@@ -1640,7 +1640,7 @@ Cache Statistics:
                     legend: {
                         position: 'bottom',
                         labels: {
-                            color: '#b0b0b0',     // igual ao Attack Distribution
+                            color: '#b0b0b0',     
                             usePointStyle: true,
                             padding: 10,
                             boxWidth: 12,
