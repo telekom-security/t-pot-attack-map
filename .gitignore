@@ -5,3 +5,8 @@ lib/
 pyvenv.cfg
 __pycache__/
 
+# Local configuration — contains server-specific settings, never commit
+config.toml
+
+geoip-attack-map.code-workspace
+.venv/

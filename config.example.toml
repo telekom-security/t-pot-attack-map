@@ -1,0 +1,45 @@
+# GeoIP Attack Map — Configuration
+# ==================================
+# Copy this file to config.toml and adjust values for your environment.
+# config.toml is excluded from git — never commit it with real server details.
+#
+# All settings below show the default values used when config.toml is absent
+# (matching the  Docker environment). Omitting a key keeps its default.
+
+[ui]
+# Title shown in the browser tab and map header
+title = "UBC Attack Map"
+
+# Show the scrolling attack event log table below the map
+text_output = true
+
+[opensearch]
+# OpenSearch / Elasticsearch connection URL
+# Docker default: "http://elasticsearch:9200"
+url = "http://elasticsearch:9200"
+
+# Index pattern queried for honeypot events
+index = "logstash-*"
+
+# HTTP Basic Auth credentials — leave empty for unauthenticated connections
+username = ""
+password = ""
+
+# Verify the server's TLS certificate. Set to false for self-signed certificates.
+# Warning: disabling verification exposes you to man-in-the-middle attacks.
+verify_certs = true
+
+[valkey]
+# Valkey hostname or IP address
+# Docker default: "map_redis"
+host = "map_redis"
+
+# Valkey port
+port = 6379
+
+# Pub/sub channel name — must be identical in DataServer and AttackMapServer
+channel = "attack-map-production"
+
+[server]
+# TCP port the AttackMapServer web interface listens on
+web_port = 64299

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:valkey-py.readthedocs.io)",
+      "Bash(pip uninstall:*)",
+      "Bash(pip install:*)",
+      "Bash(/home/yerex/Projects/geoip-attack-map/.venv/bin/pip list:*)",
+      "Bash(openssl dgst:*)",
+      "Bash(openssl base64:*)"
+    ]
+  }
+}

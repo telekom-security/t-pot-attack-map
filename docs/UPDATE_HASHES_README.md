@@ -1,4 +1,4 @@
-# T-Pot Attack Map - Integrity Hash Updater
+# Attack Map - Integrity Hash Updater
 
 ## Overview
 
@@ -83,7 +83,7 @@ The tool provides color-coded output:
 ### Example Output
 
 ```
-T-Pot Attack Map - Integrity Hash Updater
+Attack Map - Integrity Hash Updater
 ============================================================
 
 🔄 Updating integrity hashes...
@@ -136,7 +136,7 @@ You can automate this by adding a git pre-commit hook:
 if git diff --cached --name-only | grep -q "^static/"; then
     echo "Static files modified, updating integrity hashes..."
     python3 update_hashes.py
-    
+
     # Stage the updated index.html
     git add static/index.html
 fi
@@ -199,4 +199,4 @@ If the tool reports all files unchanged but you know you modified a file:
 
 ## License
 
-This tool is part of the T-Pot Attack Map project.
+This tool is part of the Attack Map project.
