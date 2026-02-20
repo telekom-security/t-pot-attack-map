@@ -3,26 +3,41 @@ import json
 import time
 import os
 import pytz
-import redis
-from elasticsearch import Elasticsearch
+import valkey
+from opensearchpy import OpenSearch
 from tzlocal import get_localzone
 
-# Within T-Pot: es = Elasticsearch('http://elasticsearch:9200') and redis_ip = 'map_redis'
-#es = Elasticsearch('http://127.0.0.1:64298')
-#redis_ip = '127.0.0.1'
-es = Elasticsearch('http://elasticsearch:9200')
-redis_ip = 'map_redis'
-redis_channel = 'attack-map-production'
+import config as _config
+cfg = _config.load()
+
+_os_cfg = cfg['opensearch']
+_os_kwargs = {}
+if _os_cfg['username']:
+    _os_kwargs['http_auth'] = (_os_cfg['username'], _os_cfg['password'])
+if _os_cfg['url'].startswith('https'):
+    _os_kwargs['use_ssl'] = True
+    _os_kwargs['verify_certs'] = _os_cfg['verify_certs']
+    _os_kwargs['ssl_show_warn'] = _os_cfg['verify_certs']
+es = OpenSearch(_os_cfg['url'], **_os_kwargs)
+valkey_ip = cfg['valkey']['host']
+valkey_channel = cfg['valkey']['channel']
+_index = cfg['opensearch']['index']
 version = 'Data Server 3.0.0'
 local_tz = get_localzone()
-output_text = os.getenv("TPOT_ATTACKMAP_TEXT", "ENABLED").upper()
+
+# GEOIP_ATTACKMAP_TEXT env var takes precedence over config file for compatibility
+_env_text = os.getenv("GEOIP_ATTACKMAP_TEXT")
+if _env_text is not None:
+    output_text = _env_text.upper()
+else:
+    output_text = "ENABLED" if cfg['ui']['text_output'] else "DISABLED"
 
 # Track disconnection state for reconnection messages
 was_disconnected_es = False
-was_disconnected_redis = False
+was_disconnected_valkey = False
 
-# Global Redis client for persistent connection
-redis_client = None
+# Global Valkey client for persistent connection
+valkey_client = None
 
 event_count = 1
 
@@ -144,27 +159,27 @@ PORT_MAP = {
 }
 
 
-def connect_redis(redis_ip):
-    global redis_client
+def connect_valkey(valkey_ip):
+    global valkey_client
     try:
         # Check if existing connection is alive
-        if redis_client:
-            redis_client.ping()
-            return redis_client
+        if valkey_client:
+            valkey_client.ping()
+            return valkey_client
     except Exception:
         # Connection lost or invalid, reset
         pass
-    
+
     # Create new connection
-    redis_client = redis.StrictRedis(host=redis_ip, port=6379, db=0)
-    return redis_client
+    valkey_client = valkey.Valkey(host=valkey_ip, port=6379, db=0)
+    return valkey_client
 
 
 def push_honeypot_stats(honeypot_stats):
-    redis_instance = connect_redis(redis_ip)
+    valkey_instance = connect_valkey(valkey_ip)
     tmp = json.dumps(honeypot_stats)
     # print(tmp)
-    redis_instance.publish(redis_channel, tmp)
+    valkey_instance.publish(valkey_channel, tmp)
 
 
 def get_honeypot_stats(timedelta):
@@ -176,9 +191,9 @@ def get_honeypot_stats(timedelta):
                     "terms": {
                         "type.keyword": [
                             "Adbhoney", "Beelzebub", "Ciscoasa", "CitrixHoneypot", "ConPot",
-                            "Cowrie", "Ddospot", "Dicompot", "Dionaea", "ElasticPot", 
-                            "Endlessh", "Galah", "Glutton", "Go-pot", "H0neytr4p", "Hellpot", "Heralding", 
-                            "Honeyaml", "Honeytrap", "Honeypots", "Log4pot", "Ipphoney", "Mailoney", 
+                            "Cowrie", "Ddospot", "Dicompot", "Dionaea", "ElasticPot",
+                            "Endlessh", "Galah", "Glutton", "Go-pot", "H0neytr4p", "Hellpot", "Heralding",
+                            "Honeyaml", "Honeytrap", "Honeypots", "Log4pot", "Ipphoney", "Mailoney",
                             "Medpot", "Miniprint", "Redishoneypot", "Sentrypeer", "Tanner", "Wordpot"
                         ]
                     }
@@ -204,7 +219,7 @@ def get_honeypot_stats(timedelta):
 
 
 def update_honeypot_data():
-    global was_disconnected_es, was_disconnected_redis
+    global was_disconnected_es, was_disconnected_valkey
     processed_data = []
     last = {"1m", "1h", "24h"}
     mydelta = 10
@@ -219,7 +234,7 @@ def update_honeypot_data():
             honeypot_stats = {}
             for i in last:
                 try:
-                    es_honeypot_stats = es.search(index="logstash-*", aggs={}, size=0, track_total_hits=True, query=get_honeypot_stats(i))
+                    es_honeypot_stats = es.search(index=_index, body={"aggs": {}, "size": 0, "track_total_hits": True, "query": get_honeypot_stats(i)})
                     honeypot_stats.update({"last_"+i: es_honeypot_stats['hits']['total']['value']})
                 except Exception as e:
                     # Connection errors are handled by outer exception handler
@@ -231,10 +246,10 @@ def update_honeypot_data():
         # Convert timezone-aware datetime to naive for consistent string formatting with ES
         mylast_dt = time_last_request.replace(tzinfo=None)
         mynow_dt = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=mydelta)).replace(tzinfo=None)
-        
+
         mylast = str(mylast_dt).split(" ")
         mynow = str(mynow_dt).split(" ")
-        
+
         ES_query = {
             "bool": {
                 "must": [
@@ -262,7 +277,7 @@ def update_honeypot_data():
             }
         }
 
-        res = es.search(index="logstash-*", size=100, query=ES_query)
+        res = es.search(index=_index, body={"size": 100, "query": ES_query})
         hits = res['hits']
         if len(hits['hits']) != 0:
             time_last_request = datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=mydelta)
@@ -290,7 +305,7 @@ def process_data(hit):
     alert["dst_ip"] = hit["_source"]["geoip_ext"]["ip"]
     alert["dst_iso_code"] = hit["_source"]["geoip_ext"].get("country_code2", "")
     alert["dst_country_name"] = hit["_source"]["geoip_ext"].get("country_name", "")
-    alert["tpot_hostname"] = hit["_source"]["t-pot_hostname"]
+    alert["honeypot_hostname"] = hit["_source"]["honeypot_hostname"]
     try:
         # Parse ISO timestamp (handles 'Z' in Python 3.11+)
         dt = datetime.datetime.fromisoformat(hit["_source"]["@timestamp"])
@@ -333,7 +348,7 @@ def port_to_type(port):
 def push(alerts):
     global event_count
 
-    redis_instance = connect_redis(redis_ip)
+    valkey_instance = connect_valkey(valkey_ip)
 
     for alert in alerts:
         if output_text == "ENABLED":
@@ -346,7 +361,7 @@ def push(alerts):
             # Build the table data
             table_data = [
                 [local_event_time, alert["country"], alert["src_ip"], alert["ip_rep"].title(),
-                 alert["protocol"], alert["honeypot"], alert["tpot_hostname"]]
+                 alert["protocol"], alert["honeypot"], alert["honeypot_hostname"]]
             ]
 
             # Define the minimum width for each column
@@ -379,59 +394,59 @@ def push(alerts):
             "dst_ip": alert["dst_ip"],
             "dst_iso_code": alert["dst_iso_code"],
             "dst_country_name": alert["dst_country_name"],
-            "tpot_hostname": alert["tpot_hostname"]
+            "honeypot_hostname": alert["honeypot_hostname"]
         }
         event_count += 1
         tmp = json.dumps(json_data)
-        redis_instance.publish(redis_channel, tmp)
+        valkey_instance.publish(valkey_channel, tmp)
 
 
 def check_connections():
-    """Check both Elasticsearch and Redis connections on startup."""
+    """Check both Elasticsearch and Valkey connections on startup."""
     print("[*] Checking connections...")
-    
+
     es_ready = False
-    redis_ready = False
+    valkey_ready = False
     es_waiting_printed = False
-    redis_waiting_printed = False
-    
-    while not (es_ready and redis_ready):
+    valkey_waiting_printed = False
+
+    while not (es_ready and valkey_ready):
         # Check Elasticsearch
         if not es_ready:
             try:
                 es.info()
-                print("[*] Elasticsearch connection established")
+                print("[*] OpenSearch connection established")
                 es_ready = True
             except Exception as e:
                 if not es_waiting_printed:
-                    print(f"[...] Waiting for Elasticsearch... (Error: {type(e).__name__})")
+                    print(f"[...] Waiting for OpenSearch... (Error: {type(e).__name__})")
                     es_waiting_printed = True
-        
-        # Check Redis
-        if not redis_ready:
+
+        # Check Valkey
+        if not valkey_ready:
             try:
-                r = redis.StrictRedis(host=redis_ip, port=6379, db=0)
+                r = valkey.Valkey(host=valkey_ip, port=6379, db=0)
                 r.ping()
-                print("[*] Redis connection established")
-                redis_ready = True
+                print("[*] Valkey connection established")
+                valkey_ready = True
             except Exception as e:
-                if not redis_waiting_printed:
-                    print(f"[...] Waiting for Redis... (Error: {type(e).__name__})")
-                    redis_waiting_printed = True
-        
+                if not valkey_waiting_printed:
+                    print(f"[...] Waiting for Valkey... (Error: {type(e).__name__})")
+                    valkey_waiting_printed = True
+
         # If both not ready, wait before retrying
-        if not (es_ready and redis_ready):
+        if not (es_ready and valkey_ready):
             time.sleep(5)
-    
+
     return True
 
 if __name__ == '__main__':
     print(version)
-    
+
     # Check both connections on startup
     check_connections()
     print("[*] Starting data server...\n")
-    
+
     try:
         while True:
             try:
@@ -439,54 +454,54 @@ if __name__ == '__main__':
             except Exception as e:
                 error_type = type(e).__name__
                 error_msg = str(e)
-                
-                # Check for Redis errors
-                if "6379" in error_msg or "Redis" in error_msg or "redis" in error_msg.lower():
-                    if not was_disconnected_redis:
-                        print(f"[ ] Connection lost to Redis ({error_type}), retrying...")
-                        was_disconnected_redis = True
+
+                # Check for Valkey errors
+                if "6379" in error_msg or "Valkey" in error_msg or "valkey" in error_msg.lower():
+                    if not was_disconnected_valkey:
+                        print(f"[ ] Connection lost to Valkey ({error_type}), retrying...")
+                        was_disconnected_valkey = True
                 # Check for Elasticsearch errors
-                elif "Connection" in error_type or "urllib3" in error_msg or "elastic" in error_msg.lower():
+                elif "Connection" in error_type or "urllib3" in error_msg or "elastic" in error_msg.lower() or "opensearch" in error_msg.lower():
                     if not was_disconnected_es:
-                        print(f"[ ] Connection lost to Elasticsearch ({error_type}), retrying...")
+                        print(f"[ ] Connection lost to OpenSearch ({error_type}), retrying...")
                         was_disconnected_es = True
                 else:
                     # DEBUG: Show unmatched errors to improve detection
                     print(f"[ ] Error: {error_type}: {error_msg}")
                     print(f"[DEBUG] Error details - Type: '{error_type}', Message: '{error_msg}'")
-                
+
                 # Proactively check connections to ensure we catch all failures
-                if not was_disconnected_redis:
+                if not was_disconnected_valkey:
                     try:
-                        r = connect_redis(redis_ip)
+                        r = connect_valkey(valkey_ip)
                         r.ping()
                     except:
-                        print("[ ] Connection lost to Redis (Check), retrying...")
-                        was_disconnected_redis = True
-                
+                        print("[ ] Connection lost to Valkey (Check), retrying...")
+                        was_disconnected_valkey = True
+
                 if not was_disconnected_es:
                     try:
                         es.info()
                     except:
-                        print("[ ] Connection lost to Elasticsearch (Check), retrying...")
+                        print("[ ] Connection lost to OpenSearch (Check), retrying...")
                         was_disconnected_es = True
 
                 time.sleep(5)
                 if was_disconnected_es:
                     try:
                         es.info()
-                        print("[*] Elasticsearch connection re-established")
+                        print("[*] OpenSearch connection re-established")
                         was_disconnected_es = False
                     except:
                         pass
-                
-                # Test Redis
-                if was_disconnected_redis:
+
+                # Test Valkey
+                if was_disconnected_valkey:
                     try:
-                        r = connect_redis(redis_ip)
+                        r = connect_valkey(valkey_ip)
                         r.ping()
-                        print("[*] Redis connection re-established")
-                        was_disconnected_redis = False
+                        print("[*] Valkey connection re-established")
+                        was_disconnected_valkey = False
                     except:
                         pass
 
