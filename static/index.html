@@ -5,8 +5,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' https://*.cartocdn.com https://*.openstreetmap.org data:; object-src 'none'; connect-src 'self' wss: ws:">
-        <title>T-Pot Attack Map - Real-time Cybersecurity Visualization</title>
-        <meta name="description" content="Real-time visualization of T-Pot honeypot attacks and cybersecurity threats">
+        <title>Attack Map - Real-time Cybersecurity Visualization</title>
+        <meta name="description" content="Real-time visualization of honeypot attacks and cybersecurity threats">
 
         <!-- Check integrity: openssl dgst -sha384 -binary your.file.name | openssl base64 -A-->
 
@@ -40,7 +40,7 @@
         <!-- Local Icons (Font Awesome) -->
         <link rel="stylesheet" href="static/fontawesome/css/all.min.css" integrity="sha384-t1nt8BQoYMLFN5p42tRAtuAAFQaCQODekUVeKKZrEnEyp4H2R0RHFz0KWpmj7i8g">
 
-        <link href="static/index.css?v=6" rel="stylesheet" integrity="sha384-axsUVEL9GPXH1d8THaTelM/LEPfqz4DQswvGr5mjWiL97mOoRFAsB8KLrDB13qAI"/>
+        <link href="static/index.css?v=6" rel="stylesheet" integrity="sha384-O5gAKXn/tho8e4JUmsOrUf0vWYOMUa431g9sD/Y4PqQ2Wq8HBf5E0hgoVbDI2jGv"/>
     </head>
 
     <body>
@@ -48,7 +48,7 @@
         <div id="loading-screen" class="loading-screen">
             <div class="loading-content">
                 <div class="spinner"></div>
-                <h2>Initializing T-Pot Attack Map</h2>
+                <h2>Initializing Attack Map</h2>
                 <p>Loading real-time cybersecurity data...</p>
             </div>
         </div>
@@ -58,10 +58,10 @@
             <div class="navbar-content flex-between">
                 <div class="navbar-brand flex-center">
                     <i class="fas fa-shield-halved"></i>
-                    <span>T-Pot Attack Map</span>
+                    <span>Attack Map</span>
                 </div>
-                
-                <!-- T-Pot Stats in Header -->
+
+                <!-- Stats in Header -->
                 <div class="navbar-stats">
                     <div class="stats-group">
                         <div class="stats-header-title">
@@ -86,7 +86,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="navbar-controls">
                     <div class="connection-status" id="connection-status">
                         <div class="status-indicator" id="status-indicator"></div>
@@ -121,7 +121,7 @@
                 <div class="panel-toggle" id="panel-toggle">
                     <i class="fas fa-chevron-left"></i>
                 </div>
-                
+
                 <div class="panel-content">
                     <!-- Service Legend -->
                     <div class="panel-section">
@@ -477,7 +477,7 @@
                                         <th>Honeypot</th>
                                         <th>Protocol</th>
                                         <th>Port</th>
-                                        <th>T-Pot Hostname</th>
+                                        <th>Hostname</th>
                                     </tr>
                                 </thead>
                                 <tbody id='attack-tracking'>
@@ -524,7 +524,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="settings-section">
                         <h4 class="flex-center"><i class="fas fa-database"></i> Data Management</h4>
                         <div class="setting-item">
@@ -550,8 +550,8 @@
         </div>
 
         <script src="static/cache-bridge.js" defer integrity="sha384-mMltIbf7JoxVuM6ZaB7TYkrLmY2njkbSTL9VvYqNKtmct/C2X1/JvKr8FeYHU0I+"></script>
-        <script src="static/map.js" defer integrity="sha384-2qT3tHtMdXU7HVX5lsXUrVs/of8RMbZKLzlajAkUSFHOQtHBOR/e8klblY+r89DE"></script>
-        <script src="static/dashboard.js" defer integrity="sha384-G3w6UiVOgfx+CP0Otu961qJu1kfOfCLHDO4rtaWMPxem4VHwdL1SPSA0jDDWqRKF"></script>
+        <script src="static/map.js" defer integrity="sha384-AqdWJKyYyJ6oV+mgIDNwByZp8Xb8UTKckPMof5vpP2g4l+S7JvscK0EMaP+qcQ5B"></script>
+        <script src="static/dashboard.js" defer integrity="sha384-YNIoGcAIdL/KNg0lRHfNepSIoxMCvAw6pFw+hXFuYffMVpgtITGLiMuqGVxFGTC9"></script>
     </body>
 
 </html>

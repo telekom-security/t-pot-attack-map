@@ -1,5 +1,5 @@
 /**
- * T-Pot Attack Map Dashboard
+ * Attack Map Dashboard
  * Enhanced UI and data visualization functionality
  */
 
@@ -49,7 +49,7 @@ class AttackCache {
             }
 
             const request = indexedDB.open(this.dbName, this.version);
-            
+
             request.onerror = () => reject(request.error);
             request.onsuccess = () => {
                 this.db = request.result;
@@ -58,14 +58,14 @@ class AttackCache {
 
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
-                
+
                 // Create attacks object store if it doesn't exist
                 if (!db.objectStoreNames.contains(this.storeName)) {
-                    const store = db.createObjectStore(this.storeName, { 
+                    const store = db.createObjectStore(this.storeName, {
                         keyPath: 'id',
-                        autoIncrement: true 
+                        autoIncrement: true
                     });
-                    
+
                     // Create index on timestamp for efficient cleanup queries
                     store.createIndex('timestamp', 'timestamp', { unique: false });
                     store.createIndex('source_ip', 'source_ip', { unique: false });
@@ -80,7 +80,7 @@ class AttackCache {
         if (!window.localStorage) {
             throw new Error('LocalStorage not supported');
         }
-        
+
         // Initialize empty cache if doesn't exist
         if (!localStorage.getItem(this.localStorageKey)) {
             const emptyCache = {
@@ -116,7 +116,7 @@ class AttackCache {
             const transaction = this.db.transaction([this.storeName], 'readwrite');
             const store = transaction.objectStore(this.storeName);
             const request = store.add(event);
-            
+
             request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
         });
@@ -125,12 +125,12 @@ class AttackCache {
     storeEventLocalStorage(event) {
         const cache = JSON.parse(localStorage.getItem(this.localStorageKey) || '{"events":[]}');
         cache.events.push(event);
-        
+
         // Keep within limits
         if (cache.events.length > this.maxEvents) {
             cache.events = cache.events.slice(-this.maxEvents);
         }
-        
+
         localStorage.setItem(this.localStorageKey, JSON.stringify(cache));
     }
 
@@ -152,12 +152,12 @@ class AttackCache {
             const transaction = this.db.transaction([this.storeName], 'readonly');
             const store = transaction.objectStore(this.storeName);
             const index = store.index('timestamp');
-            
+
             // Get events from last 24 hours
             const cutoff = Date.now() - this.retentionPeriod;
             const range = IDBKeyRange.lowerBound(cutoff);
             const request = index.getAll(range);
-            
+
             request.onsuccess = () => {
                 const events = request.result || [];
                 console.log(`[CACHE] Retrieved ${events.length} events from IndexedDB`);
@@ -170,12 +170,12 @@ class AttackCache {
     getStoredEventsLocalStorage() {
         const cache = JSON.parse(localStorage.getItem(this.localStorageKey) || '{"events":[]}');
         const cutoff = Date.now() - this.retentionPeriod;
-        
+
         // Filter events within retention period
-        const validEvents = cache.events.filter(event => 
+        const validEvents = cache.events.filter(event =>
             event.timestamp && event.timestamp > cutoff
         );
-        
+
         console.log(`[CACHE] Retrieved ${validEvents.length} events from LocalStorage`);
         return validEvents;
     }
@@ -197,12 +197,12 @@ class AttackCache {
             const transaction = this.db.transaction([this.storeName], 'readwrite');
             const store = transaction.objectStore(this.storeName);
             const index = store.index('timestamp');
-            
+
             // Delete events older than retention period
             const cutoff = Date.now() - this.retentionPeriod;
             const range = IDBKeyRange.upperBound(cutoff);
             const request = index.openCursor(range);
-            
+
             let deletedCount = 0;
             request.onsuccess = (event) => {
                 const cursor = event.target.result;
@@ -225,20 +225,20 @@ class AttackCache {
         const cache = JSON.parse(localStorage.getItem(this.localStorageKey) || '{"events":[]}');
         const cutoff = Date.now() - this.retentionPeriod;
         const originalCount = cache.events.length;
-        
+
         // Keep only events within retention period
-        cache.events = cache.events.filter(event => 
+        cache.events = cache.events.filter(event =>
             event.timestamp && event.timestamp > cutoff
         );
-        
+
         // Limit total events for performance
         if (cache.events.length > this.maxEvents) {
             cache.events = cache.events.slice(-this.maxEvents);
         }
-        
+
         cache.lastCleanup = Date.now();
         localStorage.setItem(this.localStorageKey, JSON.stringify(cache));
-        
+
         const deletedCount = originalCount - cache.events.length;
         if (deletedCount > 0) {
             console.log(`[CACHE] Cleaned up ${deletedCount} old events from LocalStorage`);
@@ -276,7 +276,7 @@ class AttackCache {
             const transaction = this.db.transaction([this.storeName], 'readwrite');
             const store = transaction.objectStore(this.storeName);
             const request = store.clear();
-            
+
             request.onsuccess = () => {
                 console.log('[CACHE] IndexedDB cache cleared');
                 resolve();
@@ -312,7 +312,7 @@ class AttackMapDashboard {
         this.timelineData = this.initializeTimelineData(); // Add timeline data structure
         this.lastTimelineUpdate = Date.now(); // Track last update time
         this.connectionStatus = 'connecting'; // Track current connection status
-        
+
         // Honeypot Performance Tracking
         this.honeypotStats = {
             data: new Map(), // Map to store honeypot stats
@@ -320,12 +320,12 @@ class AttackMapDashboard {
             updateInterval: 60000, // Update chart every minute
             lastCleanup: Date.now()
         };
-        
+
         // Initialize attack cache system
         this.attackCache = new AttackCache();
         this.cacheInitialized = false;
         this.restoringFromCache = false;
-        
+
         this.init();
     }
 
@@ -340,12 +340,12 @@ class AttackMapDashboard {
         this.initSettings();
         this.initSoundSystem();
         this.initHoneypotTracking();
-        
+
         // Initialize cache system
         await this.initializeCache();
-        
+
         this.hideLoadingScreen();
-        
+
         // Start background tasks
         this.startPerformanceMonitoring();
         this.startDataAggregation();
@@ -356,13 +356,13 @@ class AttackMapDashboard {
         try {
             await this.attackCache.init();
             this.cacheInitialized = true;
-            
+
             // Update cache status UI
             this.updateCacheStatus();
-            
+
             // Try to restore data from cache
             await this.restoreFromCache();
-            
+
             console.log('[DASHBOARD] Cache system initialized successfully');
         } catch (error) {
             console.error('[DASHBOARD] Failed to initialize cache:', error);
@@ -375,17 +375,17 @@ class AttackMapDashboard {
         const cacheStatus = document.getElementById('cache-status');
         const cacheIndicator = document.getElementById('cache-indicator');
         const cacheText = document.getElementById('cache-text');
-        
+
         if (!cacheStatus || !cacheIndicator || !cacheText) return;
-        
+
         if (!this.cacheInitialized || status === 'error') {
             cacheStatus.style.display = 'none';
             return;
         }
-        
+
         // Show cache status
         cacheStatus.style.display = 'flex';
-        
+
         // Set status based on cache state
         if (status === 'restoring') {
             cacheIndicator.className = 'status-indicator connecting';
@@ -394,7 +394,7 @@ class AttackMapDashboard {
         } else {
             cacheIndicator.className = 'status-indicator cached';
             cacheText.textContent = 'Cached';
-            
+
             // Update tooltip with cache info
             this.attackCache.getStatistics().then(stats => {
                 const storageType = stats.storageType === 'indexeddb' ? 'IndexedDB' : 'LocalStorage';
@@ -403,7 +403,7 @@ class AttackMapDashboard {
                 cacheStatus.title = 'Data cache active';
             });
         }
-        
+
         // Add click handler to show cache details
         cacheStatus.onclick = () => this.showCacheDetails();
     }
@@ -414,7 +414,7 @@ class AttackMapDashboard {
             const storageType = stats.storageType === 'indexeddb' ? 'IndexedDB' : 'LocalStorage';
             const oldestDate = stats.oldestEvent ? new Date(stats.oldestEvent).toLocaleString() : 'None';
             const newestDate = stats.newestEvent ? new Date(stats.newestEvent).toLocaleString() : 'None';
-            
+
             const message = `
 Cache Statistics:
 • Storage: ${storageType}
@@ -423,7 +423,7 @@ Cache Statistics:
 • Newest: ${newestDate}
 • Retention: 24 hours
             `;
-            
+
             this.showNotification(message.trim(), 'info', 'cache');
         } catch (error) {
             console.error('[CACHE] Failed to get statistics:', error);
@@ -435,53 +435,53 @@ Cache Statistics:
         console.log('[DASHBOARD] Attempting to restore data from cache...');
         this.restoringFromCache = true;
         this.updateCacheStatus('restoring');
-        
+
         try {
             const cachedEvents = await this.attackCache.getStoredEvents();
             const stats = await this.attackCache.getStatistics();
-            
+
             console.log(`[DASHBOARD] Found ${cachedEvents.length} cached events (${stats.storageType})`);
-            
+
             if (cachedEvents.length > 0) {
                 // Sort events by timestamp (oldest first)
                 cachedEvents.sort((a, b) => a.timestamp - b.timestamp);
-                
+
                 // Restore all cached events for complete statistics
                 this.attackHistory = cachedEvents.map(event => ({
                     ...event,
                     restored: true // Mark as restored for debugging
                 }));
-                
+
                 // Process events in chunks to prevent UI blocking
                 const BATCH_SIZE = 500;
                 let processedCount = 0;
-                
+
                 const processBatch = () => {
                     const end = Math.min(processedCount + BATCH_SIZE, cachedEvents.length);
-                    
+
                     // Process a batch of events
                     for (let i = processedCount; i < end; i++) {
                         const event = cachedEvents[i];
-                        
+
                         // Process for timeline
                         this.addAttackToTimeline(event, false); // false = don't trigger updates
-                        
+
                         // Process for heatmap
                         this.addAttackToHeatmap(event, false);
-                        
+
                         // Process for honeypot tracking
                         if (event.honeypot) {
                             this.trackHoneypotAttack(event.honeypot, event.timestamp, false);
                         }
-                        
+
                         // Update tracking data (needed for top IPs and top countries)
                         this.updateIPTracking(event.ip || event.source_ip, event.country, event);
                         this.updateCountryTracking(event.country, event);
                         this.updateProtocolStats(event.protocol);
                     }
-                    
+
                     processedCount = end;
-                    
+
                     if (processedCount < cachedEvents.length) {
                         // Schedule next batch
                         requestAnimationFrame(processBatch);
@@ -490,7 +490,7 @@ Cache Statistics:
                         this.finalizeRestoration(cachedEvents, stats);
                     }
                 };
-                
+
                 // Start processing batches
                 processBatch();
             } else {
@@ -513,15 +513,15 @@ Cache Statistics:
             const mapEvents = [];
             const uniqueLocations = new Set();
             const MAX_MAP_CIRCLES = 200;
-            
+
             // Iterate backwards to find the most recent unique locations
             for (let i = cachedEvents.length - 1; i >= 0; i--) {
                 const event = cachedEvents[i];
                 // Use coordinates as key if available, otherwise fallback to IP
-                const key = (event.source_lat && event.source_lng) 
-                    ? `${event.source_lat},${event.source_lng}` 
+                const key = (event.source_lat && event.source_lng)
+                    ? `${event.source_lat},${event.source_lng}`
                     : (event.source_ip || event.ip);
-                    
+
                 if (key) {
                     if (uniqueLocations.size < MAX_MAP_CIRCLES || uniqueLocations.has(key)) {
                         mapEvents.push(event);
@@ -529,24 +529,24 @@ Cache Statistics:
                     }
                 }
             }
-            
+
             // Reverse to restore chronological order (oldest to newest)
             mapEvents.reverse();
-            
-            console.log(`[DASHBOARD] Restoring ${mapEvents.length} events covering ${uniqueLocations.size} unique locations`); 
-            
+
+            console.log(`[DASHBOARD] Restoring ${mapEvents.length} events covering ${uniqueLocations.size} unique locations`);
+
             for (const event of mapEvents) {
                 if (typeof window.processRestoredAttack === 'function') {
                     window.processRestoredAttack(event);
                 }
             }
-            
+
             // Restore live feed (last 100 events, newest first)
             const liveFeedEvents = cachedEvents.slice(-100);
             for (const event of liveFeedEvents) {
                 this.addToAttackTable(event, false);
             }
-            
+
             // Update all visualizations with restored data
             this.aggregateProtocolStats();
             this.aggregateCountryStats();
@@ -554,13 +554,13 @@ Cache Statistics:
             this.updateHoneypotChartData();
             this.updateThreatHeatmap();
             this.updateDashboardMetrics();
-            
+
             // Update tables with aggregated data
             this.updateTopIPsTable();
             this.updateTopCountriesTable();
-            
+
             console.log(`[DASHBOARD] Successfully restored ${cachedEvents.length} events from cache`);
-            
+
             // Show restoration notification
             this.showNotification(
                 `Restored ${cachedEvents.length} events from cache (${this.formatTimeAgo(stats.oldestEvent)})`,
@@ -577,12 +577,12 @@ Cache Statistics:
 
     formatTimeAgo(timestamp) {
         if (!timestamp) return 'unknown';
-        
+
         const now = Date.now();
         const diff = now - timestamp;
         const minutes = Math.floor(diff / (1000 * 60));
         const hours = Math.floor(diff / (1000 * 60 * 60));
-        
+
         if (hours > 0) {
             return `${hours}h ago`;
         } else if (minutes > 0) {
@@ -645,14 +645,14 @@ Cache Statistics:
             'SCADA': '#8040FF',
             'OTHER': '#78909C'
         };
-        
+
         const protocolUpper = protocol?.toUpperCase();
-        
+
         // Return predefined color for known protocols
         if (colors[protocolUpper]) {
             return colors[protocolUpper];
         }
-        
+
         // Fallback for unknown protocols - should use OTHER color for consistency
         return colors['OTHER'];  // Use OTHER color (#78909C) for unknown protocols
     }
@@ -660,12 +660,12 @@ Cache Statistics:
     // Normalize protocol names to known protocols or "OTHER"
     normalizeProtocol(protocol) {
         if (!protocol) return 'OTHER';
-        
+
         // Check if protocol is a numeric string (port number) - convert to OTHER
         if (/^\d+$/.test(protocol.toString())) {
             return 'OTHER';
         }
-        
+
         // List of known protocols to check against
         const knownProtocols = [
             'CHARGEN', 'FTP-DATA', 'FTP', 'SSH', 'TELNET', 'SMTP', 'WINS', 'DNS', 'DHCP', 'TFTP',
@@ -675,14 +675,14 @@ Cache Statistics:
             'ADB', 'VNC', 'REDIS', 'IRC', 'JETDIRECT', 'ELASTICSEARCH', 'INDUSTRIAL', 'MEMCACHED',
             'MONGODB', 'SCADA'
         ];
-        
+
         const protocolUpper = protocol.toUpperCase();
-        
+
         // If protocol is not in the known list, use "OTHER"
         if (!knownProtocols.includes(protocolUpper)) {
             return 'OTHER';
         }
-        
+
         return protocolUpper;
     }
 
@@ -720,7 +720,7 @@ Cache Statistics:
         for (let i = points - 1; i >= 0; i--) {
             const time = new Date(now.getTime() - i * duration);
             let label, timestamp;
-            
+
             switch (interval) {
                 case '1m':
                     label = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -736,7 +736,7 @@ Cache Statistics:
                     timestamp = Math.floor(time.getTime() / (60 * 60 * 1000)) * (60 * 60 * 1000); // Round to hour
                     break;
             }
-            
+
             timeline.push({
                 timestamp: timestamp,
                 label: label,
@@ -744,7 +744,7 @@ Cache Statistics:
                 unit: unit
             });
         }
-        
+
         return timeline;
     }
 
@@ -754,26 +754,26 @@ Cache Statistics:
             console.log(`[DEBUG] No attack history available for timeline population`);
             return;
         }
-        
+
         console.log(`[DEBUG] Populating timeline (${this.timelineInterval}) from ${this.attackHistory.length} attacks`);
-        
+
         // Reset counts
         this.timelineData.forEach(point => {
             point.count = 0;
         });
-        
+
         let attacksInRange = 0;
-        
+
         // Count attacks in each time bucket
         this.attackHistory.forEach(attack => {
             const attackTime = new Date(attack.timestamp || attack.time || attack.date || Date.now());
-            
+
             // Find the appropriate timeline bucket
             this.timelineData.forEach(point => {
                 const pointTime = new Date(point.timestamp);
                 const duration = this.getDurationForInterval();
                 const pointEndTime = new Date(pointTime.getTime() + duration);
-                
+
                 // Check if attack falls within this time bucket
                 if (attackTime >= pointTime && attackTime < pointEndTime) {
                     point.count++;
@@ -781,7 +781,7 @@ Cache Statistics:
                 }
             });
         });
-        
+
         console.log(`[DEBUG] Timeline populated: ${attacksInRange} attacks in range, counts:`, this.timelineData.map(p => p.count));
         this.updateTimelineChart();
     }
@@ -801,13 +801,13 @@ Cache Statistics:
         const attackTime = new Date(attack.timestamp || attack.time || attack.date || Date.now());
         const duration = this.getDurationForInterval();
         let attackAdded = false;
-        
+
         // Try to find existing time bucket that contains this attack
         for (let i = 0; i < this.timelineData.length; i++) {
             const point = this.timelineData[i];
             const pointTime = new Date(point.timestamp);
             const pointEndTime = new Date(pointTime.getTime() + duration);
-            
+
             // Check if attack falls within this time bucket
             if (attackTime >= pointTime && attackTime < pointEndTime) {
                 point.count++;
@@ -816,46 +816,46 @@ Cache Statistics:
                 break;
             }
         }
-        
+
         // If attack doesn't fit in any existing bucket, check if we need to add new buckets
         if (!attackAdded) {
             const lastPoint = this.timelineData[this.timelineData.length - 1];
             const lastPointTime = new Date(lastPoint.timestamp);
             const lastPointEndTime = new Date(lastPointTime.getTime() + duration);
-            
+
             // If attack is after the last bucket, add new bucket(s)
             if (attackTime >= lastPointEndTime) {
                 let currentTime = lastPointEndTime;
-                
+
                 // Add buckets until we reach the attack time
                 while (currentTime <= attackTime) {
                     const bucketStartTime = new Date(Math.floor(currentTime.getTime() / duration) * duration);
                     const isAttackBucket = attackTime >= bucketStartTime && attackTime < new Date(bucketStartTime.getTime() + duration);
-                    
+
                     const newPoint = {
                         timestamp: bucketStartTime.getTime(),
                         label: this.formatTimeLabel(bucketStartTime),
                         count: isAttackBucket ? 1 : 0,
                         unit: this.getUnitForInterval()
                     };
-                    
+
                     // Remove oldest point and add new one
                     this.timelineData.shift();
                     this.timelineData.push(newPoint);
-                    
+
                     if (isAttackBucket) {
                         attackAdded = true;
                         console.log(`[DEBUG] Added attack to new bucket: ${newPoint.label}, count: 1`);
                         break;
                     }
-                    
+
                     currentTime = new Date(currentTime.getTime() + duration);
                 }
             } else {
                 console.log(`[DEBUG] Attack is too old to fit in current timeline window`);
             }
         }
-        
+
         if (attackAdded && triggerUpdate) {
             this.updateTimelineChart();
         }
@@ -898,7 +898,7 @@ Cache Statistics:
     // Convert HSL to RGB
     hslToRgb(h, s, l) {
         let r, g, b;
-        
+
         if (s === 0) {
             r = g = b = l; // achromatic
         } else {
@@ -910,14 +910,14 @@ Cache Statistics:
                 if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
                 return p;
             };
-            
+
             const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
             const p = 2 * l - q;
             r = hue2rgb(p, q, h + 1/3);
             g = hue2rgb(p, q, h);
             b = hue2rgb(p, q, h - 1/3);
         }
-        
+
         return [r * 255, g * 255, b * 255];
     }
 
@@ -943,7 +943,7 @@ Cache Statistics:
         localStorage.setItem('theme', this.theme);
         this.updateThemeIcon();
         this.updateChartsTheme();
-        
+
         // Update map theme if the function exists
         if (typeof updateMapTheme === 'function') {
             updateMapTheme(this.theme);
@@ -1020,17 +1020,17 @@ Cache Statistics:
         this.updatePanelStates();
         this.initPanelResize();
         this.updateSidePanelHeight(); // Initial side panel height setup
-        
+
         // Apply saved side panel state
         this.applySidePanelState();
     }
 
     toggleSidePanel() {
         this.panelCollapsed = !this.panelCollapsed;
-        
+
         // Save the panel state to localStorage
         localStorage.setItem('sidePanelCollapsed', this.panelCollapsed.toString());
-        
+
         const panel = document.getElementById('side-panel');
         if (panel) {
             panel.classList.toggle('collapsed', this.panelCollapsed);
@@ -1048,7 +1048,7 @@ Cache Statistics:
     initPanelResize() {
         const resizeHandle = document.getElementById('panel-resize');
         const bottomPanel = document.getElementById('bottom-panel');
-        
+
         if (!resizeHandle || !bottomPanel) return;
 
         let isResizing = false;
@@ -1065,10 +1065,10 @@ Cache Statistics:
 
         document.addEventListener('mousemove', (e) => {
             if (!isResizing) return;
-            
+
             const deltaY = startY - e.clientY;
             const newHeight = Math.max(200, Math.min(600, startHeight + deltaY));
-            
+
             this.bottomPanelHeight = newHeight;
             localStorage.setItem('bottomPanelHeight', newHeight.toString());
             bottomPanel.style.height = `${newHeight}px`;
@@ -1094,7 +1094,7 @@ Cache Statistics:
     updateMapSize() {
         // Update side panel height based on bottom panel position
         this.updateSidePanelHeight();
-        
+
         // Trigger map resize if needed
         if (window.map) {
             setTimeout(() => {
@@ -1106,13 +1106,13 @@ Cache Statistics:
     updateSidePanelHeight() {
         const sidePanel = document.getElementById('side-panel');
         const bottomPanel = document.getElementById('bottom-panel');
-        
+
         if (sidePanel && bottomPanel) {
             // Calculate available height: viewport height - navbar height - bottom panel height
             const navbarHeight = 70; // Top navbar height
             const bottomPanelHeight = this.bottomPanelHeight || 350;
             const availableHeight = window.innerHeight - navbarHeight - bottomPanelHeight;
-            
+
             sidePanel.style.height = `${Math.max(200, availableHeight)}px`;
         }
     }
@@ -1126,7 +1126,7 @@ Cache Statistics:
                 this.switchTab(tabName);
             });
         });
-        
+
         // Activate the default tab (live-feed)
         this.switchTab(this.activeTab);
     }
@@ -1134,28 +1134,28 @@ Cache Statistics:
     switchTab(tabName) {
         // Update active tab
         this.activeTab = tabName;
-        
+
         // Update tab buttons
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
         });
-        
+
         // Hide all tab panes first
         document.querySelectorAll('.tab-pane').forEach(pane => {
             pane.classList.remove('active');
             pane.style.display = 'none';
         });
-        
+
         // Show the selected tab pane
         const targetTab = document.getElementById(`${tabName}-tab`);
         if (targetTab) {
             targetTab.classList.add('active');
             targetTab.style.display = 'block';
         }
-        
+
         // Load tab-specific data
         this.loadTabData(tabName);
-        
+
         // Resize charts if needed
         setTimeout(() => {
             this.resizeCharts();
@@ -1187,13 +1187,13 @@ Cache Statistics:
             this.initTimelineChart();
             this.initProtocolChart();
             this.initHoneypotChart();
-            
+
             // Populate timeline and heatmap with any existing attack history
             setTimeout(() => {
                 this.populateTimelineFromHistory();
                 this.populateHeatmapFromHistory();
             }, 200);
-            
+
             // Force a resize after initialization
             setTimeout(() => {
                 this.resizeCharts();
@@ -1204,19 +1204,19 @@ Cache Statistics:
     // Handle timeline interval change
     changeTimelineInterval(newInterval) {
         console.log(`[DEBUG] Changing timeline interval from ${this.timelineInterval} to ${newInterval}`);
-        
+
         this.timelineInterval = newInterval;
         this.timelineData = this.generateTimelineData(newInterval);
-        
+
         // Populate the new timeline with existing attack history
         this.populateTimelineFromHistory();
-        
+
         // Reinitialize the timeline chart with new data
         this.initTimelineChart();
-        
+
         // Restart timeline updates with new frequency
         this.startTimelineUpdates();
-        
+
         console.log(`[DEBUG] Timeline interval changed to ${newInterval}, data points: ${this.timelineData.length}`);
     }
 
@@ -1224,10 +1224,10 @@ Cache Statistics:
     updateTimelineChartTitle() {
         const titleMap = {
             '1m': 'Attacks per Second (Last Minute)',
-            '1h': 'Attacks per Minute (Last Hour)', 
+            '1h': 'Attacks per Minute (Last Hour)',
             '24h': 'Attacks per Hour (Last 24 Hours)'
         };
-        
+
         if (this.charts.timeline && this.charts.timeline.options.plugins.legend) {
             this.charts.timeline.data.datasets[0].label = titleMap[this.timelineInterval] || 'Attacks';
             this.charts.timeline.options.scales.x.title.text = this.getTimelineXAxisTitle();
@@ -1302,7 +1302,7 @@ Cache Statistics:
                 cutout: '60%'
             }
         });
-        
+
         // Ensure proper sizing after chart creation
         setTimeout(() => {
             if (this.charts.attackDistribution) {
@@ -1346,7 +1346,7 @@ Cache Statistics:
                 maintainAspectRatio: false,
                 scales: {
                     x: {
-                        ticks: { 
+                        ticks: {
                             color: '#b0b0b0',
                             maxTicksLimit: this.getMaxTicks()
                         },
@@ -1367,7 +1367,7 @@ Cache Statistics:
                     legend: {
                         position: 'bottom',
                         align: 'center',
-                        labels: { 
+                        labels: {
                             color: '#b0b0b0',
                             usePointStyle: true,
                             padding: 15,
@@ -1447,7 +1447,7 @@ Cache Statistics:
                         grid: { display: false }
                     },
                     y: {
-                        ticks: { 
+                        ticks: {
                             color: '#b0b0b0',
                             callback: function(value) {
                                 return Math.round(Math.pow(value, 2));
@@ -1463,8 +1463,8 @@ Cache Statistics:
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                const raw = context.dataset.originalData ? 
-                                          context.dataset.originalData[context.dataIndex] : 
+                                const raw = context.dataset.originalData ?
+                                          context.dataset.originalData[context.dataIndex] :
                                           Math.round(Math.pow(context.raw, 2));
                                 return context.dataset.label + ': ' + raw;
                             }
@@ -1506,14 +1506,14 @@ Cache Statistics:
                 scales: {
                     r: {
                         beginAtZero: true,
-                        ticks: { 
+                        ticks: {
                             display: false, // Remove attack count numbers for cleaner look
                             maxTicksLimit: 8 // Limit number of grid rings to prevent performance issues
                         },
                         grid: { color: gridColor },
-                        pointLabels: { 
+                        pointLabels: {
                             color: textColor,
-                            font: { 
+                            font: {
                                 size: 10, // Slightly smaller to reduce crowding
                                 weight: '400' // Normal weight for better readability
                             },
@@ -1529,7 +1529,7 @@ Cache Statistics:
                     legend: {
                         position: 'bottom',
                         align: 'center',
-                        labels: { 
+                        labels: {
                             color: textColor, // Match timeline chart exactly
                             usePointStyle: true,
                             padding: 15,
@@ -1539,7 +1539,7 @@ Cache Statistics:
                             generateLabels: function(chart) {
                                 const original = Chart.defaults.plugins.legend.labels.generateLabels;
                                 const labels = original.call(this, chart);
-                                
+
                                 // Customize legend to match timeline chart opacity and stroke
                                 labels.forEach(label => {
                                     if (label.fillStyle) {
@@ -1549,7 +1549,7 @@ Cache Statistics:
                                         label.lineWidth = 1; // Match timeline chart default stroke width
                                     }
                                 });
-                                
+
                                 return labels;
                             }
                         }
@@ -1562,8 +1562,8 @@ Cache Statistics:
                         borderWidth: 1,
                         callbacks: {
                             label: function(context) {
-                                const raw = context.dataset.originalData ? 
-                                          context.dataset.originalData[context.dataIndex] : 
+                                const raw = context.dataset.originalData ?
+                                          context.dataset.originalData[context.dataIndex] :
                                           Math.round(Math.pow(context.raw, 2));
                                 return context.dataset.label + ': ' + raw;
                             }
@@ -1572,7 +1572,7 @@ Cache Statistics:
                 }
             }
         });
-        
+
         // Don't call updateHoneypotChartData here - let it be called when real data arrives
     }
 
@@ -1582,10 +1582,10 @@ Cache Statistics:
         setInterval(() => {
             this.cleanupOldHoneypotData();
         }, 5 * 60 * 1000); // Clean up every 5 minutes
-        
+
         // Honeypot chart updates will be synchronized with timeline updates
         // No separate interval needed - updates happen in addAttackEvent and startDataAggregation
-        
+
         console.log('[DEBUG] Honeypot performance tracking initialized');
     }
 
@@ -1594,22 +1594,22 @@ Cache Statistics:
             console.warn('[DEBUG] Invalid honeypot data:', honeypot);
             return;
         }
-        
+
         // Clean honeypot name (remove any whitespace/special chars)
         honeypot = honeypot.trim();
-        
+
         // Get or create honeypot entry
         if (!this.honeypotStats.data.has(honeypot)) {
             this.honeypotStats.data.set(honeypot, []);
             console.log(`[DEBUG] New honeypot discovered: ${honeypot}`);
         }
-        
+
         // Add timestamp to honeypot's attack history
         this.honeypotStats.data.get(honeypot).push(timestamp);
-        
+
         // Immediately clean old data for this honeypot
         this.cleanupHoneypotData(honeypot);
-        
+
         const currentStats = this.honeypotStats.data.get(honeypot);
         if (currentStats) {
             console.log(`[DEBUG] Tracked attack for honeypot: ${honeypot} (${currentStats.length} total attacks)`);
@@ -1620,11 +1620,11 @@ Cache Statistics:
 
     cleanupOldHoneypotData() {
         const cutoff = Date.now() - this.honeypotStats.retention;
-        
+
         for (const [honeypot, timestamps] of this.honeypotStats.data.entries()) {
             this.cleanupHoneypotData(honeypot, cutoff);
         }
-        
+
         this.honeypotStats.lastCleanup = Date.now();
     }
 
@@ -1632,13 +1632,13 @@ Cache Statistics:
         if (!cutoff) {
             cutoff = Date.now() - this.honeypotStats.retention;
         }
-        
+
         const timestamps = this.honeypotStats.data.get(honeypot);
         if (!timestamps) return;
-        
+
         // Filter out old timestamps
         const filtered = timestamps.filter(ts => ts > cutoff);
-        
+
         if (filtered.length === 0) {
             // Remove honeypot if no recent attacks
             this.honeypotStats.data.delete(honeypot);
@@ -1649,21 +1649,21 @@ Cache Statistics:
 
     getHoneypotStats() {
         const stats = {};
-        
+
         for (const [honeypot, timestamps] of this.honeypotStats.data.entries()) {
             stats[honeypot] = timestamps.length;
         }
-        
+
         return stats;
     }
 
     updateHoneypotChartData() {
         if (!this.charts.honeypot) return;
-        
+
         const stats = this.getHoneypotStats();
         const honeypots = Object.keys(stats).sort();
         const counts = honeypots.map(hp => stats[hp]);
-        
+
         // Handle no data case
         if (honeypots.length === 0) {
             this.charts.honeypot.data.labels = ['No Data'];
@@ -1675,27 +1675,27 @@ Cache Statistics:
             this.charts.honeypot.data.datasets[0].data = counts.map(c => Math.sqrt(c));
             this.charts.honeypot.data.datasets[0].originalData = counts;
         }
-        
+
         // Update chart
         this.charts.honeypot.update('none'); // No animation for performance
-        
+
     }
 
     // Public method to be called from map.js when processing attacks
     processAttackForDashboard(attackData) {
         if (!attackData) return;
-        
+
         // Track honeypot attack if honeypot field is present
         if (attackData.honeypot) {
             this.trackHoneypotAttack(attackData.honeypot, attackData.timestamp || Date.now());
         }
-        
+
         // Add to attack history for other dashboard features
         this.attackHistory.push({
             ...attackData,
             timestamp: attackData.timestamp || Date.now()
         });
-        
+
         // Keep attack history within reasonable bounds (match cache size)
         if (this.attackHistory.length > this.attackCache.maxEvents) {
             this.attackHistory = this.attackHistory.slice(-this.attackCache.maxEvents);
@@ -1724,12 +1724,12 @@ Cache Statistics:
                         if (scale.angleLines) scale.angleLines.color = gridColor;
                     });
                 }
-                
+
                 // Update legend colors - all charts follow theme now
                 if (chart.options.plugins && chart.options.plugins.legend) {
                     chart.options.plugins.legend.labels.color = textColor;
                 }
-                
+
                 // Update tooltip colors for theme
                 if (chart.options.plugins && chart.options.plugins.tooltip) {
                     chart.options.plugins.tooltip.backgroundColor = this.theme === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)';
@@ -1737,14 +1737,14 @@ Cache Statistics:
                     chart.options.plugins.tooltip.bodyColor = textColor;
                     chart.options.plugins.tooltip.borderColor = gridColor;
                 }
-                
+
                 // Update honeypot chart dataset colors to match timeline chart exactly
                 if (chart === this.charts.honeypot && chart.data.datasets[0]) {
                     // Use same transparency as timeline chart (0.1) regardless of theme
                     const backgroundColor = 'rgba(226, 0, 116, 0.1)';
                     chart.data.datasets[0].backgroundColor = backgroundColor;
                 }
-                
+
                 chart.update();
             }
         });
@@ -1779,7 +1779,7 @@ Cache Statistics:
     filterTable(type, query) {
         const tableId = type === 'ip' ? 'ip-tracking' : 'country-tracking';
         const tbody = document.getElementById(tableId);
-        
+
         if (!tbody) return;
 
         const rows = tbody.querySelectorAll('tr');
@@ -1805,7 +1805,7 @@ Cache Statistics:
         this.updateAttackDistribution();
         // Timeline is updated by its own interval
         this.updateProtocolBreakdown();
-        
+
         // Update honeypot performance (now part of overview)
         this.updateHoneypotPerformance();
     }
@@ -1845,7 +1845,7 @@ Cache Statistics:
                 }
                 return this.getProtocolColor(protocol);
             });
-            
+
             this.charts.attackDistribution.data.labels = labels;
             this.charts.attackDistribution.data.datasets[0].data = data;
             this.charts.attackDistribution.data.datasets[0].backgroundColor = colors;
@@ -1856,13 +1856,13 @@ Cache Statistics:
 
     // Get the most common port for OTHER protocol attacks
     getMostCommonOtherPort() {
-        const recent = this.attackHistory.filter(attack => 
-            Date.now() - attack.timestamp < 300000 && 
+        const recent = this.attackHistory.filter(attack =>
+            Date.now() - attack.timestamp < 300000 &&
             attack.protocol?.toUpperCase() === 'OTHER'
         );
-        
+
         if (recent.length === 0) return null;
-        
+
         // Count port frequencies
         const portCounts = recent.reduce((counts, attack) => {
             if (attack.dstPort) {
@@ -1870,20 +1870,20 @@ Cache Statistics:
             }
             return counts;
         }, {});
-        
+
         // Return the most frequent port
         const sortedPorts = Object.entries(portCounts)
             .sort(([,a], [,b]) => b - a);
-        
+
         return sortedPorts.length > 0 ? parseInt(sortedPorts[0][0]) : null;
     }
 
     updateTimeline() {
         if (!this.charts.timeline) return;
-        
+
         const now = Date.now();
         let currentUnit, lastDataPoint, shouldAddNewPoint = false;
-        
+
         // Get the current time unit based on interval
         switch (this.timelineInterval) {
             case '1m':
@@ -1906,12 +1906,12 @@ Cache Statistics:
                 shouldAddNewPoint = currentUnit > lastHour;
                 break;
         }
-        
+
         if (shouldAddNewPoint) {
             // Add new time unit
             const newTime = new Date(now);
             let newTimestamp, newLabel;
-            
+
             switch (this.timelineInterval) {
                 case '1m':
                     newTimestamp = Math.floor(now / 1000) * 1000;
@@ -1929,38 +1929,38 @@ Cache Statistics:
                     newLabel = newTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     break;
             }
-            
+
             this.timelineData.push({
                 timestamp: newTimestamp,
                 label: newLabel,
                 count: this.getAttackCountForInterval(),
                 unit: this.timelineData[0]?.unit || 'hour'
             });
-            
+
             // Remove oldest data point to maintain window size
             const maxPoints = this.timelineInterval === '1m' ? 60 : this.timelineInterval === '1h' ? 60 : 24;
             if (this.timelineData.length > maxPoints) {
                 this.timelineData.shift();
             }
-            
+
             // Update chart with new data
             const labels = this.timelineData.map(point => point.label);
             const data = this.timelineData.map(point => point.count);
-            
+
             this.charts.timeline.data.labels = labels;
             this.charts.timeline.data.datasets[0].data = data;
-            
+
             // Disable animation for 1-minute view to improve readability
             const updateMode = this.timelineInterval === '1m' ? 'none' : 'default';
             this.charts.timeline.update(updateMode);
-            
+
             console.log(`[DEBUG] Timeline updated for ${this.timelineInterval}, new point added`);
         } else {
             // Update current time unit's count in real-time
             const currentCount = this.getAttackCountForCurrentInterval();
             if (currentCount !== lastDataPoint.count) {
                 lastDataPoint.count = currentCount;
-                
+
                 // Update chart without animation for real-time feel
                 this.charts.timeline.data.datasets[0].data[this.timelineData.length - 1] = currentCount;
                 this.charts.timeline.update('none');
@@ -1971,7 +1971,7 @@ Cache Statistics:
     // Get attack count for the last complete interval
     getAttackCountForInterval() {
         let intervalMs, lookBackMs;
-        
+
         switch (this.timelineInterval) {
             case '1m':
                 intervalMs = 1000; // 1 second
@@ -1987,12 +1987,12 @@ Cache Statistics:
                 lookBackMs = 2 * 60 * 60 * 1000; // Look back 2 hours
                 break;
         }
-        
+
         const now = Date.now();
         const intervalStart = now - lookBackMs;
         const intervalEnd = now - intervalMs;
-        
-        return this.attackHistory.filter(attack => 
+
+        return this.attackHistory.filter(attack =>
             attack.timestamp > intervalStart && attack.timestamp <= intervalEnd
         ).length;
     }
@@ -2001,7 +2001,7 @@ Cache Statistics:
     getAttackCountForCurrentInterval() {
         let intervalStart;
         const now = Date.now();
-        
+
         switch (this.timelineInterval) {
             case '1m':
                 intervalStart = Math.floor(now / 1000) * 1000; // Start of current second
@@ -2014,8 +2014,8 @@ Cache Statistics:
                 intervalStart = Math.floor(now / (60 * 60 * 1000)) * (60 * 60 * 1000); // Start of current hour
                 break;
         }
-        
-        return this.attackHistory.filter(attack => 
+
+        return this.attackHistory.filter(attack =>
             attack.timestamp >= intervalStart
         ).length;
     }
@@ -2025,7 +2025,7 @@ Cache Statistics:
             const data = Object.values(this.protocolStats);
             const labels = Object.keys(this.protocolStats);
             const colors = labels.map(protocol => this.getProtocolColor(protocol));
-            
+
             this.charts.protocol.data.labels = labels;
             this.charts.protocol.data.datasets[0].data = data.map(d => Math.sqrt(d));
             this.charts.protocol.data.datasets[0].originalData = data;
@@ -2037,8 +2037,8 @@ Cache Statistics:
     getRecentAttackCount() {
         const now = Date.now();
         const oneMinuteAgo = now - 60000;
-        
-        return this.attackHistory.filter(attack => 
+
+        return this.attackHistory.filter(attack =>
             attack.timestamp > oneMinuteAgo
         ).length;
     }
@@ -2069,14 +2069,14 @@ Cache Statistics:
                 }
             }
         });
-        
+
         // Apply settings after loading them into UI
         this.applySettings();
     }
 
     saveSettings() {
         const settings = {};
-        
+
         // Collect all settings from UI
         ['sound-alerts', 'alert-sound'].forEach(id => {
             const element = document.getElementById(id);
@@ -2085,12 +2085,12 @@ Cache Statistics:
                 settings[key] = element.type === 'checkbox' ? element.checked : element.value;
             }
         });
-        
+
         this.settings = settings;
         localStorage.setItem('attack-map-settings', JSON.stringify(settings));
         this.applySettings();
         this.closeSettings();
-        
+
         this.showNotification('Settings saved successfully', 'success', 'settings');
     }
 
@@ -2098,29 +2098,29 @@ Cache Statistics:
         localStorage.removeItem('attack-map-settings');
         localStorage.removeItem('sidePanelCollapsed');
         localStorage.removeItem('bottomPanelHeight');
-        
+
         this.settings = this.loadSettings();
-        
+
         // Reset panel states to defaults
         this.panelCollapsed = false;
         this.bottomPanelHeight = 350;
-        
+
         // Apply the reset panel states
         const sidePanel = document.getElementById('side-panel');
         const bottomPanel = document.getElementById('bottom-panel');
-        
+
         if (sidePanel) {
             sidePanel.classList.remove('collapsed');
         }
-        
+
         if (bottomPanel) {
             bottomPanel.style.height = '350px';
         }
-        
+
         this.loadSettingsUI();
         this.applySettings();
         this.updateMapSize(); // Update layout after reset
-        
+
         // Show notification after layout updates to prevent position jumping
         setTimeout(() => {
             this.showNotification('Settings and panel states reset to default', 'info', 'settings');
@@ -2131,7 +2131,7 @@ Cache Statistics:
         // Apply sound alert toggle visibility - use actual settings value, not just checkbox state
         const soundOptions = document.getElementById('sound-options');
         const soundAlerts = document.getElementById('sound-alerts');
-        
+
         if (soundOptions && soundAlerts) {
             // Use the stored setting value to determine visibility
             soundOptions.style.display = this.settings.soundAlerts ? 'block' : 'none';
@@ -2144,7 +2144,7 @@ Cache Statistics:
         try {
             // Show confirmation dialog
             const confirmed = confirm('Are you sure you want to clear all cached data? This will reset the map markers and live feed. This action cannot be undone.');
-            
+
             if (!confirmed) {
                 return;
             }
@@ -2160,7 +2160,7 @@ Cache Statistics:
                 if (window.circles) window.circles.clearLayers();
                 if (window.markers) window.markers.clearLayers();
                 if (window.attackLines) window.attackLines.clearLayers();
-                
+
                 // Clear map data objects
                 if (window.circleAttackData) {
                     Object.keys(window.circleAttackData).forEach(key => {
@@ -2189,14 +2189,14 @@ Cache Statistics:
             if (liveFeedTable) {
                 liveFeedTable.innerHTML = '';
             }
-            
+
             // Clear data structures
             this.ipStats = {};
             this.countryStats = {};
             this.countryTrackingStats = {};
             this.protocolStats = {};
             this.attackHistory = [];
-            
+
             // Reset Honeypot Stats
             if (this.honeypotStats && this.honeypotStats.data) {
                 this.honeypotStats.data.clear();
@@ -2208,9 +2208,9 @@ Cache Statistics:
             // Update Tables
             this.updateTopIPsTable();
             this.updateTopCountriesTable();
-            
+
             // Reset Charts
-            
+
             // 1. Honeypot Chart
             if (this.charts.honeypot) {
                 this.charts.honeypot.data.labels = ['No Data'];
@@ -2253,7 +2253,7 @@ Cache Statistics:
             this.updateCacheStatus();
 
             this.showNotification('Cache cleared successfully', 'success', 'cache');
-            
+
         } catch (error) {
             console.error('[ERROR] Failed to clear cache:', error);
             this.showNotification('Failed to clear cache', 'error', 'cache');
@@ -2265,7 +2265,7 @@ Cache Statistics:
         this.audioContext = null;
         this.soundBuffers = {};
         this.audioInitialized = false;
-        
+
         // Add event listener for sound alerts checkbox
         const soundAlerts = document.getElementById('sound-alerts');
         if (soundAlerts) {
@@ -2288,7 +2288,7 @@ Cache Statistics:
                 );
             });
         }
-        
+
         // Add event listener for alert sound dropdown
         const alertSound = document.getElementById('alert-sound');
         if (alertSound) {
@@ -2305,7 +2305,7 @@ Cache Statistics:
                 );
             });
         }
-        
+
         // Initialize audio context on various user interactions
         const initAudioOnInteraction = (event) => {
             if (!this.audioInitialized) {
@@ -2314,12 +2314,12 @@ Cache Statistics:
                 // Don't forcefully remove audio prompt - let it expire naturally after 5 seconds
             }
         };
-        
+
         // Add listeners for user interaction - be more aggressive
         document.addEventListener('click', initAudioOnInteraction, { once: true });
         document.addEventListener('keydown', initAudioOnInteraction, { once: true });
         document.addEventListener('touchstart', initAudioOnInteraction, { once: true });
-        
+
         // Also initialize on any interaction with main content areas
         const contentAreas = ['#map', '#dashboard', '#side-panel', '#bottom-panel'];
         contentAreas.forEach(selector => {
@@ -2329,13 +2329,13 @@ Cache Statistics:
                 element.addEventListener('mouseover', initAudioOnInteraction, { once: true });
             }
         });
-        
+
         // Show audio prompt if sound is enabled but not initialized
         this.showAudioPromptIfNeeded();
-        
+
         this.loadSoundEffects();
     }
-    
+
     showAudioPromptIfNeeded() {
         // Only show prompt if sound alerts are enabled and audio is not yet initialized
         if (this.settings.soundAlerts && !this.audioInitialized) {
@@ -2352,7 +2352,7 @@ Cache Statistics:
             if (!this.audioContext) {
                 this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
-            
+
             // Resume audio context if it's suspended (some browsers suspend it by default)
             if (this.audioContext.state === 'suspended') {
                 this.audioContext.resume().then(() => {
@@ -2369,12 +2369,12 @@ Cache Statistics:
             console.warn('[SOUND] Could not initialize audio context:', error);
         }
     }
-    
+
     loadSoundEffects() {
         // Create simple sound effects programmatically
         this.createSoundEffects();
     }
-    
+
     createSoundEffects() {
         // We'll create simple beep sounds using Web Audio API
         this.soundGenerators = {
@@ -2384,169 +2384,169 @@ Cache Statistics:
             retro_videogame: () => this.generateRetroVideogame()
         };
     }
-    
+
     generateBeep(frequency, duration) {
         if (!this.audioContext) {
             this.initializeAudioContext();
         }
-        
+
         if (!this.audioContext) {
             console.warn('[SOUND] Audio context not available');
             return;
         }
-        
+
         const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
-        
+
         oscillator.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
-        
+
         oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
         oscillator.type = 'sine';
-        
+
         gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
-        
+
         oscillator.start(this.audioContext.currentTime);
         oscillator.stop(this.audioContext.currentTime + duration);
     }
-    
+
     generateChime(frequencies, duration) {
         if (!this.audioContext) {
             this.initializeAudioContext();
         }
-        
+
         if (!this.audioContext) {
             console.warn('[SOUND] Audio context not available');
             return;
         }
-        
+
         frequencies.forEach((freq, index) => {
             setTimeout(() => {
                 const oscillator = this.audioContext.createOscillator();
                 const gainNode = this.audioContext.createGain();
-                
+
                 oscillator.connect(gainNode);
                 gainNode.connect(this.audioContext.destination);
-                
+
                 oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime);
                 oscillator.type = 'sine';
-                
+
                 gainNode.gain.setValueAtTime(0.05, this.audioContext.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
-                
+
                 oscillator.start(this.audioContext.currentTime);
                 oscillator.stop(this.audioContext.currentTime + duration);
             }, index * 50);
         });
     }
-    
+
     generateAlert(frequencies, duration) {
         if (!this.audioContext) {
             this.initializeAudioContext();
         }
-        
+
         if (!this.audioContext) {
             console.warn('[SOUND] Audio context not available');
             return;
         }
-        
+
         frequencies.forEach((freq, index) => {
             setTimeout(() => {
                 const oscillator = this.audioContext.createOscillator();
                 const gainNode = this.audioContext.createGain();
-                
+
                 oscillator.connect(gainNode);
                 gainNode.connect(this.audioContext.destination);
-                
+
                 oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime);
                 oscillator.type = 'square';
-                
+
                 gainNode.gain.setValueAtTime(0.08, this.audioContext.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration/3);
-                
+
                 oscillator.start(this.audioContext.currentTime);
                 oscillator.stop(this.audioContext.currentTime + duration/3);
             }, index * 100);
         });
     }
-    
+
     generateRetroVideogame() {
         if (!this.audioContext) {
             this.initializeAudioContext();
         }
-        
+
         if (!this.audioContext) {
             console.warn('[SOUND] Audio context not available');
             return;
         }
-        
+
         // Classic retro videogame style sound with descending frequency sweep
         const startFreq = 220;  // Starting frequency (A3)
         const endFreq = 55;     // Ending frequency (A1) - two octaves down
         const duration = 0.3;   // Total duration
-        
+
         const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
-        
+
         oscillator.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
-        
+
         // Use square wave for that classic 8-bit sound
         oscillator.type = 'square';
-        
+
         // Create the characteristic descending frequency sweep
         oscillator.frequency.setValueAtTime(startFreq, this.audioContext.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(endFreq, this.audioContext.currentTime + duration);
-        
+
         // Volume envelope: quick attack, then fade out
         gainNode.gain.setValueAtTime(0.12, this.audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
-        
+
         oscillator.start(this.audioContext.currentTime);
         oscillator.stop(this.audioContext.currentTime + duration);
-        
+
         // Add a second harmonic for richness (classic arcade sound technique)
         setTimeout(() => {
             const oscillator2 = this.audioContext.createOscillator();
             const gainNode2 = this.audioContext.createGain();
-            
+
             oscillator2.connect(gainNode2);
             gainNode2.connect(this.audioContext.destination);
-            
+
             oscillator2.type = 'square';
-            
+
             // Second oscillator at a higher frequency for harmonic content
             oscillator2.frequency.setValueAtTime(startFreq * 1.5, this.audioContext.currentTime);
             oscillator2.frequency.exponentialRampToValueAtTime(endFreq * 1.5, this.audioContext.currentTime + duration * 0.6);
-            
+
             // Lower volume for the harmonic
             gainNode2.gain.setValueAtTime(0.06, this.audioContext.currentTime);
             gainNode2.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration * 0.6);
-            
+
             oscillator2.start(this.audioContext.currentTime);
             oscillator2.stop(this.audioContext.currentTime + duration * 0.6);
         }, 20); // Slight delay for phasing effect
     }
-    
+
     playAlertSound() {
         if (!this.settings.soundAlerts) {
             return;
         }
-        
+
         // Try to initialize audio context if not done yet
         if (!this.audioInitialized) {
             this.initializeAudioContext();
         }
-        
+
         if (!this.soundGenerators) {
             console.warn('[SOUND] Sound generators not available');
             return;
         }
-        
+
         const soundType = this.settings.alertSound || 'beep';
         const generator = this.soundGenerators[soundType];
-        
+
         if (generator) {
             try {
                 generator();
@@ -2606,12 +2606,12 @@ Cache Statistics:
                     break;
             }
         }
-        
+
         // Escape key
         if (e.key === 'Escape') {
             this.closeSettings();
         }
-        
+
         // Tab navigation
         if (e.key >= '1' && e.key <= '4' && e.altKey) {
             e.preventDefault();
@@ -2651,7 +2651,7 @@ Cache Statistics:
             // Set initial status to connecting
             this.updateConnectionStatus('connecting');
         }
-        
+
         // Periodically check and sync connection status
         setInterval(() => {
             this.syncConnectionStatus();
@@ -2661,7 +2661,7 @@ Cache Statistics:
     syncConnectionStatus() {
         const now = Date.now();
         const IDLE_THRESHOLD = 30000; // 30 seconds
-        
+
         // 1. Check WebSocket State
         if (!window.webSocket) {
             this.updateConnectionStatus('disconnected');
@@ -2697,7 +2697,7 @@ Cache Statistics:
         if (this.attackHistory.length > this.attackCache.maxEvents) {
             this.attackHistory = this.attackHistory.slice(-this.attackCache.maxEvents);
         }
-        
+
         // Limit table rows
         const tables = ['ip-tracking', 'country-tracking', 'attack-tracking'];
         tables.forEach(tableId => {
@@ -2713,7 +2713,7 @@ Cache Statistics:
     startDataAggregation() {
         // Update timeline with different frequencies based on interval
         this.startTimelineUpdates();
-        
+
         // Update other stats every 5 seconds (synchronized updates)
         setInterval(() => {
             this.aggregateProtocolStats();
@@ -2728,7 +2728,7 @@ Cache Statistics:
         if (this.timelineUpdateInterval) {
             clearInterval(this.timelineUpdateInterval);
         }
-        
+
         let updateFrequency;
         switch (this.timelineInterval) {
             case '1m':
@@ -2742,11 +2742,11 @@ Cache Statistics:
                 updateFrequency = 30000; // Update every 30 seconds
                 break;
         }
-        
+
         this.timelineUpdateInterval = setInterval(() => {
             this.updateTimeline();
         }, updateFrequency);
-        
+
         console.log(`[DEBUG] Timeline updates started with ${updateFrequency}ms interval for ${this.timelineInterval} mode`);
     }
 
@@ -2754,29 +2754,29 @@ Cache Statistics:
         // Use consistent time window for protocol stats
         const retentionMinutes = 15;
         const retentionTime = retentionMinutes * 60 * 1000; // 15 minutes
-        const recent = this.attackHistory.filter(attack => 
+        const recent = this.attackHistory.filter(attack =>
             Date.now() - attack.timestamp < retentionTime
         );
-        
+
         this.protocolStats = recent.reduce((stats, attack) => {
             const normalizedProtocol = this.normalizeProtocol(attack.protocol);
             stats[normalizedProtocol] = (stats[normalizedProtocol] || 0) + 1;
             return stats;
         }, {});
-        
+
         // Update data retention display
         this.updateDataRetentionInfo('attack-distribution', retentionMinutes);
         this.updateDataRetentionInfo('protocol-breakdown', retentionMinutes);
     }
 
     aggregateCountryStats() {
-        // Use consistent time window for country stats  
+        // Use consistent time window for country stats
         const retentionMinutes = 15;
         const retentionTime = retentionMinutes * 60 * 1000; // 15 minutes
-        const recent = this.attackHistory.filter(attack => 
+        const recent = this.attackHistory.filter(attack =>
             Date.now() - attack.timestamp < retentionTime
         );
-        
+
         this.countryStats = recent.reduce((stats, attack) => {
             stats[attack.country] = (stats[attack.country] || 0) + 1;
             return stats;
@@ -2792,13 +2792,13 @@ Cache Statistics:
                 const text = header.textContent;
                 if ((cardType === 'attack-distribution' && text.includes('Attack Distribution')) ||
                     (cardType === 'protocol-breakdown' && text.includes('Protocol Breakdown'))) {
-                    
+
                     // Remove existing retention info
                     let retentionSpan = card.querySelector('.data-retention-info');
                     if (retentionSpan) {
                         retentionSpan.remove();
                     }
-                    
+
                     // Add new retention info
                     retentionSpan = document.createElement('span');
                     retentionSpan.className = 'data-retention-info';
@@ -2817,7 +2817,7 @@ Cache Statistics:
         if (this.activeTab === 'overview') {
             this.updateOverviewCharts();
         }
-        
+
         // Note: Header stats are updated by WebSocket Stats messages (handleStats in map.js)
         // which contain correct historical data from Elasticsearch
     }
@@ -2839,42 +2839,42 @@ Cache Statistics:
             container.id = 'notification-container';
             document.body.appendChild(container);
         }
-        
+
         // Create notification element
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
-        
+
         // Add context-specific class if needed
         if (context !== 'general') {
             notification.classList.add(`notification-${context}`);
         }
-        
+
         // Create notification structure using DOM API
         const header = document.createElement('div');
         header.className = 'notification-header';
-        
+
         const title = document.createElement('div');
         title.className = 'notification-title';
         title.textContent = this.getNotificationTitle(type);
         header.appendChild(title);
-        
+
         const closeBtn = document.createElement('button');
         closeBtn.className = 'notification-close';
         closeBtn.innerHTML = '&times;'; // Safe entity
         header.appendChild(closeBtn);
-        
+
         notification.appendChild(header);
-        
+
         const msgDiv = document.createElement('div');
         msgDiv.className = 'notification-message';
         msgDiv.textContent = message;
         notification.appendChild(msgDiv);
-        
+
         const timeDiv = document.createElement('div');
         timeDiv.className = 'notification-timestamp';
         timeDiv.textContent = new Date().toLocaleTimeString();
         notification.appendChild(timeDiv);
-        
+
         // Add close button event listener
         const closeButton = notification.querySelector('.notification-close');
         closeButton.addEventListener('click', (e) => {
@@ -2889,13 +2889,13 @@ Cache Statistics:
                 }, 300);
             }
         });
-        
+
         // Add to container at the top (newest first)
         container.insertBefore(notification, container.firstChild);
-        
+
         // Force reflow to ensure proper positioning
         notification.offsetHeight;
-        
+
         // Auto-remove after 5 seconds
         setTimeout(() => {
             if (notification.parentNode) {
@@ -2908,11 +2908,11 @@ Cache Statistics:
             }
         }, 5000);
     }
-    
+
     getNotificationTitle(type) {
         const titles = {
             'success': 'Success',
-            'info': 'Information', 
+            'info': 'Information',
             'warning': 'Warning',
             'error': 'Error'
         };
@@ -2922,42 +2922,42 @@ Cache Statistics:
     // Public API for external components
     addAttackEvent(event) {
         console.log('[DEBUG] Dashboard received attack event:', event);
-        
+
         event.timestamp = Date.now();
         this.attackHistory.push(event);
-        
+
         // Store in cache if initialized and not currently restoring
         if (this.cacheInitialized && !this.restoringFromCache) {
             this.attackCache.storeEvent(event).catch(error => {
                 console.warn('[CACHE] Failed to store event:', error);
             });
         }
-        
+
         // Process attack for honeypot tracking if honeypot field is present
         if (event.honeypot) {
             this.trackHoneypotAttack(event.honeypot, event.timestamp);
         }
-        
+
         // Try to initialize audio context if not already done (aggressive approach)
         if (!this.audioInitialized) {
             console.log('[SOUND] Attempting audio initialization on attack event');
             this.initializeAudioContext();
         }
-        
+
         // Play sound alert for new attack
         this.playAlertSound();
-        
+
         // Add to timeline data in real-time
         this.addAttackToTimeline(event);
-        
+
         // Add to heatmap data in real-time
         this.addAttackToHeatmap(event);
-        
+
         // Limit history size
         if (this.attackHistory.length > 1000) {
             this.attackHistory.shift();
         }
-        
+
         // Update relevant displays (synchronized updates)
         this.updateLiveAttackDisplay(event);
         this.updateHoneypotChartData(); // Update honeypot chart in sync with other cards
@@ -2969,16 +2969,16 @@ Cache Statistics:
         if (this.connectionStatus === status) {
             return;
         }
-        
+
         const indicator = document.getElementById('status-indicator');
         const text = document.getElementById('status-text');
-        
+
         console.log(`[DEBUG] Connection status update: ${this.connectionStatus} -> ${status}`);
-        
+
         if (indicator && text) {
             const oldStatus = indicator.className;
             indicator.className = `status-indicator ${status}`;
-            
+
             switch (status) {
                 case 'connected':
                     text.textContent = 'Connected';
@@ -2997,7 +2997,7 @@ Cache Statistics:
                     text.textContent = 'Disconnected';
                     break;
             }
-            
+
             this.connectionStatus = status;
             console.log(`[DEBUG] Connection status UI updated from '${oldStatus}' to '${indicator.className}'`);
         } else {
@@ -3008,7 +3008,7 @@ Cache Statistics:
     // Helper method to update IP tracking data for restored events
     updateIPTracking(ip, country, event) {
         if (!ip) return;
-        
+
         if (!this.ipStats.has(ip)) {
             this.ipStats.set(ip, { count: 0, country: country || 'Unknown', firstSeen: event.timestamp });
         }
@@ -3017,10 +3017,10 @@ Cache Statistics:
         stats.lastSeen = event.timestamp;
     }
 
-    // Helper method to update country tracking data for restored events  
+    // Helper method to update country tracking data for restored events
     updateCountryTracking(country, event) {
         if (!country || country === 'Unknown') return;
-        
+
         if (!this.countryStats.has(country)) {
             this.countryStats.set(country, { count: 0, firstSeen: event.timestamp });
         }
@@ -3032,20 +3032,20 @@ Cache Statistics:
     // Helper method to update protocol stats for restored events
     updateProtocolStats(protocol) {
         if (!protocol) return;
-        
+
         this.protocolStats[protocol] = (this.protocolStats[protocol] || 0) + 1;
     }
 
     addToLiveFeed(event) {
         // Add event to live feed table without highlighting (for cache restoration)
         this.addToAttackTable(event, false); // false = no highlighting for restored events
-        
+
         // Update IP tracking (needed for top IPs table)
         this.updateIPTracking(event.ip || event.source_ip, event.country, event);
-        
+
         // Update country tracking (needed for top countries table)
         this.updateCountryTracking(event.country, event);
-        
+
         // Update protocol statistics (needed for protocol breakdown)
         this.updateProtocolStats(event.protocol);
     }
@@ -3053,16 +3053,16 @@ Cache Statistics:
     updateLiveAttackDisplay(event) {
         // Update live attack feed table
         this.addToAttackTable(event);
-        
+
         // Update IP tracking
         this.updateIPTracking(event.ip, event.country, event);
-        
-        // Update country tracking  
+
+        // Update country tracking
         this.updateCountryTracking(event.country, event);
-        
+
         // Update protocol statistics
         this.updateProtocolStats(event.protocol);
-        
+
         // Update real-time charts if on overview tab
         if (this.activeTab === 'overview') {
             this.updateOverviewCharts();
@@ -3077,20 +3077,20 @@ Cache Statistics:
         }
 
         const row = document.createElement('tr');
-        
+
         // Add the new row highlight class only for real-time events
         if (highlight) {
             row.classList.add('new-attack-row');
-            
+
             // Remove the highlight class after animation completes
             setTimeout(() => {
                 row.classList.remove('new-attack-row');
             }, 2000);
         }
-        
+
         // Use the event timestamp if available, otherwise current time
         const eventTime = event.timestamp ? new Date(event.timestamp) : new Date();
-        
+
         // Format timestamp as YYYY-MM-DD HH:MM:SS
         const year = eventTime.getFullYear();
         const month = String(eventTime.getMonth() + 1).padStart(2, '0');
@@ -3098,18 +3098,18 @@ Cache Statistics:
         const hours = String(eventTime.getHours()).padStart(2, '0');
         const minutes = String(eventTime.getMinutes()).padStart(2, '0');
         const seconds = String(eventTime.getSeconds()).padStart(2, '0');
-        
+
         const timeDisplay = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-        
+
         // Use ISO code for flag path (should be 2-letter uppercase code)
         const flagCode = event.iso_code || event.country_code || 'XX';
-        
+
         // Determine protocol - use "OTHER" if not specified or unknown
         const protocolName = this.normalizeProtocol(event.protocol);
-        
+
         const protocol = protocolName.toLowerCase();
         const protocolClass = `protocol-${protocol}`;
-        
+
         // Create cells using DOM API to prevent XSS
         const addCell = (className, text) => {
             const td = document.createElement('td');
@@ -3145,23 +3145,23 @@ Cache Statistics:
         row.appendChild(protocolCell);
 
         addCell('port-cell', event.port || event.dst_port || 'N/A');
-        addCell('tpot-hostname-cell', event.tpot_hostname || 'Unknown');
-        
+        addCell('tpot-hostname-cell', event.honeypot_hostname || 'Unknown');
+
         // Add to top of table
         tbody.insertBefore(row, tbody.firstChild);
-        
+
         // Limit table size
         while (tbody.children.length > 100) {
             tbody.removeChild(tbody.lastChild);
         }
-        
+
         console.log('[DEBUG] Added row to attack table for IP:', event.ip || event.src_ip);
     }
 
     updateIPTracking(ip, country, event = null) {
         // Update IP statistics
         if (!this.ipStats) this.ipStats = {};
-        
+
         // Determine timestamp to use
         const timestamp = (event && event.timestamp) ? new Date(event.timestamp) : new Date();
 
@@ -3177,14 +3177,14 @@ Cache Statistics:
             };
         }
         this.ipStats[ip].hits++;
-        
+
         // Update lastSeen if the event is newer than what we have
         if (timestamp >= this.ipStats[ip].lastSeen) {
             this.ipStats[ip].lastSeen = timestamp;
         }
-        
+
         this.ipStats[ip].country = country; // Update country in case it changes
-        
+
         // Update reputation, protocol and country code if event data is available
         if (event) {
             if (event.ip_rep) {
@@ -3198,7 +3198,7 @@ Cache Statistics:
                 this.ipStats[ip].countryCode = event.iso_code || event.country_code;
             }
         }
-        
+
         // Update IP table if it's the active tab
         if (this.activeTab === 'top-ips') {
             this.updateTopIPsTable();
@@ -3208,7 +3208,7 @@ Cache Statistics:
     updateCountryTracking(country, event = null) {
         // Update country statistics
         if (!this.countryTrackingStats) this.countryTrackingStats = {};
-        
+
         // Determine timestamp to use
         const timestamp = (event && event.timestamp) ? new Date(event.timestamp) : new Date();
 
@@ -3225,25 +3225,25 @@ Cache Statistics:
             };
         }
         this.countryTrackingStats[country].hits++;
-        
+
         // Update lastSeen if the event is newer than what we have
         if (timestamp >= this.countryTrackingStats[country].lastSeen) {
             this.countryTrackingStats[country].lastSeen = timestamp;
         }
-        
+
         // Update additional fields if event data is available
         if (event) {
             // Store the actual ISO code from Elasticsearch
             if (event.iso_code || event.country_code) {
                 this.countryTrackingStats[country].countryCode = event.iso_code || event.country_code;
             }
-            
+
             // Track unique IPs for this country
             if (event.ip) {
                 this.countryTrackingStats[country].uniqueIPs.add(event.ip);
                 this.countryTrackingStats[country].lastSeenIP = event.ip;
             }
-            
+
             // Track protocol counts to determine top protocol
             if (event.protocol) {
                 const normalizedProtocol = this.normalizeProtocol(event.protocol);
@@ -3251,7 +3251,7 @@ Cache Statistics:
                     this.countryTrackingStats[country].protocolCounts[normalizedProtocol] = 0;
                 }
                 this.countryTrackingStats[country].protocolCounts[normalizedProtocol]++;
-                
+
                 // Update top protocol (most frequent)
                 let maxCount = 0;
                 let topProtocol = 'Unknown';
@@ -3264,7 +3264,7 @@ Cache Statistics:
                 this.countryTrackingStats[country].topProtocol = topProtocol;
             }
         }
-        
+
         // Update country table if it's the active tab
         if (this.activeTab === 'countries') {
             this.updateTopCountriesTable();
@@ -3274,17 +3274,17 @@ Cache Statistics:
     updateTopIPsTable() {
         const tbody = document.getElementById('ip-tracking');
         if (!tbody || !this.ipStats) return;
-        
+
         // Sort IPs by hits (descending)
         const sortedIPs = Object.values(this.ipStats)
             .sort((a, b) => b.hits - a.hits)
             .slice(0, 100); // Top 100
-        
+
         tbody.innerHTML = '';
-        
+
         sortedIPs.forEach((ipData, index) => {
             const row = document.createElement('tr');
-            
+
             // Format timestamp as YYYY-MM-DD HH:MM:SS
             const eventTime = ipData.lastSeen;
             const year = eventTime.getFullYear();
@@ -3293,16 +3293,16 @@ Cache Statistics:
             const hours = String(eventTime.getHours()).padStart(2, '0');
             const minutes = String(eventTime.getMinutes()).padStart(2, '0');
             const seconds = String(eventTime.getSeconds()).padStart(2, '0');
-            
+
             const timeDisplay = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-            
+
             // Use stored ISO code instead of converting country name
             const flagCode = ipData.countryCode || 'XX';
-            
+
             // Protocol badge styling
             const protocol = ipData.lastProtocol.toLowerCase();
             const protocolClass = `protocol-${protocol}`;
-            
+
             // Create cells using DOM API to prevent XSS
             const addCell = (className, text) => {
                 const td = document.createElement('td');
@@ -3338,7 +3338,7 @@ Cache Statistics:
             row.appendChild(protocolCell);
 
             addCell('time-cell', timeDisplay);
-            
+
             tbody.appendChild(row);
         });
     }
@@ -3346,17 +3346,17 @@ Cache Statistics:
     updateTopCountriesTable() {
         const tbody = document.getElementById('country-tracking');
         if (!tbody || !this.countryTrackingStats) return;
-        
+
         // Sort countries by hits (descending)
         const sortedCountries = Object.values(this.countryTrackingStats)
             .sort((a, b) => b.hits - a.hits)
             .slice(0, 100); // Top 100
-        
+
         tbody.innerHTML = '';
-        
+
         sortedCountries.forEach((countryData, index) => {
             const row = document.createElement('tr');
-            
+
             // Format timestamp as YYYY-MM-DD HH:MM:SS
             const eventTime = countryData.lastSeen;
             const year = eventTime.getFullYear();
@@ -3365,19 +3365,19 @@ Cache Statistics:
             const hours = String(eventTime.getHours()).padStart(2, '0');
             const minutes = String(eventTime.getMinutes()).padStart(2, '0');
             const seconds = String(eventTime.getSeconds()).padStart(2, '0');
-            
+
             const timeDisplay = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-            
+
             // Use stored ISO code instead of converting country name
             const flagCode = countryData.countryCode || 'XX';
-            
+
             // Protocol badge styling
             const protocol = countryData.topProtocol.toLowerCase();
             const protocolClass = `protocol-${protocol}`;
-            
+
             // Get unique IP count
             const uniqueIPCount = countryData.uniqueIPs ? countryData.uniqueIPs.size : 0;
-            
+
             // Create cells using DOM API to prevent XSS
             const addCell = (className, text) => {
                 const td = document.createElement('td');
@@ -3413,24 +3413,24 @@ Cache Statistics:
             addCell('unique-ips-cell', uniqueIPCount);
             addCell('last-ip-cell', countryData.lastSeenIP);
             addCell('time-cell', timeDisplay);
-            
+
             tbody.appendChild(row);
         });
     }
 
     updateProtocolStats(protocol) {
         if (!protocol) return;
-        
+
         // Normalize protocol to known protocols or "OTHER"
         const normalizedProtocol = this.normalizeProtocol(protocol);
-        
+
         this.protocolStats[normalizedProtocol] = (this.protocolStats[normalizedProtocol] || 0) + 1;
-        
+
         // Update protocol chart if it exists
         if (this.charts.protocol) {
             const labels = Object.keys(this.protocolStats);
             const data = Object.values(this.protocolStats);
-            
+
             this.charts.protocol.data.labels = labels;
             this.charts.protocol.data.datasets[0].data = data.map(d => Math.sqrt(d));
             this.charts.protocol.data.datasets[0].originalData = data;
@@ -3470,7 +3470,7 @@ Cache Statistics:
             intensity: 0, // Will be calculated from real attack data
             attacks: 0    // Will be calculated from real attack data
         }));
-        
+
         // Populate with real attack data
         this.populateHeatmapFromHistory();
     }
@@ -3492,9 +3492,9 @@ Cache Statistics:
 
         const now = Date.now();
         const last24Hours = now - (24 * 60 * 60 * 1000); // 24 hours ago
-        
+
         // Filter attacks from last 24 hours
-        const recentAttacks = this.attackHistory.filter(attack => 
+        const recentAttacks = this.attackHistory.filter(attack =>
             attack.timestamp >= last24Hours
         );
 
@@ -3504,7 +3504,7 @@ Cache Statistics:
         recentAttacks.forEach(attack => {
             const attackTime = new Date(attack.timestamp);
             const hour = attackTime.getHours();
-            
+
             if (hour >= 0 && hour <= 23) {
                 this.heatmapData[hour].attacks++;
             }
@@ -3523,16 +3523,16 @@ Cache Statistics:
     addAttackToHeatmap(attack, triggerUpdate = true) {
         const attackTime = new Date(attack.timestamp || Date.now());
         const hour = attackTime.getHours();
-        
+
         if (hour >= 0 && hour <= 23) {
             this.heatmapData[hour].attacks++;
-            
+
             // Recalculate intensity
             const maxAttacks = Math.max(...this.heatmapData.map(h => h.attacks), 1);
             this.heatmapData.forEach(hourData => {
                 hourData.intensity = maxAttacks > 0 ? (hourData.attacks / maxAttacks) * 100 : 0;
             });
-            
+
             // Update heatmap display only if not restoring
             if (triggerUpdate) {
                 this.updateThreatHeatmap();
@@ -3543,7 +3543,7 @@ Cache Statistics:
     updateThreatHeatmap() {
         const timelineGrid = document.querySelector('.timeline-grid');
         const timelineLabels = document.querySelector('.timeline-labels');
-        
+
         if (!timelineGrid || !timelineLabels) return;
 
         // Create hour labels
@@ -3572,7 +3572,7 @@ Cache Statistics:
     getHeatmapColor(intensity) {
         // Greyish/blue tone color gradient: Light Grey (safe) to Dark Blue (danger)
         const ratio = intensity / 100;
-        
+
         if (ratio <= 0.25) {
             // Light Grey to Light Blue (0-25%) - Safe/Low threat
             const localRatio = ratio / 0.25;
@@ -3608,27 +3608,27 @@ Cache Statistics:
         // Create and show tooltip near the heatmap
         const heatmapContainer = document.getElementById('threat-heatmap');
         if (!heatmapContainer) return;
-        
+
         // Remove existing tooltip
         const existingTooltip = document.querySelector('.heatmap-tooltip');
         if (existingTooltip) {
             existingTooltip.remove();
         }
-        
+
         // Create new tooltip
         const tooltip = document.createElement('div');
         tooltip.className = 'heatmap-tooltip';
-        
+
         const strong = document.createElement('strong');
         strong.textContent = `Hour ${data.hour}:00`;
         tooltip.appendChild(strong);
-        
+
         tooltip.appendChild(document.createElement('br'));
         tooltip.appendChild(document.createTextNode(`${data.attacks} attacks`));
-        
+
         tooltip.appendChild(document.createElement('br'));
         tooltip.appendChild(document.createTextNode(`${Math.round(data.intensity)}% intensity`));
-        
+
         // Position tooltip near the heatmap
         const rect = heatmapContainer.getBoundingClientRect();
         tooltip.style.cssText = `
@@ -3645,9 +3645,9 @@ Cache Statistics:
             font-size: var(--font-xs);
             pointer-events: none;
         `;
-        
+
         document.body.appendChild(tooltip);
-        
+
         // Auto-remove after 3 seconds
         setTimeout(() => {
             if (tooltip && tooltip.parentNode) {
@@ -3671,7 +3671,7 @@ window.addEventListener('load', () => {
             setTimeout(initWhenReady, 100);
         }
     }
-    
+
     initWhenReady();
 });
 

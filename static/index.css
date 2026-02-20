@@ -9,7 +9,7 @@
     --warning-color: #ffc107;
     --danger-color: #dc3545;
     --info-color: #17a2b8;
-    
+
     /* Dark Theme Colors */
     --bg-primary: #0a0a0a;
     --bg-secondary: #1a1a1a;
@@ -17,28 +17,28 @@
     --bg-card: #1e1e1e;
     --bg-modal: #252525;
     --bg-navbar: rgba(26, 26, 26, 0.95);
-    
+
     /* Text Colors */
     --text-primary: #ffffff;
     --text-secondary: #b0b0b0;
     --text-muted: #808080;
     --text-disabled: #555555;
-    
+
     /* Border Colors */
     --border-primary: #333333;
     --border-secondary: #444444;
     --border-accent: var(--primary-color);
-    
+
     /* Shadow Colors */
     --shadow-light: rgba(0, 0, 0, 0.1);
     --shadow-medium: rgba(0, 0, 0, 0.2);
     --shadow-heavy: rgba(0, 0, 0, 0.4);
     --glow: rgba(226, 0, 116, 0.3);
-    
+
     /* Typography */
     --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono: 'JetBrains Mono', 'Monaco', 'Menlo', monospace;
-    
+
     /* Font Sizes */
     --font-xs: 0.875rem;      /* 14px - Small text, was 0.75rem/12px */
     --font-sm: 1rem;          /* 16px - Body text, was 0.875rem/14px */
@@ -46,7 +46,7 @@
     --font-lg: 1.25rem;       /* 20px - Large text */
     --font-xl: 1.5rem;        /* 24px - Headings */
     --font-xxl: 1.875rem;     /* 30px - Large headings */
-    
+
     /* Spacing */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
@@ -54,19 +54,19 @@
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
     --spacing-xxl: 3rem;
-    
+
     /* Border Radius */
     --radius-sm: 4px;
     --radius-md: 8px;
     --radius-lg: 12px;
     --radius-xl: 16px;
     --radius-round: 50%;
-    
+
     /* Transitions */
     --transition-fast: 0.15s ease;
     --transition-normal: 0.3s ease;
     --transition-slow: 0.5s ease;
-    
+
     /* Z-index */
     --z-dropdown: 1000;
     --z-modal: 9999;
@@ -235,7 +235,7 @@ body {
     font-size: var(--font-xl);
 }
 
-/* T-Pot Stats in Navbar */
+/* Stats in Navbar */
 .navbar-stats {
     display: flex;
     align-items: center;
@@ -941,7 +941,7 @@ body {
 }
 
 /* Rank column styling */
-#ip-table td:nth-child(1), 
+#ip-table td:nth-child(1),
 #country-table td:nth-child(1) {
     font-weight: 600;
     color: var(--text-primary);
@@ -950,7 +950,7 @@ body {
 }
 
 /* Hits/Attacks count column - emphasize numbers */
-#ip-table td:nth-child(2), 
+#ip-table td:nth-child(2),
 #country-table td:nth-child(2) {
     font-weight: 600;
     color: var(--text-primary);
@@ -975,14 +975,14 @@ body {
 }
 
 /* Flag column - match live feed */
-#ip-table td:nth-child(5), 
+#ip-table td:nth-child(5),
 #country-table td:nth-child(3) {
     text-align: center;
     width: 30px;
 }
 
 /* Country column formatting - match live feed */
-#ip-table td:nth-child(6), 
+#ip-table td:nth-child(6),
 #country-table td:nth-child(4) {
     font-weight: 500;
     max-width: 120px;
@@ -991,7 +991,7 @@ body {
 }
 
 /* Protocol column - match live feed */
-#ip-table td:nth-child(7), 
+#ip-table td:nth-child(7),
 #country-table td:nth-child(5) {
     text-align: left;
     font-weight: 500;
@@ -999,7 +999,7 @@ body {
 }
 
 /* Time-related columns - match live feed */
-#ip-table td:nth-child(8), 
+#ip-table td:nth-child(8),
 #country-table td:nth-child(8) {
     min-width: 140px;
     font-weight: 500;
@@ -1139,7 +1139,7 @@ body {
     color: var(--text-secondary);
 }
 
-/* T-Pot Hostname column */
+/* Hostname column */
 #live-attacks-table .tpot-hostname-cell {
     font-weight: 500;
     max-width: 120px;
@@ -1479,17 +1479,17 @@ body {
         height: calc(100vh - 70px);
         z-index: 1001;
     }
-    
+
     .side-panel.open {
         left: 0;
     }
-    
+
     .main-container {
         padding-right: 0;
         margin-top: 70px;
         height: calc(100vh - 70px);
     }
-    
+
     .dashboard-grid {
         grid-template-columns: 1fr;
     }
@@ -1499,58 +1499,58 @@ body {
     .navbar-content {
         padding: 0 var(--spacing-md);
     }
-    
+
     .navbar-brand span {
         display: none;
     }
-    
+
     /* Responsive navbar stats */
     .navbar-stats {
         flex: none;
         margin: 0 var(--spacing-sm);
     }
-    
+
     .stats-group {
         padding: var(--spacing-sm) var(--spacing-lg);
         gap: var(--spacing-md);
     }
-    
+
     .stats-header-title {
         font-size: 0.9rem;
     }
-    
+
     .stats-header-title span {
         display: none;
     }
-    
+
     .stats-inline {
         gap: var(--spacing-md);
     }
-    
+
     .stat-inline-label {
         font-size: 0.8rem;
     }
-    
+
     .stat-inline-value {
         font-size: 1.1rem;
         min-width: 2rem;
     }
-    
+
     .stats-row {
         flex-direction: column;
         gap: var(--spacing-md);
     }
-    
+
     .bottom-panel {
         height: 300px;
     }
-    
+
     .table-header {
         flex-direction: column;
         gap: var(--spacing-md);
         align-items: flex-start;
     }
-    
+
     .table-controls {
         width: 100%;
         justify-content: space-between;
@@ -1561,17 +1561,17 @@ body {
     .tab-btn span {
         display: none;
     }
-    
+
     /* Ultra-compact navbar stats for mobile */
     .navbar-stats {
         display: none; /* Hide on very small screens to save space */
     }
-    
+
     .modal-content {
         width: 95%;
         margin: var(--spacing-md);
     }
-    
+
     .dashboard-grid {
         gap: var(--spacing-md);
     }
@@ -1828,7 +1828,7 @@ select:focus {
 .legend-gradient {
     width: 120px;
     height: 10px;
-    background: linear-gradient(to right, 
+    background: linear-gradient(to right,
         rgba(240, 240, 240, 0.85),   /* Light Grey - Safe */
         rgba(175, 215, 225, 0.85),   /* Light Blue */
         rgba(100, 150, 200, 0.85),   /* Medium Blue */
@@ -2371,11 +2371,11 @@ select:focus {
 }
 
 @keyframes honeypotPulse {
-    0%, 100% { 
+    0%, 100% {
         transform: scale(1);
         opacity: 1;
     }
-    50% { 
+    50% {
         transform: scale(1.1);
         opacity: 0.8;
     }
@@ -2564,11 +2564,11 @@ select:focus {
 }
 
 @keyframes attackerPulse {
-    0%, 100% { 
+    0%, 100% {
         transform: scale(1);
         opacity: 1;
     }
-    50% { 
+    50% {
         transform: scale(1.2);
         opacity: 0.7;
     }

@@ -32,10 +32,10 @@ class TestDataServerTiming(unittest.TestCase):
             raise StopLoop("Test finished")
 
     @patch('DataServer.es')
-    @patch('DataServer.connect_redis')
+    @patch('DataServer.connect_valkey')
     @patch('DataServer.time.sleep')
     @patch('DataServer.datetime')
-    def test_update_honeypot_data_timing(self, mock_datetime_module, mock_sleep, mock_connect_redis, mock_es):
+    def test_update_honeypot_data_timing(self, mock_datetime_module, mock_sleep, mock_connect_valkey, mock_es):
         """
         Test that:
         1. Stats are collected initially (due to -10s offset).
@@ -45,8 +45,8 @@ class TestDataServerTiming(unittest.TestCase):
         """
         
         # Setup mocks
-        mock_redis = MagicMock()
-        mock_connect_redis.return_value = mock_redis
+        mock_valkey = MagicMock()
+        mock_connect_valkey.return_value = mock_valkey
         
         # Mock datetime.datetime.now to return our controlled time
         # We need to mock the class datetime.datetime, but keep timedelta working
