@@ -320,7 +320,21 @@ class AttackMapDashboard {
             updateInterval: 60000, // Update chart every minute
             lastCleanup: Date.now()
         };
-        
+    // Honeypot Sensor Tracking
+	this.sensorStats = {
+    	    data: new Map(), // Map to store sensor stats
+    	    retention: 15 * 60 * 1000, // 15 minutes in milliseconds
+    	    lastCleanup: Date.now()
+	};
+
+        // Sensor colors (stable mapping like getProtocolColor)
+        this.sensorColorPalette = [
+            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
+            '#E74C3C', '#3498DB', '#2ECC71', '#F39C12', '#9B59B6', '#1ABC9C'
+        ];
+        this.sensorColorMap = new Map();
+        this.sensorColorIndex = 0;
+
         // Initialize attack cache system
         this.attackCache = new AttackCache();
         this.cacheInitialized = false;
@@ -340,8 +354,9 @@ class AttackMapDashboard {
         this.initSettings();
         this.initSoundSystem();
         this.initHoneypotTracking();
-        
-        // Initialize cache system
+        this.initSensorActivityTracking(); 
+       
+	// Initialize cache system
         await this.initializeCache();
         
         this.hideLoadingScreen();
@@ -473,7 +488,12 @@ Cache Statistics:
                         if (event.honeypot) {
                             this.trackHoneypotAttack(event.honeypot, event.timestamp, false);
                         }
-                        
+			
+			if (event.tpot_hostname || event.hostname || event.host) {
+   			    const sensorName = event.tpot_hostname || event.hostname || event.host;
+    			    this.trackSensorActivity(sensorName, event.timestamp, false);
+			}
+
                         // Update tracking data (needed for top IPs and top countries)
                         this.updateIPTracking(event.ip || event.source_ip, event.country, event);
                         this.updateCountryTracking(event.country, event);
@@ -658,6 +678,21 @@ Cache Statistics:
     }
 
     // Normalize protocol names to known protocols or "OTHER"
+    /**
+     * Get consistent color for a sensor (like getProtocolColor for protocols)
+     */
+    getSensorColor(sensorName) {
+        if (!sensorName) return '#78909C'; // OTHER
+        if (this.sensorColorMap.has(sensorName)) {
+            return this.sensorColorMap.get(sensorName);
+        }
+
+        const color = this.sensorColorPalette[this.sensorColorIndex % this.sensorColorPalette.length];
+        this.sensorColorIndex++;
+        this.sensorColorMap.set(sensorName, color);
+        return color;
+    }
+
     normalizeProtocol(protocol) {
         if (!protocol) return 'OTHER';
         
@@ -1187,7 +1222,7 @@ Cache Statistics:
             this.initTimelineChart();
             this.initProtocolChart();
             this.initHoneypotChart();
-            
+    	    this.initSensorsActivityChart();        
             // Populate timeline and heatmap with any existing attack history
             setTimeout(() => {
                 this.populateTimelineFromHistory();
@@ -1573,8 +1608,68 @@ Cache Statistics:
             }
         });
         
-        // Don't call updateHoneypotChartData here - let it be called when real data arrives
+    // Don't call updateHoneypotChartData here - let it be called when real data arrives
     }
+
+// ====================================
+// === SENSORS ACTIVITY CHART ===
+// ====================================
+
+    initSensorsActivityChart() {
+        const ctx = document.getElementById('sensors-activity-chart');
+        if (!ctx) return;
+
+        this.charts.sensorsActivity = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['OTHER'],
+                datasets: [{
+                    data: [1],
+                    backgroundColor: ['#78909C'],
+                    borderWidth: 2,
+                    borderColor: ['#78909C']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: { top: 10, bottom: 10, left: 10, right: 10 }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#b0b0b0',     
+                            usePointStyle: true,
+                            padding: 10,
+                            boxWidth: 12,
+                            font: { size: 12 }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                return `${label}: ${value}`;
+                            }
+                        }
+                    }
+                },
+                elements: {
+                    arc: { borderWidth: 2 }
+                },
+                cutout: '60%'
+            }
+        });
+
+        setTimeout(() => {
+            if (this.charts.sensorsActivity) this.charts.sensorsActivity.resize();
+        }, 100);
+    }
+
+
 
     // Honeypot Performance Tracking System
     initHoneypotTracking() {
@@ -1680,6 +1775,113 @@ Cache Statistics:
         this.charts.honeypot.update('none'); // No animation for performance
         
     }
+    //    ====================================
+    //  === SENSOR ACTIVITY TRACKING SYSTEM ===
+    //    ====================================
+
+    initSensorActivityTracking() {
+        console.log('[DEBUG] Sensor activity tracking initialized');
+	    
+	    // Start periodic cleanup of old data
+	setInterval(() => {
+	    this.cleanupOldSensorData();
+	}, 5 * 60 * 1000); // Clean up every 5 minutes
+    }
+
+    trackSensorActivity(sensorHostname, timestamp = Date.now(), triggerUpdate = true) {
+	if (!sensorHostname || typeof sensorHostname !== 'string') {
+	    console.warn('[DEBUG] Invalid sensor hostname:', sensorHostname);
+	    return;
+    }
+	    
+	// Clean sensor hostname - remove any whitespace
+	sensorHostname = sensorHostname.trim();
+	    
+	// Get or create sensor entry
+	if (!this.sensorStats.data.has(sensorHostname)) {
+	    this.sensorStats.data.set(sensorHostname, []);
+     	    console.log('[DEBUG] New sensor discovered:', sensorHostname);
+	}
+	    
+	// Add timestamp to sensor's attack history
+	this.sensorStats.data.get(sensorHostname).push(timestamp);
+	    
+	// Immediately clean old data for this sensor
+	this.cleanupSensorData(sensorHostname);
+    }
+
+    cleanupSensorData(sensorHostname) {
+	if (!this.sensorStats.data.has(sensorHostname)) return;
+	    
+	const now = Date.now();
+	const cutoff = now - this.sensorStats.retention;
+	    
+	// Filter out old timestamps
+	const timestamps = this.sensorStats.data.get(sensorHostname)
+	    .filter(t => t > cutoff);
+	    
+	if (timestamps.length > 0) {
+	    this.sensorStats.data.set(sensorHostname, timestamps);
+	} else {
+	    // Remove sensor if no recent activity
+	    this.sensorStats.data.delete(sensorHostname);
+	}
+    }
+
+    cleanupOldSensorData() {
+	const now = Date.now();
+	this.sensorStats.lastCleanup = now;
+	    
+	console.log('[DEBUG] Running sensor data cleanup...');
+	    
+	for (const [sensorHostname, timestamps] of this.sensorStats.data) {
+	    this.cleanupSensorData(sensorHostname);
+	}
+	    
+	console.log('[DEBUG] Sensor cleanup complete. Active sensors:', 
+    this.sensorStats.data.size);
+    }
+
+    getSensorStats() {
+	const stats = {};
+	    
+	for (const [sensorHostname, timestamps] of this.sensorStats.data) {
+	    stats[sensorHostname] = timestamps.length;
+	}
+	    
+	return stats;
+    }
+
+    updateSensorActivityChartData() {
+        if (!this.charts.sensorsActivity) return;
+
+        const stats = this.getSensorStats(); // { "dolo-cl1": 10, ... }
+        const entries = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+
+        const MAX_SENSORS = 10; // ajusta: 8/10/12
+        const top = entries.slice(0, MAX_SENSORS);
+        const otherSum = entries.slice(MAX_SENSORS).reduce((sum, [, c]) => sum + c, 0);
+
+        const labels = top.map(([name]) => name);
+        const data = top.map(([, count]) => count);
+
+        if (otherSum > 0) {
+            labels.push('OTHER');
+            data.push(otherSum);
+        }
+
+        const colors = labels.map(name =>
+            name === 'OTHER' ? '#78909C' : this.getSensorColor(name)
+        );
+
+        this.charts.sensorsActivity.data.labels = labels;
+        this.charts.sensorsActivity.data.datasets[0].data = data;
+        this.charts.sensorsActivity.data.datasets[0].backgroundColor = colors;
+        this.charts.sensorsActivity.data.datasets[0].borderColor = colors;
+
+        this.charts.sensorsActivity.update('none');
+    }
+
 
     // Public method to be called from map.js when processing attacks
     processAttackForDashboard(attackData) {
@@ -2201,6 +2403,10 @@ Cache Statistics:
             if (this.honeypotStats && this.honeypotStats.data) {
                 this.honeypotStats.data.clear();
             }
+	    
+	    if (this.sensorStats && this.sensorStats.data) {
+ 	        this.sensorStats.data.clear();
+	    }
 
             // Reset Timeline Data
             this.timelineData = this.initializeTimelineData();
@@ -2719,7 +2925,8 @@ Cache Statistics:
             this.aggregateProtocolStats();
             this.aggregateCountryStats();
             this.updateDashboardMetrics();
-            this.updateHoneypotChartData(); // Synchronized with other card updates
+            this.updateHoneypotChartData();// Synchronized with other card updates
+	    this.updateSensorActivityChartData();
         }, 5000); // Every 5 seconds
     }
 
@@ -2937,7 +3144,12 @@ Cache Statistics:
         if (event.honeypot) {
             this.trackHoneypotAttack(event.honeypot, event.timestamp);
         }
-        
+
+        if (event.tpot_hostname || event.hostname || event.host) {
+    	    const sensorName = event.tpot_hostname || event.hostname || event.host;
+    	    this.trackSensorActivity(sensorName, event.timestamp);
+	}
+
         // Try to initialize audio context if not already done (aggressive approach)
         if (!this.audioInitialized) {
             console.log('[SOUND] Attempting audio initialization on attack event');
