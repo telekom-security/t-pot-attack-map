@@ -1095,10 +1095,11 @@ Cache Statistics:
         // Update side panel height based on bottom panel position
         this.updateSidePanelHeight();
         
-        // Trigger map resize if needed
+        // Trigger map resize if needed (D37: window.map is null until the map
+        // is READY — optional calls keep this safe in every lifecycle state)
         if (window.map) {
             setTimeout(() => {
-                window.map.invalidateSize();
+                window.map?.resize?.();
             }, 300);
         }
     }
@@ -2154,13 +2155,14 @@ Cache Statistics:
                 await this.attackCache.clearCache();
             }
 
+            // Clear map visuals and pending queues in EVERY lifecycle state
+            // (D38: a pre-clear event must never resurface when the map
+            // becomes READY — this call must not sit behind if (window.map))
+            window.clearMapVisuals?.();
+
             // Clear map markers and data
             if (window.map) {
-                // Clear Leaflet map layers
-                if (window.circles) window.circles.clearLayers();
-                if (window.markers) window.markers.clearLayers();
-                if (window.attackLines) window.attackLines.clearLayers();
-                
+
                 // Clear map data objects
                 if (window.circleAttackData) {
                     Object.keys(window.circleAttackData).forEach(key => {
@@ -3657,23 +3659,14 @@ Cache Statistics:
     }
 }
 
-// Initialize dashboard when DOM is loaded
-// Initialize dashboard when DOM and scripts are loaded
-window.addEventListener('load', () => {
-    // Wait for Chart.js to be available
-    function initWhenReady() {
-        if (typeof Chart !== 'undefined') {
-            console.log('[DEBUG] Chart.js available, initializing Attack Map Dashboard...');
-            window.attackMapDashboard = new AttackMapDashboard();
-            console.log('[DEBUG] Dashboard initialized:', window.attackMapDashboard);
-        } else {
-            console.log('[DEBUG] Chart.js not yet available, waiting...');
-            setTimeout(initWhenReady, 100);
-        }
-    }
-    
-    initWhenReady();
-});
+// D43 (HANDOFF-v2): instantiate the dashboard SYNCHRONOUSLY at script
+// evaluation. Safe by spec-guaranteed document order, not timing: Chart.js is
+// a deferred classic script earlier in index.html, deferred scripts execute in
+// document order, all complete before DOMContentLoaded, and the WebSocket only
+// connects at DOMContentLoaded — so the dashboard object exists before the
+// first message can arrive. The 3.0.1 window.load + Chart.js polling loop had
+// a real race (an early Traffic message threw) and is deleted.
+window.attackMapDashboard = new AttackMapDashboard();
 
 // Export for use in other modules
 window.AttackMapDashboard = AttackMapDashboard;

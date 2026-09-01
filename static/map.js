@@ -1,3 +1,8 @@
+// T-Pot Attack Map 4.0 — MapLibre GL + PMTiles migration (HANDOFF-v2 WP6).
+// Two independent startup domains (D29): startDataChannel() (WebSocket, stats,
+// dashboard) never depends on initMap() succeeding. Map lifecycle is explicit
+// (D34): INITIALIZING -> READY | FAILED, with a bounded startup-only queue.
+
 // Global WebSocket connection state variables
 let webSocket = null;
 let reconnectAttempts = 0;
@@ -15,248 +20,79 @@ window.lastValidDataTime = Date.now(); // For "Connected" vs "Idle" state tracki
 // Global connection flag for dashboard synchronization
 window.webSocketConnected = false;
 
-// FIX: Leaflet Grid Lines / Tile Gaps
-// Override the internal _initTile method to force tiles to be 1px larger
-// This creates a 1px overlap that hides the sub-pixel rendering gaps in Chrome/Edge
-// We exclude Firefox (Gecko) because it handles rendering differently and this fix causes artifacts there
-(function(){
-    if (L.Browser.gecko) return; // Skip for Firefox
+// ---------------------------------------------------------------------------
+// Map lifecycle state (D34/D37) — everything below is renderer-local
+// ---------------------------------------------------------------------------
+let mapLifecycle = 'INITIALIZING';          // INITIALIZING -> READY | FAILED
+const startupTrafficQueue = [];             // startup-only, cap 400, keep-newest
+const MAX_STARTUP_TRAFFIC = 400;
+const pendingRestored = [];                 // §7.2 cache-restore queue, cap 1000, keep-newest
+const MAX_PENDING_RESTORED = 1000;
 
-    var originalInitTile = L.GridLayer.prototype._initTile;
-    L.GridLayer.include({
-        _initTile: function (tile) {
-            originalInitTile.call(this, tile);
-            var tileSize = this.getTileSize();
-            tile.style.width = tileSize.x + 1 + 'px';
-            tile.style.height = tileSize.y + 1 + 'px';
-        }
-    });
-})();
+let map = null;                 // the MapLibre instance (window.map per D37)
+let maplibregl = null;          // filled by the awaited dynamic import
+let renderer = null;            // AttackRenderer (WP5)
+let header = null;              // PMTiles header — the zoom authority (§7.4)
+let pmtilesUrl = null;
+let themeRevision = 0;          // §7.6 async-reordering guard
+let pendingTheme = null;        // D44: theme requested while not READY
+let themeTheMapWasBuiltWith = null;
+let lastMapErrorLog = 0;
 
-// Map theme support
-var mapLayers = {
-    dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '<a href="https://www.openstreetmap.org/copyright">&copy OpenStreetMap</a> <a href="https://carto.com/attributions">&copy CARTO</a>',
-        detectRetina: true,
-        subdomains: 'abcd',
-        minZoom: 2,
-        maxZoom: 8,
-        tileSize: 256
-    }),
-    light: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '<a href="https://www.openstreetmap.org/copyright">&copy OpenStreetMap</a> <a href="https://carto.com/attributions">&copy CARTO</a>',
-        detectRetina: true,
-        subdomains: 'abcd',
-        minZoom: 2,
-        maxZoom: 8,
-        tileSize: 256
-    })
-};
-
-// Get current theme
-var currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-var base = mapLayers[currentTheme];
-
-// Check if map container is already initialized
-if (window.map) {
-    window.map.remove();
+const warnedOnce = {};
+function warnOnce(tag, message) {
+  if (warnedOnce[tag]) return;
+  warnedOnce[tag] = true;
+  console.warn(message);
 }
 
-var map = L.map('map', {
-    layers: [base],
-    tap: false, // ref https://github.com/Leaflet/Leaflet/issues/7255
-    center: new L.LatLng(0, 0),
-    trackResize: true,
-    worldCopyJump: true,
-    minZoom: 2,
-    maxZoom: 8,
-    zoom: 3,
-    zoomSnap: 0.2, // Allow fractional zoom levels
-    zoomDelta: 0.2, // Match zoomSnap
-    fullscreenControl: true,
-    fullscreenControlOptions: {
-        title:"Fullscreen Mode",
-        titleCancel:"Exit Fullscreen Mode"
-    }
-});
+// Attacker-circle calibration (D19, §9.5 — zoom-scaled pixel radius instead of
+// the old metric 50 km circle; values reviewed against the WP1 screenshots):
+const CIRCLE_R1 = 4;   // px radius at zoom 1
+const CIRCLE_R7 = 32;  // px radius at zoom 7
 
-// Make map globally accessible
-window.map = map;
+// ---------------------------------------------------------------------------
+// Safe globals — installed synchronously, before any await (§13.6, D37, D38)
+// ---------------------------------------------------------------------------
+function installSafeGlobals() {
+  window.map = null; // D37: set non-null exactly once, after construction
 
-// Enhanced attack map with modern dashboard integration
+  // D38: NOT a no-op — Clear Cache must cancel pending startup/restore events
+  // in every lifecycle state, so a pre-clear event can never resurface on READY.
+  window.clearMapVisuals = function () {
+    startupTrafficQueue.length = 0;
+    pendingRestored.length = 0;
+  };
 
-// Make map globally accessible
-window.map = map;
+  // Replaced by the D39 bridge receiver when the choropleth initialises (WP7).
+  window.updateChoropleth = function () {};
 
-// Enhanced marker clustering
-var circles = new L.LayerGroup();
-var markers = new L.LayerGroup();
-var attackLines = new L.LayerGroup();
-
-map.addLayer(circles);
-map.addLayer(markers);
-map.addLayer(attackLines);
-
-// Cache restoration function for map markers
-window.processRestoredAttack = function(event) {
-    console.log('[MAP-RESTORE] Processing restored attack:', event);
-    
-    // Skip if event doesn't have required data
-    if (!event.source_ip || !event.destination_ip) {
-        console.log('[MAP-RESTORE] Skipping event - missing IP data');
-        return;
+  // §7.2: bounded queueing stub (keep-newest); swapped for the real
+  // implementation after a successful map init. The contract stays dormant —
+  // nothing calls window.restoreAttackToMap in 4.0.
+  window.processRestoredAttack = function (event) {
+    if (pendingRestored.length >= MAX_PENDING_RESTORED) {
+      pendingRestored.shift(); // keep-newest: drop the OLDEST
+      warnOnce('restore-queue', '[MAP-RESTORE] queue full, dropping oldest');
     }
-    
-    // Create a simplified message object from cached event
-    const restoredMsg = {
-        // Source (attacker) data
-        country: event.country || 'Unknown',
-        iso_code: event.country_code || 'XX',
-        src_ip: event.source_ip || event.ip,
-        ip_rep: event.ip_rep || event.reputation || event.ip_reputation || 'Unknown',
-        color: event.color || getProtocolColor(event.protocol),
-        
-        // Destination (honeypot) data - use original WebSocket field names
-        dst_country_name: event.dst_country_name || event.destination_country || 'Local',
-        dst_iso_code: event.dst_iso_code || event.destination_country_code || 'XX',
-        dst_ip: event.destination_ip,
-        tpot_hostname: event.tpot_hostname || event.honeypot || 'honeypot',
-        honeypot: event.honeypot,
-        protocol: event.protocol,
-        dst_port: event.destination_port || event.port,
-        
-        // Coordinates (if available in cached data)
-        src_lat: event.source_lat,
-        src_long: event.source_lng || event.source_long,
-        dst_lat: event.destination_lat,
-        dst_long: event.destination_lng || event.destination_long
-    };
-    
-    // If we have coordinates in the cached data, use them directly
-    if (restoredMsg.src_lat && restoredMsg.src_long && restoredMsg.dst_lat && restoredMsg.dst_long) {
-        const srcLatLng = new L.LatLng(restoredMsg.src_lat, restoredMsg.src_long);
-        const dstLatLng = new L.LatLng(restoredMsg.dst_lat, restoredMsg.dst_long);
-        
-        restoreMarkerData(restoredMsg, srcLatLng, dstLatLng, event);
-    } else {
-        // Fallback: get coordinates from country/location data
-        Promise.all([
-            getCoordinates(restoredMsg.country, restoredMsg.iso_code),
-            getCoordinates(restoredMsg.dst_country_name, restoredMsg.dst_iso_code)
-        ]).then(([srcCoords, dstCoords]) => {
-            if (srcCoords && dstCoords) {
-                const srcLatLng = new L.LatLng(srcCoords.lat, srcCoords.lng);
-                const dstLatLng = new L.LatLng(dstCoords.lat, dstCoords.lng);
-                
-                restoreMarkerData(restoredMsg, srcLatLng, dstLatLng, event);
-            }
-        }).catch(error => {
-            console.log('[MAP-RESTORE] Error getting coordinates:', error);
-        });
-    }
-};
-
-// Helper function to restore marker data and add visual elements
-function restoreMarkerData(restoredMsg, srcLatLng, dstLatLng, originalEvent) {
-    const srcKey = srcLatLng.lat + "," + srcLatLng.lng;
-    const dstKey = dstLatLng.lat + "," + dstLatLng.lng;
-    
-    // Initialize or update circleAttackData for source location
-    if (!circleAttackData[srcKey]) {
-        circleAttackData[srcKey] = {
-            country: restoredMsg.country,
-            iso_code: restoredMsg.iso_code,
-            attacks: [],
-            totalAttacks: 0,
-            ips: {},
-            firstSeen: new Date(originalEvent.timestamp),
-            lastSeen: new Date(originalEvent.timestamp),
-            lastProtocol: restoredMsg.protocol,
-            lastColor: restoredMsg.color
-        };
-    } else {
-        // Update protocol tracking for restored attacks
-        // For restoration, we want to preserve the latest protocol/color from actual restore order
-        circleAttackData[srcKey].lastProtocol = restoredMsg.protocol;
-        circleAttackData[srcKey].lastColor = restoredMsg.color;
-        circleAttackData[srcKey].lastSeen = new Date(originalEvent.timestamp);
-    }
-    
-    // Initialize IP data if needed
-    if (!circleAttackData[srcKey].ips[restoredMsg.src_ip]) {
-        circleAttackData[srcKey].ips[restoredMsg.src_ip] = {
-            src_ip: restoredMsg.src_ip,
-            ip_rep: restoredMsg.ip_rep,
-            attacks: [],
-            firstSeen: new Date(originalEvent.timestamp),
-            lastSeen: new Date(originalEvent.timestamp)
-        };
-    } else {
-        // Update reputation if new data is provided
-        if (restoredMsg.ip_rep) {
-            circleAttackData[srcKey].ips[restoredMsg.src_ip].ip_rep = restoredMsg.ip_rep;
-        }
-    }
-    
-    // Add attack data to source location
-    const attackData = {
-        protocol: restoredMsg.protocol,
-        port: restoredMsg.dst_port,
-        timestamp: new Date(originalEvent.timestamp),
-        src_ip: restoredMsg.src_ip
-    };
-    
-    circleAttackData[srcKey].attacks.push(attackData);
-    circleAttackData[srcKey].totalAttacks++;
-    circleAttackData[srcKey].lastSeen = new Date(originalEvent.timestamp);
-    circleAttackData[srcKey].ips[restoredMsg.src_ip].attacks.push(attackData);
-    circleAttackData[srcKey].ips[restoredMsg.src_ip].lastSeen = new Date(originalEvent.timestamp);
-    
-    // Initialize or update markerAttackData for destination (honeypot)
-    if (!markerAttackData[dstKey]) {
-        markerAttackData[dstKey] = {
-            country: restoredMsg.dst_country_name,
-            iso_code: restoredMsg.dst_iso_code,
-            dst_ip: restoredMsg.dst_ip,
-            hostname: restoredMsg.tpot_hostname,
-            attacks: [],
-            totalAttacks: 0,
-            uniqueAttackers: new Set(),
-            protocolStats: {},
-            firstSeen: new Date(originalEvent.timestamp),
-            lastUpdate: new Date(originalEvent.timestamp)
-        };
-    }
-    
-    // Add attack to honeypot data
-    markerAttackData[dstKey].attacks.push({
-        src_ip: restoredMsg.src_ip,
-        protocol: restoredMsg.protocol,
-        port: restoredMsg.dst_port,
-        timestamp: new Date(originalEvent.timestamp)
-    });
-    markerAttackData[dstKey].totalAttacks++;
-    markerAttackData[dstKey].uniqueAttackers.add(restoredMsg.src_ip);
-    markerAttackData[dstKey].protocolStats[restoredMsg.protocol] = 
-        (markerAttackData[dstKey].protocolStats[restoredMsg.protocol] || 0) + 1;
-    markerAttackData[dstKey].lastUpdate = new Date(originalEvent.timestamp);
-    
-    // Keep only last 50 attacks per location for performance
-    if (markerAttackData[dstKey].attacks.length > 50) {
-        markerAttackData[dstKey].attacks = markerAttackData[dstKey].attacks.slice(-50);
-    }
-    if (circleAttackData[srcKey].attacks.length > 50) {
-        circleAttackData[srcKey].attacks = circleAttackData[srcKey].attacks.slice(-50);
-    }
-    
-    // Add visual elements (circle for attacker and marker for honeypot)
-    addCircle(restoredMsg.country, restoredMsg.iso_code, restoredMsg.src_ip, 
-             restoredMsg.ip_rep, restoredMsg.color, srcLatLng, restoredMsg.protocol);
-    addMarker(restoredMsg.dst_country_name, restoredMsg.dst_iso_code, 
-             restoredMsg.dst_ip, restoredMsg.tpot_hostname, dstLatLng);
+    pendingRestored.push(event);
+  };
 }
 
-// Helper function to get protocol color (matches existing logic)
+installSafeGlobals();
+
+// ---------------------------------------------------------------------------
+// Registries — global names/shapes preserved from 3.0.1 (WP6 requirement):
+// keys stay the byte-identical "lat,lng" strings.
+// ---------------------------------------------------------------------------
+var circlesObject = {};        // key -> GeoJSON feature in the 'attackers' source
+var circleAttackData = {};     // key -> aggregated attacker data (popups)
+var markersObject = {};        // key -> maplibregl.Marker
+var markerAttackData = {};     // key -> aggregated honeypot data (popups)
+
+// ---------------------------------------------------------------------------
+// Protocol colours (unchanged from 3.0.1)
+// ---------------------------------------------------------------------------
 function getProtocolColor(protocol) {
     // Use the same color mapping as the dashboard for consistency
     const colors = {
@@ -312,16 +148,16 @@ function getProtocolColor(protocol) {
         'SCADA': '#8040FF',
         'OTHER': '#78909C'
     };
-    
+
     // Normalize the protocol like the dashboard does
     function normalizeProtocol(protocol) {
         if (!protocol) return 'OTHER';
-        
+
         // Check if protocol is a numeric string (port number) - convert to OTHER
         if (/^\d+$/.test(protocol.toString())) {
             return 'OTHER';
         }
-        
+
         // List of known protocols to check against
         const knownProtocols = [
             'CHARGEN', 'FTP-DATA', 'FTP', 'SSH', 'TELNET', 'SMTP', 'WINS', 'DNS', 'DHCP', 'TFTP',
@@ -331,270 +167,93 @@ function getProtocolColor(protocol) {
             'ADB', 'VNC', 'REDIS', 'IRC', 'JETDIRECT', 'ELASTICSEARCH', 'INDUSTRIAL', 'MEMCACHED',
             'MONGODB', 'SCADA'
         ];
-        
+
         const protocolUpper = protocol.toUpperCase();
-        
+
         // If protocol is not in the known list, use "OTHER"
         if (!knownProtocols.includes(protocolUpper)) {
             return 'OTHER';
         }
-        
+
         return protocolUpper;
     }
-    
+
     const normalizedProtocol = normalizeProtocol(protocol);
-    
+
     // Return color for the normalized protocol
     return colors[normalizedProtocol] || colors['OTHER'];
 }
 
-// Use Leaflet's built-in SVG renderer to handle zoom/pan and event bubbling correctly
-var svgRenderer = L.svg({ clickable: true }).addTo(map);
-
-// Select the SVG element and append a group for D3 animations
-// We use a group to keep our elements separate from Leaflet's internal layers
-var svg = d3.select(svgRenderer._container).append("g").attr("class", "d3-overlay");
-
-// Ensure the SVG container doesn't block map interactions
-// Leaflet usually handles this, but we enforce it to fix the Firefox panning issue
-d3.select(svgRenderer._container).style("pointer-events", "none");
-
-// Clear animations on zoom start to prevent coordinate desync
-// D3 elements don't automatically re-project during zoom, so we clear them
-map.on("zoomstart", function() {
-    svg.selectAll("*").remove();
-});
-
-// No need for manual translateSVG or moveend listener as Leaflet handles the SVG renderer
-
-function calcMidpoint(x1, y1, x2, y2, bend) {
-    if(y2<y1 && x2<x1) {
-        var tmpy = y2;
-        var tmpx = x2;
-        x2 = x1;
-        y2 = y1;
-        x1 = tmpx;
-        y1 = tmpy;
-    }
-    else if(y2<y1) {
-        y1 = y2 + (y2=y1, 0);
-    }
-    else if(x2<x1) {
-        x1 = x2 + (x2=x1, 0);
-    }
-
-    var radian = Math.atan(-((y2-y1)/(x2-x1)));
-    var r = Math.sqrt(x2-x1) + Math.sqrt(y2-y1);
-    var m1 = (x1+x2)/2;
-    var m2 = (y1+y2)/2;
-
-    var min = 2.5, max = 7.5;
-    var arcIntensity = parseFloat((Math.random() * (max - min) + min).toFixed(2));
-
-    if (bend === true) {
-        var a = Math.floor(m1 - r * arcIntensity * Math.sin(radian));
-        var b = Math.floor(m2 - r * arcIntensity * Math.cos(radian));
-    } else {
-        var a = Math.floor(m1 + r * arcIntensity * Math.sin(radian));
-        var b = Math.floor(m2 + r * arcIntensity * Math.cos(radian));
-    }
-
-    return {"x":a, "y":b};
+// ---------------------------------------------------------------------------
+// Attacker circles — native MapLibre source/layer (D14, D19)
+// ---------------------------------------------------------------------------
+function attackersFeatureCollection() {
+    return { type: 'FeatureCollection', features: Object.values(circlesObject) };
 }
 
-function translateAlong(path) {
-    var l = path.getTotalLength();
-    return function(i) {
-        return function(t) {
-            // Put in try/catch because sometimes floating point is stupid..
-            try {
-                var p = path.getPointAtLength(t*l);
-                return "translate(" + p.x + "," + p.y + ")";
-            } catch(err){
-                console.log("Caught exception.");
-                return "ERROR";
-            }
-        };
+function attackersSourceSpec() {
+    return { type: 'geojson', data: attackersFeatureCollection() };
+}
+
+function attackersLayerSpec() {
+    return {
+        id: 'attackers-layer',
+        type: 'circle',
+        source: 'attackers',
+        paint: {
+            'circle-color': ['get', 'color'],
+            'circle-opacity': 0.2,
+            'circle-stroke-color': ['get', 'color'],
+            'circle-stroke-width': 2,
+            // D19: visual-marker semantics — zoom-interpolated pixel radius
+            'circle-radius': ['interpolate', ['exponential', 2], ['zoom'], 1, CIRCLE_R1, 7, CIRCLE_R7]
+        }
     };
 }
 
-function handleParticle(color, srcPoint) {
-    // Skip animation if tab is not visible OR if we are in the "waking up" grace period
-    // This prevents the explosion of buffered animations when returning to the tab
-    if (document.hidden || isWakingUp) return;
-
-    var i = 0;
-    var x = srcPoint['x'];
-    var y = srcPoint['y'];
-
-    svg.append('circle')
-        .attr('cx', x)
-        .attr('cy', y)
-        .attr('r', 0)
-        .style('fill', 'none')
-        .style('stroke', color)
-        .style('stroke-opacity', 1)
-        .style('stroke-width', 3)
-        .transition()
-        .duration(700)
-        .ease(d3.easeCircleIn)
-        // Circle radius source animation
-        .attr('r', 50)
-        .style('stroke-opacity', 0)
-        .remove();
+function syncAttackersSource() {
+    const src = map && map.getSource('attackers');
+    if (src) src.setData(attackersFeatureCollection());
 }
-
-function handleTraffic(color, srcPoint, hqPoint) {
-    // Skip animation if tab is not visible OR if we are in the "waking up" grace period
-    // This prevents the explosion of buffered animations when returning to the tab
-    if (document.hidden || isWakingUp) return;
-
-    var fromX = srcPoint['x'];
-    var fromY = srcPoint['y'];
-    var toX = hqPoint['x'];
-    var toY = hqPoint['y'];
-    var bendArray = [true, false];
-    var bend = bendArray[Math.floor(Math.random() * bendArray.length)];
-
-    var lineData = [srcPoint, calcMidpoint(fromX, fromY, toX, toY, bend), hqPoint]
-    var lineFunction = d3.line()
-        .curve(d3.curveBasis)
-        .x(function(d) {return d.x;})
-        .y(function(d) {return d.y;});
-
-    var lineGraph = svg.append('path')
-            .attr('d', lineFunction(lineData))
-            .attr('opacity', 0.8)
-            .attr('stroke', color)
-            .attr('stroke-width', 2)
-            .attr('fill', 'none');
-
-    var circleRadius = 6
-
-    // Circle follows the line
-    var dot = svg.append('circle')
-        .attr('r', circleRadius)
-        .attr('fill', color)
-        .transition()
-        .duration(700)
-        .ease(d3.easeCircleIn)
-        .attrTween('transform', translateAlong(lineGraph.node()))
-        .on('end', function() {
-            d3.select(this)
-                .attr('fill', 'none')
-                .attr('stroke', color)
-                .attr('stroke-width', 3)
-                .transition()
-                .duration(700)
-                .ease(d3.easeCircleIn)
-                // Circle radius destination animation
-                .attr('r', 50)
-                .style('stroke-opacity', 0)
-                .remove();
-    });
-
-    var length = lineGraph.node().getTotalLength();
-    lineGraph.attr('stroke-dasharray', length + ' ' + length)
-        .attr('stroke-dashoffset', length)
-        .transition()
-        .duration(700)
-        .ease(d3.easeCircleIn)
-        .attr('stroke-dashoffset', 0)
-        .on('end', function() {
-            d3.select(this)
-                .transition()
-                .duration(700)
-                .style('opacity', 0)
-                .remove();
-        });
-}
-
-var circlesObject = {};
-// Store attack data for each circle for enhanced tooltips
-var circleAttackData = {};
 
 function addCircle(country, iso_code, src_ip, ip_rep, color, srcLatLng, protocol) {
-    circleCount = circles.getLayers().length;
-    circleArray = circles.getLayers();
-
-    // Only allow 200 circles to be on the map at a time
-    if (circleCount >= 200) {
-        // Find the key with the oldest lastSeen time
+    // Only allow 200 circles on the map at a time (LRU by lastSeen, as 3.0.1)
+    const keys = Object.keys(circlesObject);
+    if (keys.length >= 200 && !circlesObject[srcLatLng.lat + "," + srcLatLng.lng]) {
         let oldestKey = null;
-        let oldestTime = new Date(); // Start with current time, anything older will be smaller
-
-        // Only iterate over keys that actually exist on the map to avoid ghost entries
-        const validKeys = Object.keys(circlesObject);
-        
-        for (const key of validKeys) {
-            const data = circleAttackData[key];
+        let oldestTime = new Date();
+        for (const k of keys) {
+            const data = circleAttackData[k];
             if (data && data.lastSeen < oldestTime) {
                 oldestTime = data.lastSeen;
-                oldestKey = key;
+                oldestKey = k;
             }
         }
-
-        if (oldestKey) {
-            circles.removeLayer(circlesObject[oldestKey]);
-            delete circlesObject[oldestKey];
-            delete circleAttackData[oldestKey];
-        } else {
-            // Fallback if something goes wrong
-            const layerToRemove = circleArray[0];
-            circles.removeLayer(layerToRemove);
-            
-            // Try to find and clean up the key for this layer
-            for (const [key, layer] of Object.entries(circlesObject)) {
-                if (layer === layerToRemove) {
-                    delete circlesObject[key];
-                    delete circleAttackData[key];
-                    break;
-                }
-            }
-        }
+        if (!oldestKey) oldestKey = keys[0]; // fallback
+        delete circlesObject[oldestKey];
+        delete circleAttackData[oldestKey];
     }
 
     var key = srcLatLng.lat + "," + srcLatLng.lng;
-    
-    // Check if circle exists and needs color update
+
     if (circlesObject[key]) {
-        // Circle exists - check if protocol/color has changed
-        const existingCircle = circlesObject[key];
-        const currentColor = existingCircle.options.color;
-        
-        // If color changed, update the circle
-        if (currentColor !== color) {
-            console.log(`[CIRCLE-UPDATE] Updating circle color at ${key} from ${currentColor} to ${color} (protocol: ${protocol})`);
-            
-            // Update circle style
-            existingCircle.setStyle({
-                color: color,
-                fillColor: color,
-                fillOpacity: 0.2
-            });
-            
-            // Update protocol tracking in attack data
+        // Feature exists — update its colour if the protocol changed
+        if (circlesObject[key].properties.color !== color) {
+            circlesObject[key].properties.color = color;
             if (circleAttackData[key]) {
                 circleAttackData[key].lastProtocol = protocol;
                 circleAttackData[key].lastColor = color;
                 circleAttackData[key].lastSeen = new Date();
             }
+            syncAttackersSource();
         }
-        
-        // Update IP data if needed
-        if (circleAttackData[key] && circleAttackData[key].ips[src_ip]) {
-            // Update reputation if new data is provided
-            if (ip_rep) {
-                circleAttackData[key].ips[src_ip].ip_rep = ip_rep;
-            }
+        if (circleAttackData[key] && circleAttackData[key].ips[src_ip] && ip_rep) {
+            circleAttackData[key].ips[src_ip].ip_rep = ip_rep;
         }
-        
-        return; // Circle exists and has been updated if needed
+        return;
     }
-    
-    // Create new circle if it doesn't exist
-    // Attack data should already be created in Traffic handler
-    // If for some reason it doesn't exist, create it (fallback)
+
+    // Attack data should already be created in the Traffic handler (fallbacks as 3.0.1)
     if (!circleAttackData[key]) {
         circleAttackData[key] = {
             country: country,
@@ -608,13 +267,10 @@ function addCircle(country, iso_code, src_ip, ip_rep, color, srcLatLng, protocol
             ips: {}
         };
     } else {
-        // Update protocol tracking for existing data
         circleAttackData[key].lastProtocol = protocol;
         circleAttackData[key].lastColor = color;
         circleAttackData[key].lastSeen = new Date();
     }
-    
-    // Ensure IP data exists (fallback)
     if (!circleAttackData[key].ips[src_ip]) {
         circleAttackData[key].ips[src_ip] = {
             src_ip: src_ip,
@@ -623,181 +279,103 @@ function addCircle(country, iso_code, src_ip, ip_rep, color, srcLatLng, protocol
             firstSeen: new Date(),
             lastSeen: new Date()
         };
-    } else {
-        // Update reputation if new data is provided
-        if (ip_rep) {
-            circleAttackData[key].ips[src_ip].ip_rep = ip_rep;
-        }
+    } else if (ip_rep) {
+        circleAttackData[key].ips[src_ip].ip_rep = ip_rep;
     }
 
-    var circle = L.circle(srcLatLng, 50000, {
-        color: color,
-        fillColor: color,
-        fillOpacity: 0.2
-    });
-
-    // Enhanced popup with modern styling
-    var popupContent = createAttackerPopup(circleAttackData[key]);
-    circle.bindPopup(popupContent, {
-        maxWidth: 350,
-        className: 'modern-popup attacker-popup'
-    });
-
-    // Add click event for enhanced interaction
-    circle.on('click', function(e) {
-        // Update popup content with latest data
-        var updatedContent = createAttackerPopup(circleAttackData[key]);
-        circle.setPopupContent(updatedContent);
-    });
-
-    circlesObject[key] = circle.addTo(circles);
+    circlesObject[key] = {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [srcLatLng.lng, srcLatLng.lat] },
+        properties: { key: key, color: color }
+    };
+    syncAttackersSource();
 }
 
-var markersObject = {};
-// Store attack data for each marker for enhanced tooltips
-var markerAttackData = {};
-
+// ---------------------------------------------------------------------------
+// Honeypot markers — DOM maplibregl.Markers (survive setStyle, §9.6)
+// ---------------------------------------------------------------------------
 function addMarker(dst_country_name, dst_iso_code, dst_ip, tpot_hostname, dstLatLng) {
-    // Validate parameters
     if (!dstLatLng || !dstLatLng.lat || !dstLatLng.lng) {
         return;
     }
 
-    markerCount = markers.getLayers().length;
-    markerArray = markers.getLayers();
-
-    // Only allow 200 markers to be on the map at a time
-    if (markerCount >= 200) {
-        // Find the key with the oldest lastUpdate time
+    const keys = Object.keys(markersObject);
+    if (keys.length >= 200 && !markersObject[dstLatLng.lat + "," + dstLatLng.lng]) {
         let oldestKey = null;
         let oldestTime = new Date();
-
-        // Only iterate over keys that actually exist on the map to avoid ghost entries
-        const validKeys = Object.keys(markersObject);
-
-        for (const key of validKeys) {
-            const data = markerAttackData[key];
+        for (const k of keys) {
+            const data = markerAttackData[k];
             if (data && data.lastUpdate < oldestTime) {
                 oldestTime = data.lastUpdate;
-                oldestKey = key;
+                oldestKey = k;
             }
         }
-
-        if (oldestKey) {
-            markers.removeLayer(markersObject[oldestKey]);
-            delete markersObject[oldestKey];
-            delete markerAttackData[oldestKey];
-        } else {
-            // Fallback
-            markers.removeLayer(markerArray[0]);
-            // Reset objects if we can't track properly (original behavior fallback)
-            markersObject = {};
-            markerAttackData = {};
-        }
+        if (!oldestKey) oldestKey = keys[0];
+        if (markersObject[oldestKey]) markersObject[oldestKey].remove();
+        delete markersObject[oldestKey];
+        delete markerAttackData[oldestKey];
     }
 
     var key = dstLatLng.lat + "," + dstLatLng.lng;
-    // Only draw marker if its coordinates are not already present in markersObject
-    if (!markersObject[key]) {
-        // Attack data should already be created in Traffic handler
-        // If for some reason it doesn't exist, create it (fallback)
-        if (!markerAttackData[key]) {
-            markerAttackData[key] = {
-                country: dst_country_name,
-                iso_code: dst_iso_code,
-                dst_ip: dst_ip,
-                hostname: tpot_hostname,
-                attacks: [],
-                totalAttacks: 0,
-                uniqueAttackers: new Set(),
-                protocolStats: {},
-                firstSeen: new Date(),
-                lastUpdate: new Date()
-            };
-        }
+    if (markersObject[key]) return;
 
-        var marker = L.marker(dstLatLng, {
-            icon: L.icon({
-                iconUrl: 'static/images/honeypot-marker.svg',
-                iconSize: [48, 48], // Match original square size
-                iconAnchor: [24, 40], // Adjusted anchor to fix hovering (was 48)
-                popupAnchor: [0, -48], // Match original popup position
-                className: 'honeypot-marker'
-            }),
-        });
-
-        // Enhanced popup with modern styling
-        var popupContent = createHoneypotPopup(markerAttackData[key]);
-        marker.bindPopup(popupContent, {
-            maxWidth: 400,
-            className: 'modern-popup honeypot-popup'
-        });
-
-        // Add click event for enhanced interaction
-        marker.on('click', function(e) {
-            // Update popup content with latest data
-            var updatedContent = createHoneypotPopup(markerAttackData[key]);
-            marker.setPopupContent(updatedContent);
-        });
-
-        markersObject[key] = marker.addTo(markers);
+    if (!markerAttackData[key]) {
+        markerAttackData[key] = {
+            country: dst_country_name,
+            iso_code: dst_iso_code,
+            dst_ip: dst_ip,
+            hostname: tpot_hostname,
+            attacks: [],
+            totalAttacks: 0,
+            uniqueAttackers: new Set(),
+            protocolStats: {},
+            firstSeen: new Date(),
+            lastUpdate: new Date()
+        };
     }
+
+    const img = document.createElement('img');
+    img.src = 'static/images/honeypot-marker.svg';
+    img.width = 48;
+    img.height = 48;
+    img.className = 'honeypot-marker';
+    img.alt = 'Honeypot';
+
+    // Leaflet used iconAnchor [24,40] on a 48x48 icon: anchor 'bottom' + 8 px up.
+    const marker = new maplibregl.Marker({ element: img, anchor: 'bottom', offset: [0, 8] })
+        .setLngLat([dstLatLng.lng, dstLatLng.lat])
+        .addTo(map);
+
+    const popup = new maplibregl.Popup({
+        maxWidth: '400px',
+        offset: [0, -48],
+        className: 'modern-popup honeypot-popup'
+    });
+    marker.setPopup(popup);
+
+    // Popup content is (re)built on click, replacing the old refresh-on-click logic
+    img.addEventListener('click', function () {
+        popup.setDOMContent(createHoneypotPopup(markerAttackData[key]));
+    });
+    img.style.cursor = 'pointer';
+
+    markersObject[key] = marker;
 }
 
-function handleStats(msg) {
-    const last = ["last_1m", "last_1h", "last_24h"];
-    
-    // Check if message contains any stats data
-    const hasData = last.some(key => msg[key] !== undefined && msg[key] !== null);
-    
-    if (!hasData) {
-        // If message is empty (backend failed to fetch stats), just return
-        // We don't want to spam the console with warnings every 10 seconds
-        console.log('[WARNING] Stats message contains no valid data:', msg);
-        return;
-    }
-
-    // Valid data received - update timestamp for connection status
-    console.log('[STATS] Valid stats data received, updating last valid timestamp.');
-    window.lastValidDataTime = Date.now();
-
-    last.forEach(function(i) {
-        const element = document.getElementById(i);
-        if (element) {
-            const oldValue = element.textContent;
-            const newValue = msg[i];
-            
-            // Check if newValue exists and is not undefined
-            if (newValue !== undefined && newValue !== null) {
-                // Only animate if value actually changed
-                if (oldValue !== newValue.toString()) {
-                    element.textContent = newValue;
-                    element.setAttribute('data-updated', 'true');
-                    
-                    // Remove animation class after animation completes
-                    setTimeout(() => {
-                        element.removeAttribute('data-updated');
-                    }, 600);
-                }
-            } else {
-                console.warn('[WARNING] Stats value is undefined for:', i, 'in message:', msg);
-            }
-        }
-    });
-};
-
-// WEBSOCKET STUFF
+// ---------------------------------------------------------------------------
+// Popups (DOM builders unchanged from 3.0.1)
+// ---------------------------------------------------------------------------
 
 // Helper function to format reputation with line breaks for multi-word values
 function formatReputation(reputation) {
     if (!reputation) return 'Unknown';
-    
+
     // Add line break if the value contains multiple words (space separated)
     const words = reputation.trim().split(/\s+/);
     if (words.length > 1) {
         return words.join('<br>');
     }
-    
+
     return reputation;
 }
 
@@ -814,7 +392,7 @@ function createAttackerPopup(attackerData) {
         errorDiv.appendChild(errorRow);
         return errorDiv;
     }
-    
+
     // Ensure required fields exist with defaults
     if (!attackerData.firstSeen) attackerData.firstSeen = new Date();
     if (!attackerData.lastSeen) attackerData.lastSeen = new Date();
@@ -822,46 +400,46 @@ function createAttackerPopup(attackerData) {
     if (!attackerData.ips) attackerData.ips = {};
     if (!attackerData.country) attackerData.country = 'Unknown';
     if (!attackerData.iso_code) attackerData.iso_code = 'XX';
-    
+
     const now = new Date();
     const firstSeenAgo = formatTimeAgo(attackerData.firstSeen);
     const lastSeenAgo = formatTimeAgo(attackerData.lastSeen);
-    
+
     // Get list of unique IPs at this location
     const ips = Object.keys(attackerData.ips);
     const totalAttacks = attackerData.attacks.length;
-    
+
     // Get protocol stats from all attacks
     const protocolCounts = {};
     attackerData.attacks.forEach(attack => {
         protocolCounts[attack.protocol] = (protocolCounts[attack.protocol] || 0) + 1;
     });
-    
-    const topProtocol = Object.keys(protocolCounts).reduce((a, b) => 
+
+    const topProtocol = Object.keys(protocolCounts).reduce((a, b) =>
         protocolCounts[a] > protocolCounts[b] ? a : b, 'N/A');
-    
+
     const container = document.createElement('div');
 
     // Header
     const header = document.createElement('div');
     header.className = 'popup-header';
-    
+
     const flagImg = document.createElement('img');
     flagImg.src = `static/flags/${attackerData.iso_code}.svg`;
     flagImg.width = 64;
     flagImg.height = 44;
     flagImg.className = 'flag-icon';
     header.appendChild(flagImg);
-    
+
     const titleDiv = document.createElement('div');
     titleDiv.className = 'popup-title';
-    
+
     const h4 = document.createElement('h4');
-    
+
     const subtitle = document.createElement('span');
     subtitle.className = 'popup-subtitle';
     subtitle.textContent = attackerData.country;
-    
+
     titleDiv.appendChild(h4);
     titleDiv.appendChild(subtitle);
     header.appendChild(titleDiv);
@@ -875,20 +453,20 @@ function createAttackerPopup(attackerData) {
     function createInfoRow(label, value, valueClass = '') {
         const row = document.createElement('div');
         row.className = 'info-row';
-        
+
         const labelSpan = document.createElement('span');
         labelSpan.className = 'info-label';
         labelSpan.textContent = label;
-        
+
         const valueSpan = document.createElement('span');
         valueSpan.className = 'info-value ' + valueClass;
-        
+
         if (value instanceof Node) {
             valueSpan.appendChild(value);
         } else {
             valueSpan.textContent = value;
         }
-        
+
         row.appendChild(labelSpan);
         row.appendChild(valueSpan);
         return row;
@@ -898,7 +476,7 @@ function createAttackerPopup(attackerData) {
         // Single IP
         h4.textContent = 'Attacker Source';
         const ipData = attackerData.ips[ips[0]];
-        
+
         if (!ipData) {
              console.error('[ERROR] IP data is missing for:', ips[0]);
              const err = document.createElement('div');
@@ -911,9 +489,9 @@ function createAttackerPopup(attackerData) {
         // Defaults
         if (!ipData.src_ip) ipData.src_ip = ips[0] || 'Unknown';
         if (ipData.ip_rep === undefined || ipData.ip_rep === null) ipData.ip_rep = 'Unknown';
-        
+
         content.appendChild(createInfoRow('Source IP:', ipData.src_ip));
-        
+
         // Handle reputation with safe line breaks
         const repFragment = document.createDocumentFragment();
         const words = (ipData.ip_rep || 'Unknown').trim().split(/\s+/);
@@ -922,9 +500,9 @@ function createAttackerPopup(attackerData) {
             repFragment.appendChild(document.createTextNode(word));
         });
         content.appendChild(createInfoRow('Reputation:', repFragment, getReputationClass(ipData.ip_rep)));
-        
+
         content.appendChild(createInfoRow('Total Attacks:', ipData.attacks.length));
-        
+
         // Protocol Badge
         const protoRow = document.createElement('div');
         protoRow.className = 'info-row';
@@ -937,25 +515,25 @@ function createAttackerPopup(attackerData) {
         protoRow.appendChild(protoLabel);
         protoRow.appendChild(protoBadge);
         content.appendChild(protoRow);
-        
+
         content.appendChild(createInfoRow('First Seen:', formatTimeAgo(ipData.firstSeen || new Date())));
         content.appendChild(createInfoRow('Last Seen:', formatTimeAgo(ipData.lastSeen || new Date())));
 
     } else {
         // Multiple IPs
         h4.textContent = 'Multiple Attackers';
-        
+
         const sortedIps = ips.map(ip => {
             const ipData = attackerData.ips[ip];
             if (!ipData || !ipData.attacks) return { ip: ip, attackCount: 0 };
             return { ip: ip, attackCount: ipData.attacks.length };
         }).sort((a, b) => b.attackCount - a.attackCount);
-        
+
         const topIps = sortedIps.slice(0, 3);
 
         content.appendChild(createInfoRow('Total IPs:', ips.length));
         content.appendChild(createInfoRow('Total Attacks:', totalAttacks));
-        
+
         // Protocol Badge
         const protoRow = document.createElement('div');
         protoRow.className = 'info-row';
@@ -976,7 +554,7 @@ function createAttackerPopup(attackerData) {
         sectionLabel.className = 'section-label';
         sectionLabel.textContent = 'Top Source IPs:';
         section.appendChild(sectionLabel);
-        
+
         topIps.forEach(ipInfo => {
             const detail = document.createElement('div');
             detail.className = 'ip-detail';
@@ -990,7 +568,7 @@ function createAttackerPopup(attackerData) {
             detail.appendChild(ipCount);
             section.appendChild(detail);
         });
-        
+
         if (ips.length > 3) {
             const more = document.createElement('div');
             more.className = 'ip-detail more-ips';
@@ -998,46 +576,46 @@ function createAttackerPopup(attackerData) {
             section.appendChild(more);
         }
         content.appendChild(section);
-        
+
         content.appendChild(createInfoRow('First Seen:', firstSeenAgo));
         content.appendChild(createInfoRow('Last Seen:', lastSeenAgo));
     }
-    
+
     return container;
 }
 
 function createHoneypotPopup(honeypotData) {
     const now = new Date();
     const lastUpdateAgo = formatTimeAgo(honeypotData.lastUpdate);
-    
+
     // Get top 3 protocols
     const sortedProtocols = Object.entries(honeypotData.protocolStats)
         .sort(([,a], [,b]) => b - a)
         .slice(0, 3);
-    
+
     const container = document.createElement('div');
 
     // Header
     const header = document.createElement('div');
     header.className = 'popup-header';
-    
+
     const flagImg = document.createElement('img');
     flagImg.src = `static/flags/${honeypotData.iso_code}.svg`;
     flagImg.width = 64;
     flagImg.height = 44;
     flagImg.className = 'flag-icon';
     header.appendChild(flagImg);
-    
+
     const titleDiv = document.createElement('div');
     titleDiv.className = 'popup-title';
-    
+
     const h4 = document.createElement('h4');
     h4.textContent = 'T-Pot Honeypot';
-    
+
     const subtitle = document.createElement('span');
     subtitle.className = 'popup-subtitle';
     subtitle.textContent = honeypotData.country;
-    
+
     titleDiv.appendChild(h4);
     titleDiv.appendChild(subtitle);
     header.appendChild(titleDiv);
@@ -1051,15 +629,15 @@ function createHoneypotPopup(honeypotData) {
     function createInfoRow(label, value) {
         const row = document.createElement('div');
         row.className = 'info-row';
-        
+
         const labelSpan = document.createElement('span');
         labelSpan.className = 'info-label';
         labelSpan.textContent = label;
-        
+
         const valueSpan = document.createElement('span');
         valueSpan.className = 'info-value';
         valueSpan.textContent = value;
-        
+
         row.appendChild(labelSpan);
         row.appendChild(valueSpan);
         return row;
@@ -1077,19 +655,19 @@ function createHoneypotPopup(honeypotData) {
         sectionLabel.className = 'section-label';
         sectionLabel.textContent = 'Top Protocols:';
         section.appendChild(sectionLabel);
-        
+
         sortedProtocols.forEach(([protocol, count]) => {
             const stat = document.createElement('div');
             stat.className = 'protocol-stat';
-            
+
             const badge = document.createElement('span');
             badge.className = `protocol-badge protocol-${protocol.toLowerCase()}`;
             badge.textContent = protocol;
-            
+
             const countSpan = document.createElement('span');
             countSpan.className = 'protocol-count';
             countSpan.textContent = count;
-            
+
             stat.appendChild(badge);
             stat.appendChild(countSpan);
             section.appendChild(stat);
@@ -1098,7 +676,7 @@ function createHoneypotPopup(honeypotData) {
     }
 
     content.appendChild(createInfoRow('Last Update:', lastUpdateAgo));
-    
+
     return container;
 }
 
@@ -1108,7 +686,7 @@ function formatTimeAgo(date) {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
-    
+
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
@@ -1121,113 +699,60 @@ function getReputationClass(reputation) {
     return 'reputation-clean';
 }
 
-const messageHandlers = {
-  Traffic: (msg) => {
+// ---------------------------------------------------------------------------
+// Stats (unchanged from 3.0.1)
+// ---------------------------------------------------------------------------
+function handleStats(msg) {
+    const last = ["last_1m", "last_1h", "last_24h"];
+
+    // Check if message contains any stats data
+    const hasData = last.some(key => msg[key] !== undefined && msg[key] !== null);
+
+    if (!hasData) {
+        // If message is empty (backend failed to fetch stats), just return
+        // We don't want to spam the console with warnings every 10 seconds
+        console.log('[WARNING] Stats message contains no valid data:', msg);
+        return;
+    }
+
     // Valid data received - update timestamp for connection status
     window.lastValidDataTime = Date.now();
 
-    var srcLatLng = new L.LatLng(msg.src_lat, msg.src_long);
-    var dstLatLng = new L.LatLng(msg.dst_lat, msg.dst_long);
-    var dstPoint = map.latLngToLayerPoint(dstLatLng);
-    var srcPoint = map.latLngToLayerPoint(srcLatLng);
+    last.forEach(function(i) {
+        const element = document.getElementById(i);
+        if (element) {
+            const oldValue = element.textContent;
+            const newValue = msg[i];
 
-    // Store attack data for tooltips
-    var srcKey = srcLatLng.lat + "," + srcLatLng.lng;
-    var dstKey = dstLatLng.lat + "," + dstLatLng.lng;
-    
-    // Pre-create attacker data structure if needed
-    if (!circleAttackData[srcKey]) {
-        circleAttackData[srcKey] = {
-            country: msg.country,
-            iso_code: msg.iso_code,
-            location_key: srcKey,
-            attacks: [],
-            firstSeen: new Date(),
-            lastSeen: new Date(),
-            lastProtocol: msg.protocol,
-            lastColor: msg.color,
-            // Track multiple IPs at the same location
-            ips: {}
-        };
-    } else {
-        // Update protocol tracking for existing location
-        circleAttackData[srcKey].lastProtocol = msg.protocol;
-        circleAttackData[srcKey].lastColor = msg.color;
-        circleAttackData[srcKey].lastSeen = new Date();
-    }
-    
-    // Initialize IP-specific data if this is a new IP at this location
-    if (!circleAttackData[srcKey].ips[msg.src_ip]) {
-        circleAttackData[srcKey].ips[msg.src_ip] = {
-            src_ip: msg.src_ip,
-            ip_rep: msg.ip_rep,
-            attacks: [],
-            firstSeen: new Date(),
-            lastSeen: new Date()
-        };
-    }
-    
-    // Pre-create honeypot data structure if needed
-    if (!markerAttackData[dstKey]) {
-        markerAttackData[dstKey] = {
-            country: msg.dst_country_name,
-            iso_code: msg.dst_iso_code,
-            dst_ip: msg.dst_ip,
-            hostname: msg.tpot_hostname,
-            attacks: [],
-            totalAttacks: 0,
-            uniqueAttackers: new Set(),
-            protocolStats: {},
-            firstSeen: new Date(),
-            lastUpdate: new Date()
-        };
-    }
+            // Check if newValue exists and is not undefined
+            if (newValue !== undefined && newValue !== null) {
+                // Only animate if value actually changed
+                if (oldValue !== newValue.toString()) {
+                    element.textContent = newValue;
+                    element.setAttribute('data-updated', 'true');
 
-    Promise.all([
-        addCircle(msg.country, msg.iso_code, msg.src_ip, msg.ip_rep, msg.color, srcLatLng, msg.protocol),
-        addMarker(msg.dst_country_name, msg.dst_iso_code, msg.dst_ip, msg.tpot_hostname, dstLatLng),
-        handleParticle(msg.color, srcPoint),
-        handleTraffic(msg.color, srcPoint, dstPoint, srcLatLng)
-    ]).then(() => {
-        // Add attack data AFTER visual elements are created/updated
-        const attackData = {
-            protocol: msg.protocol,
-            port: msg.dst_port,
-            honeypot: msg.honeypot,
-            timestamp: new Date(),
-            src_ip: msg.src_ip
-        };
-        
-        // Add to overall location attacks
-        circleAttackData[srcKey].attacks.push(attackData);
-        circleAttackData[srcKey].lastSeen = new Date();
-        
-        // Add to IP-specific attacks
-        circleAttackData[srcKey].ips[msg.src_ip].attacks.push(attackData);
-        circleAttackData[srcKey].ips[msg.src_ip].lastSeen = new Date();
-        
-        // Add attack to honeypot data
-        markerAttackData[dstKey].attacks.push({
-            src_ip: msg.src_ip,
-            protocol: msg.protocol,
-            port: msg.dst_port,
-            timestamp: new Date()
-        });
-        markerAttackData[dstKey].totalAttacks++;
-        markerAttackData[dstKey].uniqueAttackers.add(msg.src_ip);
-        markerAttackData[dstKey].protocolStats[msg.protocol] = 
-            (markerAttackData[dstKey].protocolStats[msg.protocol] || 0) + 1;
-        markerAttackData[dstKey].lastUpdate = new Date();
-        
-        // Keep only last 50 attacks per honeypot for performance
-        if (markerAttackData[dstKey].attacks.length > 50) {
-            markerAttackData[dstKey].attacks = markerAttackData[dstKey].attacks.slice(-50);
+                    // Remove animation class after animation completes
+                    setTimeout(() => {
+                        element.removeAttribute('data-updated');
+                    }, 600);
+                }
+            } else {
+                console.warn('[WARNING] Stats value is undefined for:', i, 'in message:', msg);
+            }
         }
     });
-    
-    // Send to dashboard for Live Feed processing with correct field mapping
-    if (window.attackMapDashboard) {
-      const attackData = {
+}
+
+// ---------------------------------------------------------------------------
+// Traffic pipeline: dashboard always, map work through the D34 lifecycle
+// ---------------------------------------------------------------------------
+
+// Dashboard state updates on EVERY Traffic event, in every lifecycle state (D29).
+// Calls are optional-chained as defense in depth (D43) — the dashboard object
+// provably exists before the socket connects (synchronous instantiation +
+// deferred document order + DOMContentLoaded).
+function updateDashboardState(msg) {
+    const attackData = {
         ip: msg.src_ip,
         source_ip: msg.src_ip,
         src_ip: msg.src_ip,
@@ -1255,19 +780,545 @@ const messageHandlers = {
         destination_lng: msg.dst_long,
         timestamp: Date.now(),
         event_time: msg.event_time
-      };
-      
-      // Send to live feed
-      window.attackMapDashboard.addAttackEvent(attackData);
-      
-      // Send to honeypot performance tracking
-      window.attackMapDashboard.processAttackForDashboard(attackData);
+    };
+
+    // Send to live feed
+    window.attackMapDashboard?.addAttackEvent(attackData);
+
+    // Send to honeypot performance tracking
+    window.attackMapDashboard?.processAttackForDashboard(attackData);
+}
+
+// Canonical AttackEvent (§9.2): geographic endpoints + metadata, no shape data.
+function toAttackEvent(msg) {
+    return {
+        id: msg.event_count,
+        src: { lng: msg.src_long, lat: msg.src_lat },
+        dst: { lng: msg.dst_long, lat: msg.dst_lat },
+        color: msg.color,
+        protocol: msg.protocol,
+        spawnedAt: Date.now(),
+        seed: Number.isFinite(msg.event_count) ? msg.event_count : Math.floor(Math.random() * 2147483647)
+    };
+}
+
+// renderMapTraffic gates ALL map side effects together (D34): registry
+// bookkeeping, attacker circle, honeypot marker and the transient animation.
+function renderMapTraffic(msg) {
+    var srcLatLng = { lat: msg.src_lat, lng: msg.src_long };
+    var dstLatLng = { lat: msg.dst_lat, lng: msg.dst_long };
+
+    // Store attack data for tooltips — keys byte-identical to 3.0.1
+    var srcKey = srcLatLng.lat + "," + srcLatLng.lng;
+    var dstKey = dstLatLng.lat + "," + dstLatLng.lng;
+
+    // Pre-create attacker data structure if needed
+    if (!circleAttackData[srcKey]) {
+        circleAttackData[srcKey] = {
+            country: msg.country,
+            iso_code: msg.iso_code,
+            location_key: srcKey,
+            attacks: [],
+            firstSeen: new Date(),
+            lastSeen: new Date(),
+            lastProtocol: msg.protocol,
+            lastColor: msg.color,
+            // Track multiple IPs at the same location
+            ips: {}
+        };
+    } else {
+        // Update protocol tracking for existing location
+        circleAttackData[srcKey].lastProtocol = msg.protocol;
+        circleAttackData[srcKey].lastColor = msg.color;
+        circleAttackData[srcKey].lastSeen = new Date();
     }
+
+    // Initialize IP-specific data if this is a new IP at this location
+    if (!circleAttackData[srcKey].ips[msg.src_ip]) {
+        circleAttackData[srcKey].ips[msg.src_ip] = {
+            src_ip: msg.src_ip,
+            ip_rep: msg.ip_rep,
+            attacks: [],
+            firstSeen: new Date(),
+            lastSeen: new Date()
+        };
+    }
+
+    // Pre-create honeypot data structure if needed
+    if (!markerAttackData[dstKey]) {
+        markerAttackData[dstKey] = {
+            country: msg.dst_country_name,
+            iso_code: msg.dst_iso_code,
+            dst_ip: msg.dst_ip,
+            hostname: msg.tpot_hostname,
+            attacks: [],
+            totalAttacks: 0,
+            uniqueAttackers: new Set(),
+            protocolStats: {},
+            firstSeen: new Date(),
+            lastUpdate: new Date()
+        };
+    }
+
+    addCircle(msg.country, msg.iso_code, msg.src_ip, msg.ip_rep, msg.color, srcLatLng, msg.protocol);
+    addMarker(msg.dst_country_name, msg.dst_iso_code, msg.dst_ip, msg.tpot_hostname, dstLatLng);
+
+    // Transient animation — the tab-wake suppression of 3.0.1 is preserved
+    if (renderer && !document.hidden && !isWakingUp) {
+        renderer.spawn(toAttackEvent(msg));
+    }
+
+    // Attack bookkeeping (as 3.0.1, without the pointless Promise.all)
+    const attackData = {
+        protocol: msg.protocol,
+        port: msg.dst_port,
+        honeypot: msg.honeypot,
+        timestamp: new Date(),
+        src_ip: msg.src_ip
+    };
+
+    circleAttackData[srcKey].attacks.push(attackData);
+    circleAttackData[srcKey].lastSeen = new Date();
+    circleAttackData[srcKey].ips[msg.src_ip].attacks.push(attackData);
+    circleAttackData[srcKey].ips[msg.src_ip].lastSeen = new Date();
+
+    markerAttackData[dstKey].attacks.push({
+        src_ip: msg.src_ip,
+        protocol: msg.protocol,
+        port: msg.dst_port,
+        timestamp: new Date()
+    });
+    markerAttackData[dstKey].totalAttacks++;
+    markerAttackData[dstKey].uniqueAttackers.add(msg.src_ip);
+    markerAttackData[dstKey].protocolStats[msg.protocol] =
+        (markerAttackData[dstKey].protocolStats[msg.protocol] || 0) + 1;
+    markerAttackData[dstKey].lastUpdate = new Date();
+
+    // Keep only last 50 attacks per location for performance
+    if (markerAttackData[dstKey].attacks.length > 50) {
+        markerAttackData[dstKey].attacks = markerAttackData[dstKey].attacks.slice(-50);
+    }
+    if (circleAttackData[srcKey].attacks.length > 50) {
+        circleAttackData[srcKey].attacks = circleAttackData[srcKey].attacks.slice(-50);
+    }
+}
+
+const messageHandlers = {
+  Traffic: (msg) => {
+    // Valid data received - update timestamp for connection status
+    window.lastValidDataTime = Date.now();
+
+    // Dashboard state ALWAYS updates, in every lifecycle state (D29/D34)
+    updateDashboardState(msg);
+
+    if (mapLifecycle === 'READY') {
+      renderMapTraffic(msg);
+      return;
+    }
+    if (mapLifecycle === 'INITIALIZING') {
+      if (startupTrafficQueue.length >= MAX_STARTUP_TRAFFIC) {
+        startupTrafficQueue.shift();           // keep-newest: drop the OLDEST
+        warnOnce('startup-queue', '[MAP-STARTUP] queue full, dropping oldest');
+      }
+      startupTrafficQueue.push(msg);
+    }
+    // FAILED: no map work; the dashboard path above already ran
   },
   Stats: (msg) => {
     handleStats(msg);
   },
 };
+
+// ---------------------------------------------------------------------------
+// Cache-restore contract (§7.2, dormant): the real implementation, installed
+// only after a successful map init. Nothing calls window.restoreAttackToMap
+// in 4.0 — this preserves the contract, it does not activate it.
+// ---------------------------------------------------------------------------
+function realProcessRestoredAttack(event) {
+    console.log('[MAP-RESTORE] Processing restored attack:', event);
+
+    // Skip if event doesn't have required data
+    if (!event.source_ip || !event.destination_ip) {
+        console.log('[MAP-RESTORE] Skipping event - missing IP data');
+        return;
+    }
+
+    // Create a simplified message object from cached event
+    const restoredMsg = {
+        // Source (attacker) data
+        country: event.country || 'Unknown',
+        iso_code: event.country_code || 'XX',
+        src_ip: event.source_ip || event.ip,
+        ip_rep: event.ip_rep || event.reputation || event.ip_reputation || 'Unknown',
+        color: event.color || getProtocolColor(event.protocol),
+
+        // Destination (honeypot) data - use original WebSocket field names
+        dst_country_name: event.dst_country_name || event.destination_country || 'Local',
+        dst_iso_code: event.dst_iso_code || event.destination_country_code || 'XX',
+        dst_ip: event.destination_ip,
+        tpot_hostname: event.tpot_hostname || event.honeypot || 'honeypot',
+        honeypot: event.honeypot,
+        protocol: event.protocol,
+        dst_port: event.destination_port || event.port,
+
+        // Coordinates (if available in cached data)
+        src_lat: event.source_lat,
+        src_long: event.source_lng || event.source_long,
+        dst_lat: event.destination_lat,
+        dst_long: event.destination_lng || event.destination_long
+    };
+
+    if (restoredMsg.src_lat && restoredMsg.src_long && restoredMsg.dst_lat && restoredMsg.dst_long) {
+        const srcLatLng = { lat: restoredMsg.src_lat, lng: restoredMsg.src_long };
+        const dstLatLng = { lat: restoredMsg.dst_lat, lng: restoredMsg.dst_long };
+        restoreMarkerData(restoredMsg, srcLatLng, dstLatLng, event);
+    } else {
+        // 3.0.1 had a dead fallback here calling an undefined getCoordinates()
+        // (map.js:143-157 at e798fcb) — it could never have worked. 4.0 replaces
+        // it with an explicit warning; the "lat,lng" keys are untouched (R12).
+        warnOnce('restore-coords',
+            '[MAP-RESTORE] Restored event without coordinates skipped (the 3.0.1 getCoordinates fallback was dead code)');
+    }
+}
+
+// Helper function to restore marker data and add visual elements
+function restoreMarkerData(restoredMsg, srcLatLng, dstLatLng, originalEvent) {
+    const srcKey = srcLatLng.lat + "," + srcLatLng.lng;
+    const dstKey = dstLatLng.lat + "," + dstLatLng.lng;
+
+    // Initialize or update circleAttackData for source location
+    if (!circleAttackData[srcKey]) {
+        circleAttackData[srcKey] = {
+            country: restoredMsg.country,
+            iso_code: restoredMsg.iso_code,
+            attacks: [],
+            totalAttacks: 0,
+            ips: {},
+            firstSeen: new Date(originalEvent.timestamp),
+            lastSeen: new Date(originalEvent.timestamp),
+            lastProtocol: restoredMsg.protocol,
+            lastColor: restoredMsg.color
+        };
+    } else {
+        // Update protocol tracking for restored attacks
+        // For restoration, we want to preserve the latest protocol/color from actual restore order
+        circleAttackData[srcKey].lastProtocol = restoredMsg.protocol;
+        circleAttackData[srcKey].lastColor = restoredMsg.color;
+        circleAttackData[srcKey].lastSeen = new Date(originalEvent.timestamp);
+    }
+
+    // Initialize IP data if needed
+    if (!circleAttackData[srcKey].ips[restoredMsg.src_ip]) {
+        circleAttackData[srcKey].ips[restoredMsg.src_ip] = {
+            src_ip: restoredMsg.src_ip,
+            ip_rep: restoredMsg.ip_rep,
+            attacks: [],
+            firstSeen: new Date(originalEvent.timestamp),
+            lastSeen: new Date(originalEvent.timestamp)
+        };
+    } else {
+        // Update reputation if new data is provided
+        if (restoredMsg.ip_rep) {
+            circleAttackData[srcKey].ips[restoredMsg.src_ip].ip_rep = restoredMsg.ip_rep;
+        }
+    }
+
+    // Add attack data to source location
+    const attackData = {
+        protocol: restoredMsg.protocol,
+        port: restoredMsg.dst_port,
+        timestamp: new Date(originalEvent.timestamp),
+        src_ip: restoredMsg.src_ip
+    };
+
+    circleAttackData[srcKey].attacks.push(attackData);
+    circleAttackData[srcKey].totalAttacks++;
+    circleAttackData[srcKey].lastSeen = new Date(originalEvent.timestamp);
+    circleAttackData[srcKey].ips[restoredMsg.src_ip].attacks.push(attackData);
+    circleAttackData[srcKey].ips[restoredMsg.src_ip].lastSeen = new Date(originalEvent.timestamp);
+
+    // Initialize or update markerAttackData for destination (honeypot)
+    if (!markerAttackData[dstKey]) {
+        markerAttackData[dstKey] = {
+            country: restoredMsg.dst_country_name,
+            iso_code: restoredMsg.dst_iso_code,
+            dst_ip: restoredMsg.dst_ip,
+            hostname: restoredMsg.tpot_hostname,
+            attacks: [],
+            totalAttacks: 0,
+            uniqueAttackers: new Set(),
+            protocolStats: {},
+            firstSeen: new Date(originalEvent.timestamp),
+            lastUpdate: new Date(originalEvent.timestamp)
+        };
+    }
+
+    // Add attack to honeypot data
+    markerAttackData[dstKey].attacks.push({
+        src_ip: restoredMsg.src_ip,
+        protocol: restoredMsg.protocol,
+        port: restoredMsg.dst_port,
+        timestamp: new Date(originalEvent.timestamp)
+    });
+    markerAttackData[dstKey].totalAttacks++;
+    markerAttackData[dstKey].uniqueAttackers.add(restoredMsg.src_ip);
+    markerAttackData[dstKey].protocolStats[restoredMsg.protocol] =
+        (markerAttackData[dstKey].protocolStats[restoredMsg.protocol] || 0) + 1;
+    markerAttackData[dstKey].lastUpdate = new Date(originalEvent.timestamp);
+
+    // Keep only last 50 attacks per location for performance
+    if (markerAttackData[dstKey].attacks.length > 50) {
+        markerAttackData[dstKey].attacks = markerAttackData[dstKey].attacks.slice(-50);
+    }
+    if (circleAttackData[srcKey].attacks.length > 50) {
+        circleAttackData[srcKey].attacks = circleAttackData[srcKey].attacks.slice(-50);
+    }
+
+    // Add visual elements (circle for attacker and marker for honeypot)
+    addCircle(restoredMsg.country, restoredMsg.iso_code, restoredMsg.src_ip,
+             restoredMsg.ip_rep, restoredMsg.color, srcLatLng, restoredMsg.protocol);
+    addMarker(restoredMsg.dst_country_name, restoredMsg.dst_iso_code,
+             restoredMsg.dst_ip, restoredMsg.tpot_hostname, dstLatLng);
+}
+
+// ---------------------------------------------------------------------------
+// Style loading and theme switching (§7.3, §7.6, D44)
+// ---------------------------------------------------------------------------
+async function loadStyle(theme, hdr, url) {
+    const res = await fetch(`static/styles/${theme}.json`, { cache: 'no-cache' });
+    if (!res.ok) throw new Error(`style ${theme}: HTTP ${res.status}`);
+    const style = await res.json();
+    // Resolved base + literal template — never new URL() on a '{…}' string (§7.3)
+    style.glyphs = new URL('static/basemaps/fonts/', document.baseURI).href + '{fontstack}/{range}.pbf';
+    style.sprite = new URL(`static/basemaps/sprites/v4/${theme}`, document.baseURI).href;
+    style.sources.protomaps.url = `pmtiles://${url}`;
+    style.sources.protomaps.maxzoom = hdr.maxZoom;
+    return style;
+}
+
+async function updateMapTheme(theme) {
+    if (mapLifecycle !== 'READY') {   // D44: INITIALIZING -> remember; FAILED -> no map work.
+        pendingTheme = theme;         // The dashboard's own theming is pure CSS and
+        return;                       // continues regardless.
+    }
+    const revision = ++themeRevision;
+    const style = await loadStyle(theme, header, pmtilesUrl);
+    if (revision !== themeRevision) return;   // a newer request superseded this one
+    themeTheMapWasBuiltWith = theme;
+    map.setStyle(style, { diff: true });
+}
+
+// Re-adds custom sources/layers after any style (re)load. Guards are per
+// object (a reload can leave partial state); feature-state is ALWAYS
+// re-applied (§7.6). The choropleth pieces arrive in WP7 through the
+// window.__choropleth hook.
+function firstLabelLayerId() {
+    const layers = map.getStyle().layers || [];
+    const symbol = layers.find(l => l.type === 'symbol');
+    return symbol ? symbol.id : undefined;
+}
+
+function reAddCustomLayers() {
+    if (window.__choropleth) window.__choropleth.readd();   // WP7: countries source + fill layer
+    if (!map.getSource('attackers')) map.addSource('attackers', attackersSourceSpec());
+    if (!map.getLayer('attackers-layer')) map.addLayer(attackersLayerSpec());
+    if (map.getSource('attackers')) map.getSource('attackers').setData(attackersFeatureCollection());
+    if (window.__choropleth) window.__choropleth.reapplyFeatureState();  // ALWAYS — never inside a "source was missing" branch
+}
+
+// ---------------------------------------------------------------------------
+// Failure handling (§13.4-§13.6, D37, D38)
+// ---------------------------------------------------------------------------
+function showMapFailure(title, hint) {
+    console.error(`[MAP-FAILURE] ${title}${hint ? ' — ' + hint : ''}`);
+    const panel = document.getElementById('map-failure-panel');
+    if (panel) {
+        const t = document.getElementById('map-failure-title');
+        const h = document.getElementById('map-failure-hint');
+        if (t) t.textContent = title;
+        if (h) h.textContent = hint || '';
+        panel.hidden = false;
+    }
+    if (window.map) {          // fatal failure AFTER construction (D37)
+        try { window.map.remove(); } catch (e) { /* already torn down */ }
+        window.map = null;
+        map = null;
+    }
+    mapLifecycle = 'FAILED';
+    startupTrafficQueue.length = 0;   // one log line; dashboard and WebSocket continue
+    pendingRestored.length = 0;       // §7.2
+    console.log('[MAP-FAILURE] Map disabled; data channel and dashboard continue.');
+}
+
+function handleMapError(e) {
+    const err = e && e.error;
+    if (maplibregl && err instanceof maplibregl.GPUInitializationError) {   // §13.4
+        showMapFailure('WebGL2 required', err.message);
+        return;
+    }
+    // Tile-level failures after construction: log at most once per minute (§13.5)
+    const now = Date.now();
+    if (now - lastMapErrorLog > 60000) {
+        lastMapErrorLog = now;
+        console.warn('[MAP-ERROR]', err ? (err.message || err) : e);
+    }
+}
+
+function hasWebGL2() {
+    const probe = document.createElement('canvas').getContext('webgl2');
+    if (!probe) return false;
+    const lose = probe.getExtension('WEBGL_lose_context');
+    if (lose) lose.loseContext();   // release the context slot (§13.4)
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Startup domain 2: the map (async, may fail; never blocks the data channel)
+// ---------------------------------------------------------------------------
+async function initMap() {
+    let boot, rendererModule;
+    try {
+        // D2: awaiting the dynamic imports IS the synchronisation — no load-order
+        // globals, no polling. Relative specifiers resolve against map.js's own
+        // URL, so this works at both / and /map/ (proven in WP4).
+        [boot, rendererModule] = await Promise.all([
+            import('./map-boot.mjs'),
+            import('./attack-renderer.mjs')
+        ]);
+    } catch (e) {
+        showMapFailure('Map engine failed to load', String(e));
+        return;
+    }
+    maplibregl = boot.maplibregl;
+
+    if (!hasWebGL2()) {
+        showMapFailure('WebGL2 required',
+            'This browser/session has no WebGL2 context. Enable hardware acceleration or use a WebGL2-capable browser.');
+        return;
+    }
+
+    pmtilesUrl = new URL('static/dist/world.pmtiles', document.baseURI).href;
+    try {
+        header = await boot.openBasemap(pmtilesUrl);   // §13.5 preflight
+    } catch (e) {
+        showMapFailure('Basemap missing or unreadable',
+            'Run: tools/fetch_basemap.sh --preset dev   (details: ' + String(e && e.message || e) + ')');
+        return;
+    }
+
+    const startupTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    let style;
+    try {
+        style = await loadStyle(startupTheme, header, pmtilesUrl);
+    } catch (e) {
+        showMapFailure('Map style missing or invalid', String(e && e.message || e));
+        return;
+    }
+
+    try {
+        map = new maplibregl.Map({
+            container: 'map',
+            style: style,
+            center: [0, 0],
+            zoom: 2,                                    // 512 px tiles: ≙ old Leaflet zoom 3 (§7.4)
+            minZoom: Math.max(1, header.minZoom),
+            maxZoom: header.maxZoom,                    // the archive is authoritative (§7.4)
+            renderWorldCopies: true,
+            maxPitch: 0,
+            dragRotate: false,
+            attributionControl: { compact: true }
+        });
+    } catch (e) {
+        showMapFailure('Map initialisation failed', String(e && e.message || e));
+        return;
+    }
+    window.map = map;   // D37: the ONE successful assignment
+    themeTheMapWasBuiltWith = startupTheme;
+
+    map.on('error', handleMapError);
+    map.touchZoomRotate.disableRotation();
+    map.addControl(new maplibregl.FullscreenControl());
+
+    try {
+        await new Promise((resolve, reject) => {
+            map.once('load', resolve);
+            map.once('error', (e) => {
+                // GPUInitializationError before first load is fatal (§13.4)
+                if (e.error instanceof maplibregl.GPUInitializationError) reject(e.error);
+            });
+        });
+    } catch (e) {
+        showMapFailure('WebGL2 required', String(e && e.message || e));
+        return;
+    }
+
+    // Custom sources/layers now and after every future style (re)load (§7.6)
+    reAddCustomLayers();
+    map.on('style.load', reAddCustomLayers);
+
+    // Attacker popups: built on click (replaces the refresh-on-click logic)
+    map.on('click', 'attackers-layer', (e) => {
+        const feature = e.features && e.features[0];
+        if (!feature) return;
+        const key = feature.properties.key;
+        const data = circleAttackData[key];
+        if (!data) return;
+        new maplibregl.Popup({ maxWidth: '350px', className: 'modern-popup attacker-popup' })
+            .setLngLat(feature.geometry.coordinates)
+            .setDOMContent(createAttackerPopup(data))
+            .addTo(map);
+    });
+    map.on('mouseenter', 'attackers-layer', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'attackers-layer', () => { map.getCanvas().style.cursor = ''; });
+
+    // Transient animation renderer (WP5)
+    renderer = new rendererModule.AttackRenderer();
+    renderer.attach(map);
+
+    // Full Clear-Cache implementation (D38): queues in every state (the stub
+    // already does that) plus renderer queue, attacker source/registry, marker
+    // registry and choropleth state when READY.
+    window.clearMapVisuals = function () {
+        startupTrafficQueue.length = 0;
+        pendingRestored.length = 0;
+        if (renderer) renderer.clear();
+        for (const k of Object.keys(circlesObject)) delete circlesObject[k];
+        for (const k of Object.keys(circleAttackData)) delete circleAttackData[k];
+        for (const k of Object.keys(markersObject)) {
+            try { markersObject[k].remove(); } catch (e) { /* detached */ }
+            delete markersObject[k];
+        }
+        for (const k of Object.keys(markerAttackData)) delete markerAttackData[k];
+        syncAttackersSource();
+        if (window.__choropleth) window.__choropleth.clear();
+    };
+
+    mapLifecycle = 'READY';
+
+    // Drain the startup traffic queue in order, then the restore queue (§7.1/§7.2)
+    for (const queued of startupTrafficQueue) renderMapTraffic(queued);
+    startupTrafficQueue.length = 0;
+
+    window.processRestoredAttack = realProcessRestoredAttack;
+    for (const e of pendingRestored) realProcessRestoredAttack(e);
+    pendingRestored.length = 0;
+
+    // D44: apply a theme requested during INITIALIZING
+    const startTheme = pendingTheme ?? (document.documentElement.getAttribute('data-theme') || 'dark');
+    pendingTheme = null;
+    if (startTheme !== themeTheMapWasBuiltWith) updateMapTheme(startTheme);
+
+    console.log(`[MAP] READY — MapLibre ${maplibregl.getVersion ? maplibregl.getVersion() : ''}, basemap z${header.minZoom}-${header.maxZoom}`);
+}
+
+// ---------------------------------------------------------------------------
+// Startup domain 1: the data channel (D29 — independent of the map)
+// ---------------------------------------------------------------------------
+function startDataChannel() {
+    document.addEventListener('DOMContentLoaded', function () {
+        connectWebSocket();
+    });
+}
 
 // Enhanced WebSocket handling with dashboard integration
 function connectWebSocket() {
@@ -1286,16 +1337,14 @@ function connectWebSocket() {
         console.log('[WARN] Error closing existing WebSocket:', e);
     }
   }
-  
+
   isReconnecting = true;
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const WS_HOST = protocol + '//' + window.location.host + '/websocket';
-  
+
   // Update status to connecting when attempting connection
-  if (window.attackMapDashboard) {
-    window.attackMapDashboard.updateConnectionStatus('connecting');
-  }
-  
+  window.attackMapDashboard?.updateConnectionStatus('connecting');
+
   // Make WebSocket globally accessible for dashboard monitoring
   window.webSocket = webSocket = new WebSocket(WS_HOST);
 
@@ -1303,44 +1352,31 @@ function connectWebSocket() {
     // Reset reconnection tracking
     isReconnecting = false;
     reconnectAttempts = 0;
-    
+
     // Reset last message time to prevent immediate timeout on reconnection
     window.lastWebSocketMessageTime = Date.now();
     window.lastValidDataTime = Date.now(); // Reset valid data timer
-    
+
     // Set global connection flag immediately
     window.webSocketConnected = true;
-    
+
     // Start heartbeat to monitor connection health
     startHeartbeat();
-    
-    // Update connection status in dashboard with better retry logic
-    function updateStatusWithRetry(attempts = 0) {
-      const maxAttempts = 10; // Try for up to 5 seconds
-      
-      if (window.attackMapDashboard) {
-        window.attackMapDashboard.updateConnectionStatus('connected');
-        console.log('[*] WebSocket connection status updated to connected');
-      } else if (attempts < maxAttempts) {
-        // Dashboard not ready yet, retry with exponential backoff
-        const delay = Math.min(100 + (attempts * 100), 1000); // 100ms to 1000ms
-        setTimeout(() => updateStatusWithRetry(attempts + 1), delay);
-      } else {
-        console.log('[WARNING] Dashboard not available after retries, but flag is set');
-      }
-    }
-    
-    updateStatusWithRetry();
+
+    // D43: the dashboard object provably exists before the socket connects
+    // (synchronous instantiation, deferred document order, DOMContentLoaded) —
+    // the 3.0.1 updateStatusWithRetry polling loop is deleted.
+    window.attackMapDashboard?.updateConnectionStatus('connected');
     console.log('[*] WebSocket connection established.');
   };
 
   webSocket.onclose = function (event) {
      // Stop heartbeat when connection closes
      stopHeartbeat();
-     
+
      // Clear the WebSocket connected flag
      window.webSocketConnected = false;
-     
+
      var reason = "Unknown error reason?";
      if (event.code == 1000)     reason = "[ ] Endpoint terminating connection: Normal closure";
      else if(event.code == 1001) reason = "[ ] Endpoint terminating connection: Endpoint is \"going away\"";
@@ -1356,20 +1392,18 @@ function connectWebSocket() {
      else if(event.code == 1011) reason = "[ ] Endpoint terminating connection: Server encountered an unexpected condition";
      else if(event.code == 1015) reason = "[ ] Endpoint terminating connection: Connection closed due TLS handshake failure";
      else reason = "[ ] Endpoint terminating connection; Unknown reason";
-     
+
      // Update dashboard connection status
-     if (window.attackMapDashboard) {
-       window.attackMapDashboard.updateConnectionStatus('disconnected');
-     }
-     
+     window.attackMapDashboard?.updateConnectionStatus('disconnected');
+
      console.log(reason);
-     
+
      // Always attempt to reconnect if not a clean closure (or even if it is, depending on requirements, but usually 1000 is manual)
      // User requirement: "Every 60 seconds a reconnection attempt should be made"
      if (event.code !== 1000) {
        const delay = reconnectDelay;
        console.log(`[INFO] Connection lost. Attempting reconnection in ${delay}ms`);
-       
+
        setTimeout(() => {
          reconnectAttempts++;
          isReconnecting = false; // Reset flag to allow new connection attempt
@@ -1386,28 +1420,23 @@ function connectWebSocket() {
     // Stop heartbeat on error
     stopHeartbeat();
     // Update status to disconnected on error
-    if (window.attackMapDashboard) {
-      window.attackMapDashboard.updateConnectionStatus('disconnected');
-    }
+    window.attackMapDashboard?.updateConnectionStatus('disconnected');
   };
 
   webSocket.onmessage = function (e) {
     try {
       // Update last message time for connection health monitoring
       window.lastWebSocketMessageTime = Date.now();
-      
+
       var msg = JSON.parse(e.data);
-      
+
       let handler = messageHandlers[msg.type];
       if (handler) {
         handler(msg);
       } else {
         console.warn('[WARNING] No handler found for message type:', msg.type);
       }
-      
-      // Let dashboard handle its own processing through messageHandlers
-      // Removed duplicate addAttackEvent call to prevent double entries
-      
+
     } catch (error) {
       console.error('[ERROR] Failed to parse WebSocket message:', error);
       console.log('[ERROR] Raw message data:', e.data);
@@ -1418,11 +1447,11 @@ function connectWebSocket() {
 // Heartbeat functions to monitor connection health
 function startHeartbeat() {
   stopHeartbeat(); // Clear any existing heartbeat
-  
+
   heartbeatInterval = setInterval(() => {
     const now = Date.now();
     const timeSinceLastMessage = now - window.lastWebSocketMessageTime;
-    
+
     // Log warning if no messages for extended time, but do NOT force close
     // This allows for "Idle" state
     if (timeSinceLastMessage > 60000) {
@@ -1442,41 +1471,16 @@ function stopHeartbeat() {
 function checkConnectionHealth() {
   if (!webSocket || webSocket.readyState !== WebSocket.OPEN) {
     console.log('[INFO] WebSocket not connected, attempting to reconnect...');
-    if (window.attackMapDashboard) {
-      window.attackMapDashboard.updateConnectionStatus('disconnected');
-    }
+    window.attackMapDashboard?.updateConnectionStatus('disconnected');
     return false;
   }
-  
-  // Simple check: Is the socket technically open?
-  if (!webSocket || webSocket.readyState !== WebSocket.OPEN) {
-    return false;
-  }
-  
+
   return true;
 }
 
-// Initialize connection when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-  connectWebSocket();
-});
-
-// Map theme update function
-function updateMapTheme(theme) {
-  if (!window.map || !mapLayers[theme]) return;
-  
-  // Remove current layer
-  window.map.eachLayer(function(layer) {
-    if (layer._url && layer._url.includes('basemaps.cartocdn.com')) {
-      window.map.removeLayer(layer);
-    }
-  });
-  
-  // Add new theme layer
-  mapLayers[theme].addTo(window.map);
-}
-
-// Listen for theme changes
+// ---------------------------------------------------------------------------
+// Theme observer and tab-visibility handling
+// ---------------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', function() {
   const observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(mutation) {
@@ -1486,16 +1490,16 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
-  
+
   observer.observe(document.documentElement, {
     attributes: true,
     attributeFilter: ['data-theme']
   });
-  
+
   // Add page visibility change handler
   document.addEventListener('visibilitychange', function() {
     isPageVisible = !document.hidden;
-    
+
     if (isPageVisible) {
       // Set waking up flag to suppress animation burst from buffered messages
       isWakingUp = true;
@@ -1503,10 +1507,8 @@ document.addEventListener('DOMContentLoaded', function() {
           isWakingUp = false;
       }, 2000); // 2 second grace period
 
-      // Clean up any stuck D3 animations from background throttling
-      if (typeof svg !== 'undefined' && svg) {
-          svg.selectAll("*").remove();
-      }
+      // Clean up any stuck animations from background throttling
+      if (renderer) renderer.clear();
 
       // Check connection health and reconnect if needed
       if (!checkConnectionHealth()) {
@@ -1518,21 +1520,10 @@ document.addEventListener('DOMContentLoaded', function() {
       // Page hidden - background operation mode
     }
   });
-  
-  // Start connection health monitoring
-  // Removed aggressive health check as per new logic:
-  // - Connected: Data < 30s
-  // - Idle: No Data > 30s (but socket open)
-  // - Disconnected: Socket Closed
-  /*
-  function startConnectionHealthCheck() {
-    if (connectionHealthCheck) clearInterval(connectionHealthCheck);
-    
-    connectionHealthCheck = setInterval(() => {
-       // ... removed ...
-    }, 30000);
-  }
-  
-  startConnectionHealthCheck();
-  */
 });
+
+// ---------------------------------------------------------------------------
+// Boot: data channel first, then the map — two independent domains (D29)
+// ---------------------------------------------------------------------------
+startDataChannel();
+initMap();
