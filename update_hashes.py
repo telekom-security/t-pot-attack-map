@@ -5,9 +5,18 @@ T-Pot Attack Map - Integrity Hash Updater
 Automatically updates SHA384 integrity hashes for all static assets in index.html
 
 Usage:
-    python3 update_hashes.py              # Update all hashes
-    python3 update_hashes.py --check      # Check which files need updating
-    python3 update_hashes.py --verbose    # Show detailed output
+    python3 update_hashes.py                 # Update all hashes
+    python3 update_hashes.py --check         # Check which files need updating
+    python3 update_hashes.py --check-vendor  # Verify static/vendor.lock (offline)
+    python3 update_hashes.py --verbose       # Show detailed output
+
+Integrity hierarchy (HANDOFF-v2 §14.4):
+  1. static/vendor.lock + committed hashes — the authoritative build-integrity
+     mechanism, verified locally by --check-vendor.
+  2. SRI on ordinary <script>/<link> tags (including <link rel="modulepreload">,
+     which the discovery regex matches) — an additional browser-side control.
+  3. modulepreload integrity — a browser-dependent optimisation; dynamic-import
+     correctness never depends on it.
 """
 
 import re
@@ -196,24 +205,76 @@ def update_integrity_hashes(html_file: str, check_only: bool = False, verbose: b
     
     return stats['updated'] == 0
 
+def check_vendor_lock(repo_root: Path, verbose: bool = False) -> bool:
+    """
+    Verify every entry of static/vendor.lock against the working tree
+    (HANDOFF-v2 §14.4). Fully offline. The manifest covers all four
+    provenance types (vendored / generated / local / legacy) by hash.
+
+    Returns True when every listed file exists and matches its hash.
+    """
+    lock_file = repo_root / 'static' / 'vendor.lock'
+    if not lock_file.exists():
+        print(f"{Colors.FAIL}✗ Missing manifest: {lock_file}{Colors.ENDC}")
+        return False
+
+    ok = True
+    entries = 0
+    for lineno, line in enumerate(lock_file.read_text(encoding='utf-8').splitlines(), 1):
+        if not line.strip() or line.startswith('#'):
+            continue
+        parts = line.split('\t')
+        if len(parts) != 5:
+            print(f"{Colors.FAIL}✗ vendor.lock:{lineno}: malformed record ({len(parts)} fields){Colors.ENDC}")
+            ok = False
+            continue
+        rel_path, expected_hash, provenance, source, version = parts
+        entries += 1
+        target = repo_root / rel_path
+        if not target.is_file():
+            print(f"{Colors.FAIL}✗ missing file: {rel_path}{Colors.ENDC}")
+            ok = False
+            continue
+        actual_hash = calculate_sha384(str(target))
+        if actual_hash != expected_hash:
+            print(f"{Colors.FAIL}✗ hash mismatch: {rel_path} ({provenance}){Colors.ENDC}")
+            print(f"    expected: {expected_hash}")
+            print(f"    actual:   {actual_hash}")
+            ok = False
+        elif verbose:
+            print(f"{Colors.OKGREEN}✓ {rel_path} ({provenance}, {source} {version}){Colors.ENDC}")
+
+    if ok:
+        print(f"{Colors.OKGREEN}✓ vendor.lock verified: {entries} entries match the working tree{Colors.ENDC}")
+    else:
+        print(f"{Colors.FAIL}✗ vendor.lock verification FAILED — regenerate via "
+              f"tools/vendor_frontend.sh --write-lock only if the change is intentional{Colors.ENDC}")
+    return ok
+
+
 def main():
     """Main entry point."""
     # Parse command line arguments
     check_only = '--check' in sys.argv
+    check_vendor = '--check-vendor' in sys.argv
     verbose = '--verbose' in sys.argv or '-v' in sys.argv
-    
+
     # Show help if requested
     if '--help' in sys.argv or '-h' in sys.argv:
         print(__doc__)
         return
-    
-    # Determine HTML file path
+
     script_dir = Path(__file__).parent
+
+    if check_vendor:
+        sys.exit(0 if check_vendor_lock(script_dir, verbose=verbose) else 1)
+
+    # Determine HTML file path
     html_file = script_dir / 'static' / 'index.html'
-    
+
     # Run the updater
     success = update_integrity_hashes(str(html_file), check_only=check_only, verbose=verbose)
-    
+
     # Exit with appropriate code
     sys.exit(0 if success else 1)
 

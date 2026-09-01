@@ -1,202 +1,56 @@
-# T-Pot Attack Map - Integrity Hash Updater
+# Integrity maintenance — `update_hashes.py` and `static/vendor.lock`
 
-## Overview
+## Integrity hierarchy (HANDOFF-v2 §14.4)
 
-`update_hashes.py` is a utility tool that automatically updates SHA384 integrity hashes for all static assets referenced in `index.html`. This ensures Content Security Policy (CSP) compliance and prevents the need for manual hash calculations.
+1. **`static/vendor.lock` + committed hashes** — the authoritative build-integrity
+   mechanism, verified locally and offline by `python3 update_hashes.py --check-vendor`.
+2. **SRI on ordinary `<script>`/`<link>` tags** in `static/index.html` — an additional
+   browser-side consistency control, maintained by `python3 update_hashes.py`.
+   The discovery regex matches any tag whose `src`/`href` precedes `integrity`,
+   including `<link rel="modulepreload" … integrity="sha384-…">`.
+3. **`modulepreload integrity`** — a browser-dependent optimisation whose enforcement
+   was measured in WP4. Dynamic-import correctness never depends on it; if a browser
+   ignores it, the module still loads and `vendor.lock` still catches tampering.
 
-## Features
+## Commands
 
-- ✅ Automatically detects all files with integrity attributes
-- ✅ Calculates SHA384 hashes using the same method as OpenSSL
-- ✅ Handles query parameters in file paths (e.g., `?v=5`)
-- ✅ Provides colored, formatted output for easy reading
-- ✅ Supports check-only mode to preview changes
-- ✅ Verbose mode to see all files (not just changes)
-- ✅ Proper error handling and reporting
-
-## Files Currently Tracked
-
-The tool automatically updates hashes for the following files:
-
-### JavaScript Libraries
-- `static/d3.v7.min.js`
-- `static/jquery-3.7.1.min.js`
-- `static/luxon.min.js`
-- `static/chart.umd.js`
-- `static/bootstrap.min.js`
-- `static/leaflet.js`
-- `static/leaflet.fullscreen.js`
-
-### Custom JavaScript
-- `static/cache-bridge.js`
-- `static/map.js`
-- `static/dashboard.js`
-
-### CSS Files
-- `static/bootstrap.min.css`
-- `static/leaflet.css`
-- `static/leaflet.fullscreen.css`
-- `static/fonts/fonts.css`
-- `static/fontawesome/css/all.min.css`
-- `static/index.css`
-
-## Usage
-
-### Basic Usage
-Update all integrity hashes in index.html:
-```bash
-python3 update_hashes.py
+```sh
+python3 update_hashes.py                 # rewrite SRI hashes in static/index.html
+python3 update_hashes.py --check         # verify SRI hashes (non-zero on drift)
+python3 update_hashes.py --check-vendor  # verify every vendor.lock entry (offline)
 ```
 
-### Check Mode
-Preview which files would be updated without making changes:
-```bash
-python3 update_hashes.py --check
-```
+Run `update_hashes.py` after every edit that changes a hashed static asset, and
+commit the resulting `index.html` together with the asset.
 
-### Verbose Mode
-Show all files, including those that don't need updating:
-```bash
-python3 update_hashes.py --verbose
-```
+## `static/vendor.lock`
 
-### Combined Modes
-Check all files with detailed output:
-```bash
-python3 update_hashes.py --check --verbose
-```
+Tab-separated, sorted by path, one record per shipped third-party/generated/local
+frontend asset: `path  sha384  provenance_type  source  version`.
 
-### Help
-Display usage information:
-```bash
-python3 update_hashes.py --help
-```
+`provenance_type` is one of:
 
-## Output Explanation
+- `vendored` — third-party download, proven against the named upstream ref;
+- `generated` — produced by a committed tool from a pinned input
+  (styles, country geometry, `pmtiles.mjs` with its rewritten fflate import, `fonts.css`);
+- `local` — repository source (`map-boot.mjs`, `attack-geometry.mjs`, `attack-renderer.mjs`);
+- `legacy` — interim only (WP3→WP8): a pre-4.0 third-party file recorded at the
+  baseline `e798fcb` whose upstream ref has not been proven. WP8 removes or replaces
+  every `legacy` entry; `tools/check_all.sh --release` fails if any remains.
 
-The tool provides color-coded output:
+The manifest is regenerated **only deliberately** via
+`tools/vendor_frontend.sh --write-lock` (after a vendoring change); `--check-vendor`
+is the tamper check for everything else.
 
-- 🟢 **Green checkmark (✓)**: File hash is up-to-date
-- 🟡 **Yellow lightning (⚡)**: File hash needs updating
-- 🔴 **Red X (✗)**: Error occurred (file not found, etc.)
+## Regeneration commands (one per generated committed asset, §12.4)
 
-### Example Output
+| Asset | Command |
+|---|---|
+| `static/styles/{dark,light}.json` | `node tools/styles/generate_styles.mjs` (verify: `--verify`) |
+| `static/data/countries.geojson(.gz)` | `node tools/vendor_countries.mjs --rebuild` (verify offline: `--verify`) |
+| `static/vendor.lock` | `tools/vendor_frontend.sh --write-lock` |
+| SRI hashes in `index.html` | `python3 update_hashes.py` |
+| Vendored engine/assets/licences | `tools/vendor_frontend.sh --engine --basemap-assets --licenses` |
 
-```
-T-Pot Attack Map - Integrity Hash Updater
-============================================================
-
-🔄 Updating integrity hashes...
-
-⚡ static/dashboard.js
-  Old: sha384-vWCBuKL1BmtmDRTWz+chtEo6Y1R2FQ6DKkFuyA+Ur/MldbNNZ9+CjBIhQ9W/N3k7
-  New: sha384-Xdqg0LrZrcKsW3rsFYsvLmCzvxc1hSUk/ZINNG8ZLjryNMOmfCS3z/AllglGGFa9
-
-============================================================
-Summary:
-  Total files:     16
-  Unchanged:       15
-  Need updating:   1
-  Errors:          0
-
-✓ Successfully updated static/index.html
-```
-
-## When to Use
-
-Run this tool whenever you modify:
-- Any JavaScript file in the `static/` directory
-- Any CSS file in the `static/` directory
-- Font files or other assets with integrity attributes
-
-## Integration with Development Workflow
-
-### Recommended Workflow
-
-1. **Make changes** to any static files (e.g., `dashboard.js`, `map.js`, `index.css`)
-2. **Check what needs updating**:
-   ```bash
-   python3 update_hashes.py --check
-   ```
-3. **Update the hashes**:
-   ```bash
-   python3 update_hashes.py
-   ```
-4. **Commit the changes** including both the modified files and `index.html`
-
-### Pre-commit Hook (Optional)
-
-You can automate this by adding a git pre-commit hook:
-
-```bash
-#!/bin/sh
-# .git/hooks/pre-commit
-
-# Check if any static files were modified
-if git diff --cached --name-only | grep -q "^static/"; then
-    echo "Static files modified, updating integrity hashes..."
-    python3 update_hashes.py
-    
-    # Stage the updated index.html
-    git add static/index.html
-fi
-```
-
-## Technical Details
-
-### Hash Calculation Method
-
-The tool uses Python's `hashlib` library to calculate SHA384 hashes, which produces identical results to the OpenSSL command:
-
-```bash
-openssl dgst -sha384 -binary <file> | openssl base64 -A
-```
-
-### Path Resolution
-
-The tool intelligently handles path resolution:
-- Detects that `index.html` is in the `static/` directory
-- Strips the `static/` prefix from file paths to avoid double-pathing
-- Removes query parameters (e.g., `?v=5`) before file lookup
-- Uses absolute paths to avoid working directory issues
-
-### Regex Pattern
-
-The tool uses the following regex to extract integrity attributes:
-```regex
-(?:src|href)="(static/[^"]+)"[^>]*?integrity="(sha384-[^"]+)"
-```
-
-This matches both `<script>` and `<link>` tags with integrity attributes.
-
-## Troubleshooting
-
-### File Not Found Errors
-
-If you see "File not found" errors:
-1. Verify the file exists in the `static/` directory
-2. Check that the file path in `index.html` is correct
-3. Ensure you're running the script from the project root directory
-
-### Permission Denied
-
-If you get permission errors:
-```bash
-chmod +x update_hashes.py
-```
-
-### No Changes Detected
-
-If the tool reports all files unchanged but you know you modified a file:
-1. Verify you saved the file
-2. Check that the file path matches exactly what's in `index.html`
-3. Run with `--verbose` to see details about all files
-
-## Requirements
-
-- Python 3.6 or higher
-- Standard library only (no external dependencies)
-
-## License
-
-This tool is part of the T-Pot Attack Map project.
+Generation baseline: Node 24.20.0 LTS (`.node-version`, HANDOFF-v2 D45); Node ≥ 20
+is the compatibility floor.

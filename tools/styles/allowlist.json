@@ -1,0 +1,18 @@
+{
+  "comment": "Style allowlist (HANDOFF-v2 §8.4, D12): only these upstream layer ids are retained. The reduced T-Pot look is a STYLE decision — the tileset stays general-purpose.",
+  "retain": [
+    "background",
+    "earth",
+    "water",
+    "water_stream",
+    "water_river",
+    "water_waterway_label",
+    "water_label_ocean",
+    "water_label_lakes",
+    "boundaries",
+    "boundaries_country",
+    "places_country",
+    "places_region",
+    "places_locality"
+  ]
+}

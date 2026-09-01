@@ -1,0 +1,9 @@
+{
+  "name": "tpot-attackmap-styles",
+  "private": true,
+  "description": "Development-time style generation for the T-Pot Attack Map (HANDOFF-v2 §8.4)",
+  "type": "module",
+  "dependencies": {
+    "@protomaps/basemaps": "5.7.2"
+  }
+}
