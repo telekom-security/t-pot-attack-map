@@ -624,6 +624,7 @@ function addMarker(dst_country_name, dst_iso_code, dst_ip, tpot_hostname, dstLat
         offset: [0, -48],
         className: 'modern-popup honeypot-popup'
     });
+    installPopupClamp(popup);
     marker.setPopup(popup);
 
     // Popup content is (re)built on click, replacing the old refresh-on-click logic
@@ -638,6 +639,70 @@ function addMarker(dst_country_name, dst_iso_code, dst_ip, tpot_hostname, dstLat
 // ---------------------------------------------------------------------------
 // Popups (DOM builders unchanged from 3.0.1)
 // ---------------------------------------------------------------------------
+
+// Keep an open popup fully inside the visible map area (maintainer decision
+// 2026-09-01): the map does NOT auto-pan (unlike Leaflet in 3.0.1) and a
+// popup must never run under the header/feed/side panel — .map-container
+// clips at overflow:hidden. MapLibre's dynamic anchor only flips sides and
+// never clamps, so the popup BODY is shifted by a pixel offset into the
+// container (the wrapper keeps MapLibre's own anchor transform); the tip is
+// hidden via .popup-clamped whenever a shift was needed, because it would
+// point nowhere. A dynamic max-height makes the content scroll internally,
+// so the popup always fits even when the map area is very low.
+function installPopupClamp(popup) {
+    let dx = 0, dy = 0;   // currently applied body shift
+    const clampOnce = () => {
+        const el = popup.getElement && popup.getElement();
+        if (!el || !map) return;
+        const content = el.querySelector('.maplibregl-popup-content');
+        if (!content) return;
+        const container = map.getContainer();
+        const margin = 8;
+        // the clamp target is the VISIBLE map area: the map container runs on
+        // under the (resizable) bottom panel, which overlays its lower part —
+        // clamping against the raw container would leave popups under the feed
+        const cRect = { ...container.getBoundingClientRect().toJSON() };
+        const panel = document.getElementById('bottom-panel');
+        if (panel) {
+            const pr = panel.getBoundingClientRect();
+            if (pr.height > 0 && pr.top > cRect.top && pr.top < cRect.bottom) cRect.bottom = pr.top;
+        }
+        content.style.maxHeight = Math.max(120, (cRect.bottom - cRect.top) - 3 * margin) + 'px';
+        const pRect = content.getBoundingClientRect();
+        // natural (unshifted) position: subtract the shift already applied,
+        // so no transform reset/reflow is needed per run
+        const natural = {
+            left: pRect.left - dx, right: pRect.right - dx,
+            top: pRect.top - dy, bottom: pRect.bottom - dy,
+        };
+        dx = 0; dy = 0;
+        if (natural.left < cRect.left + margin) dx = cRect.left + margin - natural.left;
+        else if (natural.right > cRect.right - margin) dx = cRect.right - margin - natural.right;
+        if (natural.top < cRect.top + margin) dy = cRect.top + margin - natural.top;
+        else if (natural.bottom > cRect.bottom - margin) dy = cRect.bottom - margin - natural.bottom;
+        content.style.transform = (dx || dy) ? `translate(${dx}px, ${dy}px)` : '';
+        el.classList.toggle('popup-clamped', !!(dx || dy));
+    };
+    // run twice per trigger: MapLibre's own popup update (dynamic anchor
+    // re-evaluation) shares the same events and may land after the first
+    // pass — the second pass converges on the settled position
+    const clamp = () => { clampOnce(); requestAnimationFrame(clampOnce); };
+    // re-clamp when the bottom panel is resized (it overlays the map, so the
+    // map itself fires no resize event for it)
+    const panelObserver = (typeof ResizeObserver !== 'undefined')
+        ? new ResizeObserver(() => clamp()) : null;
+    popup.on('open', () => {
+        dx = 0; dy = 0;
+        clamp();
+        if (map) { map.on('move', clamp); map.on('resize', clamp); }
+        const panel = document.getElementById('bottom-panel');
+        if (panelObserver && panel) panelObserver.observe(panel);
+    });
+    popup.on('close', () => {
+        if (map) { map.off('move', clamp); map.off('resize', clamp); }
+        if (panelObserver) panelObserver.disconnect();
+    });
+}
 
 // Helper function to format reputation with line breaks for multi-word values
 function formatReputation(reputation) {
@@ -1538,10 +1603,11 @@ async function initMap() {
         const key = feature.properties.key;
         const data = circleAttackData[key];
         if (!data) return;
-        new maplibregl.Popup({ maxWidth: '350px', className: 'modern-popup attacker-popup' })
+        const popup = new maplibregl.Popup({ maxWidth: '350px', className: 'modern-popup attacker-popup' })
             .setLngLat(feature.geometry.coordinates)
-            .setDOMContent(createAttackerPopup(data))
-            .addTo(map);
+            .setDOMContent(createAttackerPopup(data));
+        installPopupClamp(popup);   // 'open' fires on addTo
+        popup.addTo(map);
     });
     map.on('mouseenter', 'attackers-layer', () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'attackers-layer', () => { map.getCanvas().style.cursor = ''; });

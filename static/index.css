@@ -1916,6 +1916,34 @@ select:focus {
     padding: 0;
     font-family: var(--font-primary);
     line-height: 1.4;
+    /* clamped-into-view popups (map.js installPopupClamp): the header stays
+       fixed and the content scrolls within the JS-set max-height */
+    display: flex;
+    flex-direction: column;
+}
+
+/* the popup builders wrap header + content in one classless div — pass the
+   flex chain through it so the capped height reaches .popup-content */
+.modern-popup .maplibregl-popup-content > div {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.modern-popup .popup-header {
+    flex-shrink: 0;
+}
+
+.modern-popup .popup-content {
+    overflow-y: auto;
+    min-height: 0;
+}
+
+/* the body was shifted to stay inside the map area — the tip would point
+   nowhere, so hide it (visibility keeps the wrapper's flex layout stable,
+   display:none would shift the just-measured content by the tip size) */
+.modern-popup.popup-clamped .maplibregl-popup-tip {
+    visibility: hidden;
 }
 
 .modern-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--bg-card); }
