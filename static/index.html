@@ -35,7 +35,7 @@
         <!-- Local Icons (Font Awesome) -->
         <link rel="stylesheet" href="static/fontawesome/css/all.min.css" integrity="sha384-qrALq7+6jBOZIQsNnT6xGkMDru64qD6uTlDra39xrt2SoXl4pO3FX6Roz/RpR/BS">
 
-        <link href="static/index.css?v=7" rel="stylesheet" integrity="sha384-dhFJPvzjv4oe8DDAGIfSaMtRF+ay7ig/KtwBR8WNYXpF5rK03mYy6iHTG9/9wOkb"/>
+        <link href="static/index.css?v=7" rel="stylesheet" integrity="sha384-EVttRxIGSKllfm6lUT9tCZSjj9ez14IBIUQjIASOVzLWYTcpEVDqwL/JBg8kL0xR"/>
     </head>
 
     <body>
@@ -513,18 +513,16 @@
                     <div class="settings-section">
                         <h4 class="flex-center"><i class="fas fa-volume-up"></i> Audio Alerts</h4>
                         <div class="setting-item">
-                            <label class="setting-label">
+                            <label class="setting-row">
+                                <span class="setting-title">Play sound alerts</span>
                                 <input type="checkbox" id="sound-alerts">
-                                <div class="setting-content">
-                                    <span class="setting-title">Play sound alerts</span>
-                                    <span class="setting-description">Enable audio notifications for new attacks</span>
-                                </div>
                             </label>
+                            <span class="setting-description">Enable audio notifications for new attacks</span>
                         </div>
                         <div class="setting-item" id="sound-options">
-                            <div class="setting-content">
-                                <span class="setting-title">Alert Sound</span>
-                                <select id="alert-sound" class="setting-select">
+                            <div class="setting-row">
+                                <span class="setting-title">Alert sound</span>
+                                <select id="alert-sound" class="setting-select" title="Alert sound">
                                     <option value="beep">Digital Beep</option>
                                     <option value="notification">Notification Chime</option>
                                     <option value="alert">Security Alert</option>
@@ -533,38 +531,39 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="settings-section">
                         <h4 class="flex-center"><i class="fas fa-earth-europe"></i> Map</h4>
                         <div class="setting-item">
-                            <div class="setting-content">
+                            <div class="setting-row">
                                 <span class="setting-title">Activity shading</span>
                                 <select id="shading-mode" class="setting-select" title="Activity shading mode">
-                                    <option value="mixed">Mixed (countries, heatmap when zoomed in)</option>
+                                    <option value="mixed">Mixed (auto by zoom)</option>
                                     <option value="choropleth">Countries only</option>
                                     <option value="heatmap">Heatmap only</option>
                                     <option value="off">Off</option>
                                 </select>
-                                <span class="setting-description">Shades where observed events geolocate
-                                    by source IP address — not attribution: it does not establish that an
-                                    attacker, operator or state actor is physically located there. Positions
-                                    are GeoIP city/centroid estimates and frequently mark hosting providers
-                                    and data centres; proxies, VPNs and compromised hosts all shift the
-                                    apparent origin.</span>
                             </div>
+                            <span class="setting-description">Shades where observed events geolocate
+                                by source IP address — not attribution: it does not establish that an
+                                attacker, operator or state actor is physically located there. Positions
+                                are GeoIP city/centroid estimates and frequently mark hosting providers
+                                and data centres; proxies, VPNs and compromised hosts all shift the
+                                apparent origin. In Mixed mode the country shading crossfades into a
+                                density heatmap while zooming in.</span>
                         </div>
                     </div>
 
                     <div class="settings-section">
                         <h4 class="flex-center"><i class="fas fa-database"></i> Data Management</h4>
                         <div class="setting-item">
-                            <div class="setting-content">
-                                <span class="setting-title">Cache Storage</span>
-                                <span class="setting-description">Clear cached attack data and reset map markers</span>
-                                <button class="btn-base btn-warning hover-lift mt-2" id="clear-cache">
+                            <div class="setting-row">
+                                <span class="setting-title">Cache storage</span>
+                                <button class="btn-base btn-warning hover-lift" id="clear-cache">
                                     <i class="fas fa-trash-alt"></i> Clear Cache
                                 </button>
                             </div>
+                            <span class="setting-description">Clear cached attack data and reset map markers</span>
                         </div>
                     </div>
                 </div>

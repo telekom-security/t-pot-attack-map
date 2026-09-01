@@ -1217,8 +1217,8 @@ body {
     background: var(--bg-modal);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-lg);
-    max-width: 450px;
-    width: 90%;
+    max-width: 640px;
+    width: min(92vw, 640px);
     max-height: 80vh;
     overflow: hidden;
     display: flex;
@@ -1277,7 +1277,7 @@ body {
 
 .modal-body {
     flex: 1;
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
     overflow-y: auto;
     background: var(--bg-primary);
 }
@@ -1286,7 +1286,16 @@ body {
     padding: var(--spacing-md) var(--spacing-lg);
     background: var(--bg-tertiary);
     border-top: 1px solid var(--border-primary);
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
     gap: var(--spacing-md);
+}
+
+/* neutralise Bootstrap's .modal-footer > * child margins */
+.modal-footer > * {
+    margin: 0;
 }
 
 /* Modal-specific button styling */
@@ -1302,8 +1311,8 @@ body {
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
-    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
 }
 
 .settings-section:last-child {
@@ -1311,7 +1320,7 @@ body {
 }
 
 .settings-section h4 {
-    font-size: 1.125rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0 0 var(--spacing-lg) 0;
@@ -1337,6 +1346,42 @@ body {
 
 .setting-content {
     flex: 1;
+}
+
+/* System-settings row layout: title left, control right, description below */
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    cursor: pointer;
+}
+
+.setting-row .setting-title {
+    margin-bottom: 0;
+}
+
+.setting-row .setting-select {
+    width: 260px;
+    max-width: 55%;
+    margin-top: 0;
+    flex-shrink: 0;
+}
+
+.setting-row input[type="checkbox"] {
+    margin: 0;
+    accent-color: var(--primary-color);
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.setting-row .btn-base {
+    flex-shrink: 0;
+}
+
+.setting-row + .setting-description {
+    margin-top: var(--spacing-xs);
 }
 
 .setting-title {
