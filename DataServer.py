@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import json
 import time
@@ -7,11 +8,11 @@ import redis
 from elasticsearch import Elasticsearch
 from tzlocal import get_localzone
 
-# Within T-Pot: es = Elasticsearch('http://elasticsearch:9200') and redis_ip = 'map_redis'
-#es = Elasticsearch('http://127.0.0.1:64298')
-#redis_ip = '127.0.0.1'
-es = Elasticsearch('http://elasticsearch:9200')
-redis_ip = 'map_redis'
+# Configuration defaults (override via CLI flags, HANDOFF-v2 D21)
+DEFAULT_ES_URL = 'http://elasticsearch:9200'
+DEFAULT_REDIS_HOST = 'map_redis'
+es = Elasticsearch(DEFAULT_ES_URL)
+redis_ip = DEFAULT_REDIS_HOST
 redis_channel = 'attack-map-production'
 version = 'Data Server 3.0.1'
 local_tz = get_localzone()
@@ -426,9 +427,21 @@ def check_connections():
     
     return True
 
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description=version)
+    parser.add_argument('--redis-host', default=DEFAULT_REDIS_HOST,
+                        help=f'Redis host (default: {DEFAULT_REDIS_HOST})')
+    parser.add_argument('--es-url', default=DEFAULT_ES_URL,
+                        help=f'Elasticsearch URL (default: {DEFAULT_ES_URL})')
+    return parser.parse_args(argv)
+
+
 if __name__ == '__main__':
+    cli_args = parse_args()
+    redis_ip = cli_args.redis_host
+    es = Elasticsearch(cli_args.es_url)
     print(version)
-    
+
     # Check both connections on startup
     check_connections()
     print("[*] Starting data server...\n")
