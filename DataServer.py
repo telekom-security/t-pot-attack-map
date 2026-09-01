@@ -14,7 +14,7 @@ DEFAULT_REDIS_HOST = 'map_redis'
 es = Elasticsearch(DEFAULT_ES_URL)
 redis_ip = DEFAULT_REDIS_HOST
 redis_channel = 'attack-map-production'
-version = 'Data Server 3.0.1'
+version = 'Data Server 4.0.0'
 local_tz = get_localzone()
 output_text = os.getenv("TPOT_ATTACKMAP_TEXT", "ENABLED").upper()
 

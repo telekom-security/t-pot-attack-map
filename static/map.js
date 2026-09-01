@@ -1117,7 +1117,7 @@ function realProcessRestoredAttack(event) {
         // (map.js:143-157 at e798fcb) — it could never have worked. 4.0 replaces
         // it with an explicit warning; the "lat,lng" keys are untouched (R12).
         warnOnce('restore-coords',
-            '[MAP-RESTORE] Restored event without coordinates skipped (the 3.0.1 getCoordinates fallback was dead code)');
+            '[MAP-RESTORE] Restored event without coordinates skipped (the legacy getCoordinates fallback was dead code)');
     }
 }
 

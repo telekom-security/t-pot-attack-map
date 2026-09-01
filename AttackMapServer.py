@@ -18,7 +18,7 @@ from demo_events import DEMO_BANNER, DemoEventGenerator, add_demo_arguments
 # Configuration defaults (override via CLI flags, HANDOFF-v2 D21)
 DEFAULT_REDIS_URL = 'redis://map_redis:6379'
 DEFAULT_WEB_PORT = 64299
-version = 'Attack Map Server 3.0.1'
+version = 'Attack Map Server 4.0.0'
 
 redis_url = DEFAULT_REDIS_URL
 
