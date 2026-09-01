@@ -637,6 +637,89 @@ function addMarker(dst_country_name, dst_iso_code, dst_ip, tpot_hostname, dstLat
 }
 
 // ---------------------------------------------------------------------------
+// World-fit start view (maintainer decision 2026-09-01): on load and — while
+// the user has not touched the map — on every resize (window, fullscreen,
+// bottom-panel drag) the camera fits the continents band 58°S-75°N into the
+// VISIBLE map area (the bottom panel overlays the container). minZoom stays
+// 1: zooming out below the fit remains possible, the fit never goes below 1.
+// ---------------------------------------------------------------------------
+const WORLD_FIT_LAT_N = 75;    // North Cape/Iceland; northern Greenland may overshoot
+const WORLD_FIT_LAT_S = -58;   // Cape Horn; Antarctica stays out
+
+let autoWorldView = true;      // resize re-fits only until the first user gesture
+
+/** Camera fitting 360° into visW OR the lat band into visH — whichever is
+ *  the stricter (smaller) zoom, so nothing is ever cropped. Pure; exposed
+ *  via window.__worldFit for the browser test drivers. */
+function worldFitCamera(visW, visH) {
+    const mercY = (lat) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
+    const yN = mercY(WORLD_FIT_LAT_N), yS = mercY(WORLD_FIT_LAT_S);
+    const bandFrac = (yN - yS) / (2 * Math.PI);
+    const zWidth = Math.log2(visW / 512);                 // full 360° fits the width
+    const zHeight = Math.log2(visH / (512 * bandFrac));   // lat band fits the height
+    // typical layouts need zoom < 1 (the archive holds z0); floor at 0
+    const zoom = Math.max(0, Math.min(zWidth, zHeight));
+    const latMid = (Math.atan(Math.sinh((yN + yS) / 2)) * 180) / Math.PI;   // ≈ 12.6°N
+    return { zoom, center: [0, latMid] };
+}
+
+/** The bottom panel is position:fixed and would overlay the map's lower
+ *  part. MapLibre constrains the camera to the ±85° Mercator square over
+ *  the FULL container (zoom floor log2(height/512), centre pinning), so a
+ *  panel-covered container makes the world fit impossible — the map
+ *  container must END at the panel's top edge instead. Kept in sync here
+ *  (initial + ResizeObserver on the panel). */
+function syncMapViewportToPanel() {
+    const mc = document.querySelector('.map-container');
+    const panel = document.getElementById('bottom-panel');
+    if (!mc || !panel) return;
+    const ph = Math.max(0, Math.round(panel.getBoundingClientRect().height));
+    const target = `calc(100% - ${ph}px)`;
+    if (mc.style.height !== target) {
+        mc.style.height = target;
+        if (map) map.resize();   // fires 'resize' -> scheduleWorldFit
+    }
+}
+
+/** Visible map area: the #map container minus the overlaying bottom panel.
+ *  (After syncMapViewportToPanel the overlap is normally 0; kept generic.) */
+function visibleMapArea() {
+    const container = document.getElementById('map');
+    if (!container) return null;
+    const cRect = container.getBoundingClientRect();
+    let bottom = cRect.bottom;
+    const panel = document.getElementById('bottom-panel');
+    if (panel) {
+        const pr = panel.getBoundingClientRect();
+        if (pr.height > 0 && pr.top > cRect.top && pr.top < bottom) bottom = pr.top;
+    }
+    return { w: cRect.width, h: bottom - cRect.top, overlap: cRect.bottom - bottom };
+}
+
+function applyWorldFit() {
+    if (!map) return;
+    const vis = visibleMapArea();
+    if (!vis || vis.w < 50 || vis.h < 50) return;
+    const cam = worldFitCamera(vis.w, vis.h);
+    // zoom-out stays free down to 1 (maintainer decision), but never above
+    // the fit itself: on small windows the fit IS below 1 and must be allowed
+    map.setMinZoom(Math.max(header ? header.minZoom : 0, Math.min(1, cam.zoom)));
+    // offset lifts the band centre from the container centre into the centre
+    // of the visible strip above the panel overlap; easeTo(duration 0) is a
+    // jump that supports offset and carries no originalEvent (never disarms)
+    map.easeTo({ center: cam.center, zoom: cam.zoom, duration: 0, offset: [0, -(vis.overlap / 2)] });
+}
+
+let worldFitRaf = 0;
+function scheduleWorldFit() {
+    if (!autoWorldView || worldFitRaf) return;
+    worldFitRaf = requestAnimationFrame(() => {
+        worldFitRaf = 0;
+        if (autoWorldView) applyWorldFit();
+    });
+}
+
+// ---------------------------------------------------------------------------
 // Popups (DOM builders unchanged from 3.0.1)
 // ---------------------------------------------------------------------------
 
@@ -1555,13 +1638,22 @@ async function initMap() {
         return;
     }
 
+    // world-fit start view: end the map container at the panel top, then
+    // compute the camera from the DOM geometry BEFORE construction so the
+    // first paint already shows all continents
+    syncMapViewportToPanel();
+    const initialVis = visibleMapArea();
+    const initialCam = (initialVis && initialVis.w >= 50 && initialVis.h >= 50)
+        ? worldFitCamera(initialVis.w, initialVis.h)
+        : { center: [0, 12.6], zoom: 2 };
+
     try {
         map = new maplibregl.Map({
             container: 'map',
             style: style,
-            center: [0, 0],
-            zoom: 2,                                    // 512 px tiles: ≙ old Leaflet zoom 3 (§7.4)
-            minZoom: Math.max(1, header.minZoom),
+            center: initialCam.center,
+            zoom: initialCam.zoom,                      // world fit (58°S-75°N band)
+            minZoom: Math.max(header.minZoom, Math.min(1, initialCam.zoom)),
             maxZoom: header.maxZoom,                    // the archive is authoritative (§7.4)
             renderWorldCopies: true,
             maxPitch: 0,
@@ -1578,6 +1670,33 @@ async function initMap() {
     map.on('error', handleMapError);
     map.touchZoomRotate.disableRotation();
     map.addControl(new maplibregl.FullscreenControl());
+
+    // world-fit: apply the panel-overlap offset the constructor cannot take,
+    // then keep re-fitting on resizes until the first USER gesture (only
+    // user-initiated moves carry an originalEvent; app/test jumpTo does not)
+    applyWorldFit();
+    map.on('movestart', (e) => { if (e.originalEvent) autoWorldView = false; });
+    // gesture detection directly on the canvas container — any wheel, pointer
+    // or double-click on the map ends the auto mode reliably
+    for (const gesture of ['wheel', 'pointerdown', 'dblclick']) {
+        map.getCanvasContainer().addEventListener(gesture,
+            () => { autoWorldView = false; }, { passive: true });
+    }
+    map.on('resize', scheduleWorldFit);
+    if (typeof ResizeObserver !== 'undefined') {
+        const bottomPanel = document.getElementById('bottom-panel');
+        if (bottomPanel) {
+            new ResizeObserver(() => {
+                syncMapViewportToPanel();   // map.resize() -> 'resize' -> refit
+                scheduleWorldFit();
+            }).observe(bottomPanel);
+        }
+    }
+    window.__worldFit = {   // diagnostic/test hook (like __choropleth)
+        camera: worldFitCamera,
+        apply: applyWorldFit,
+        isAuto: () => autoWorldView,
+    };
 
     try {
         await new Promise((resolve, reject) => {
