@@ -11,41 +11,82 @@
 // an injected canvas, the clock is injectable, and renderFrame(tMs) is
 // explicit so tests need no requestAnimationFrame.
 
-import { unwrapLongitude, chooseWorldCopy, easeCircleIn } from './attack-geometry.mjs';
+import { chooseWorldCopy, easeCircleIn } from './attack-geometry.mjs';
 
-// Visual calibration (WP6, against the WP1 baseline screenshots S09):
-// bendPx = clamp(screenDist * factor, MIN_BEND_PX, MAX_BEND_PX) — the bend is
-// screen-space-normalised, not latitude-scaled (§9.3). The per-event factor
-// varies deterministically with the event seed in [BEND_FACTOR_MIN,
-// BEND_FACTOR_MAX] around the FACTOR baseline — restoring 3.0.1's organic
-// per-event arc variation ("bend direction and small variation" from the
-// seed, §9.2) while keeping the D15 pixel bounds.
-export const FACTOR = 0.22;
-export const BEND_FACTOR_MIN = 0.12;
-export const BEND_FACTOR_MAX = 0.32;
-export const MIN_BEND_PX = 12;
-export const MAX_BEND_PX = 140;
+// Visual calibration: since the 3.0.1 parity decision of 2026-09-01 the bend
+// uses the EXACT 3.0.1 calcMidpoint formula — offset magnitude
+// (sqrt(dx) + sqrt(dy)) * intensity, intensity uniform in
+// [ARC_INTENSITY_MIN, ARC_INTENSITY_MAX] — reproducing the original's high
+// variance (3x random spread, sqrt distance scaling, no pixel cap). The only
+// differences: intensity and bend direction come deterministically from the
+// event seed instead of Math.random (same seed, same arc — testability), and
+// an emergency clamp keeps degenerate arcs from leaving the viewport
+// entirely. This replaces the linear factor * distance bend with its 140 px
+// cap, which made all long arcs look identical.
+export const ARC_INTENSITY_MIN = 2.5;
+export const ARC_INTENSITY_MAX = 7.5;
 
 // Phase timings, as in 3.0.1 (§9.4): travel 0-700 ms, impact 700-1400 ms,
 // source ring 0-700 ms; events self-expire after <= 1.4 s.
 export const TRAVEL_MS = 700;
 export const LIFETIME_MS = 1400;
 export const MAX_EVENTS = 300;   // flood fuse: hard cap, oldest dropped
-export const TRAIL_SAMPLES = 24;
+export const TRAIL_SAMPLES = 32;
 
-export function bendPixels(screenDistance, factor = FACTOR) {
-  return Math.min(Math.max(screenDistance * factor, MIN_BEND_PX), MAX_BEND_PX);
-}
-
-/** Deterministic per-event bend factor in [BEND_FACTOR_MIN, BEND_FACTOR_MAX]
- *  derived from the event seed (integer hash -> uniform). Same seed, same arc. */
-export function bendFactorFromSeed(seed) {
+function seedHash32(seed) {
   let h = (seed | 0) + 0x9e3779b9;
   h = Math.imul(h ^ (h >>> 16), 0x21f0aaad);
   h = Math.imul(h ^ (h >>> 15), 0x735a2d97);
   h ^= h >>> 15;
-  const u = (h >>> 0) / 4294967295;   // [0, 1]
-  return BEND_FACTOR_MIN + u * (BEND_FACTOR_MAX - BEND_FACTOR_MIN);
+  return h >>> 0;
+}
+
+/** Deterministic per-event arc intensity, uniform in [2.5, 7.5] like the
+ *  3.0.1 Math.random draw. Same seed, same arc. */
+export function arcIntensityFromSeed(seed) {
+  const u = seedHash32(seed) / 4294967295;   // [0, 1]
+  return ARC_INTENSITY_MIN + u * (ARC_INTENSITY_MAX - ARC_INTENSITY_MIN);
+}
+
+/** Deterministic coin flip for the bend side. Independently salted so it is
+ *  NOT the parity of the sequential event counter — 3.0.1 flipped a real
+ *  coin per event, and seed % 2 alternated strictly up/down/up/down. */
+export function bendFromSeed(seed) {
+  return (seedHash32((seed | 0) ^ 0x5bd1e995) & 1) === 1;
+}
+
+/**
+ * Verbatim port of 3.0.1's calcMidpoint (git master static/map.js):
+ * normalising coordinate swap, radian = atan(-(dy/dx)),
+ * r = sqrt(dx) + sqrt(dy), offset = ± r * intensity * (sin, cos), floored.
+ * Only Math.random was lifted out — the frozen per-event intensity is
+ * passed in. Returns the ABSOLUTE bent midpoint.
+ */
+export function calcMidpoint(x1, y1, x2, y2, bend, arcIntensity) {
+  if (y2 < y1 && x2 < x1) {
+    const tmpy = y2, tmpx = x2;
+    x2 = x1; y2 = y1;
+    x1 = tmpx; y1 = tmpy;
+  } else if (y2 < y1) {
+    y1 = y2 + (y2 = y1, 0);
+  } else if (x2 < x1) {
+    x1 = x2 + (x2 = x1, 0);
+  }
+
+  const radian = Math.atan(-((y2 - y1) / (x2 - x1)));
+  const r = Math.sqrt(x2 - x1) + Math.sqrt(y2 - y1);
+  const m1 = (x1 + x2) / 2;
+  const m2 = (y1 + y2) / 2;
+
+  let a, b;
+  if (bend === true) {
+    a = Math.floor(m1 - r * arcIntensity * Math.sin(radian));
+    b = Math.floor(m2 - r * arcIntensity * Math.cos(radian));
+  } else {
+    a = Math.floor(m1 + r * arcIntensity * Math.sin(radian));
+    b = Math.floor(m2 + r * arcIntensity * Math.cos(radian));
+  }
+  return { x: a, y: b };
 }
 
 /** d3's default transition easing (used by 3.0.1 for the line fade-out). */
@@ -111,23 +152,30 @@ export class AttackRenderer {
   /**
    * Accept a canonical AttackEvent (§9.2):
    * {id, src:{lng,lat}, dst:{lng,lat}, color, protocol, spawnedAt, seed}.
-   * The geographic choices (unwrap + world copy) happen ONCE here and are
+   * The geographic choice (world copy) happens ONCE here and is
    * frozen for the event's lifetime (D15).
    */
   spawn(event) {
     if (!this.map) return;
-    const dstLngUnwrapped = unwrapLongitude(event.src.lng, event.dst.lng);
+    // 3.0.1 parity (maintainer decision 2026-09-01, replaces the HANDOFF-v2
+    // §9.2 shortest-path unwrap): the destination longitude is used RAW —
+    // an arc never crosses the antimeridian and always connects the two
+    // points within one world copy, taking the "long way" across the
+    // visible map like the Leaflet noWrap renderer did. The shortest-path
+    // unwrap sent e.g. Hong Kong -> San Francisco eastwards out of a
+    // Europe-centred view, never visibly reaching its target pin.
+    const dstLng = event.dst.lng;
     const centerLng = this.map.getCenter ? this.map.getCenter().lng : 0;
-    const worldCopyOffsetLng = chooseWorldCopy(event.src.lng, dstLngUnwrapped, centerLng);
+    const worldCopyOffsetLng = chooseWorldCopy(event.src.lng, dstLng, centerLng);
     if (this.queue.length >= MAX_EVENTS) this.queue.shift();   // drop the OLDEST
     this.queue.push({
       event,
-      dstLngUnwrapped,
+      dstLng,
       worldCopyOffsetLng,
       // bend shape frozen at spawn (like the world copy) so the arc is stable
-      // across frames: direction and magnitude both come from the seed (§9.2)
-      bendDir: (event.seed % 2) ? 1 : -1,
-      bendFactor: bendFactorFromSeed(event.seed),
+      // across frames: side and intensity both come from the seed (§9.2)
+      bend: bendFromSeed(event.seed),
+      arcIntensity: arcIntensityFromSeed(event.seed),
       spawnedAt: this.clock(),
     });
     this._startLoop();
@@ -161,7 +209,7 @@ export class AttackRenderer {
   /**
    * Draw one frame at absolute time tMs. Explicit for tests (§17.5).
    * Per event: 2 map.project() calls with the FROZEN worldCopyOffsetLng, a
-   * bounded screen-space bend, a 24-sample trail, head dot and rings (§9.3/§9.4).
+   * 3.0.1 screen-space bend, a 32-sample trail, head dot and rings (§9.3/§9.4).
    */
   renderFrame(tMs) {
     if (!this.ctx || !this.map) return;
@@ -172,11 +220,11 @@ export class AttackRenderer {
     this.queue = this.queue.filter((re) => tMs - re.spawnedAt < LIFETIME_MS);
 
     for (const re of this.queue) {
-      const { event, dstLngUnwrapped, worldCopyOffsetLng, bendDir, bendFactor } = re;
+      const { event, dstLng, worldCopyOffsetLng, bend, arcIntensity } = re;
       const t = tMs - re.spawnedAt;
 
       const S = this.map.project([event.src.lng + worldCopyOffsetLng, event.src.lat]);
-      const D = this.map.project([dstLngUnwrapped + worldCopyOffsetLng, event.dst.lat]);
+      const D = this.map.project([dstLng + worldCopyOffsetLng, event.dst.lat]);
       if (!Number.isFinite(S.x) || !Number.isFinite(S.y) ||
           !Number.isFinite(D.x) || !Number.isFinite(D.y)) continue;   // §9.3 degenerate case
 
@@ -192,11 +240,25 @@ export class AttackRenderer {
       const dist = Math.hypot(dx, dy);
 
       if (dist >= 1) {
-        // screen-space quadratic bend (§9.3): direction AND magnitude frozen
-        // at spawn from the event seed, amplitude pixel-bounded (D15).
-        const bendPx = bendDir * bendPixels(dist, bendFactor);
-        const nx = -dy / dist, ny = dx / dist;                 // unit normal
-        const C = { x: (S.x + D.x) / 2 + nx * bendPx, y: (S.y + D.y) / 2 + ny * bendPx };
+        // 3.0.1 bent midpoint (side and intensity frozen at spawn from the
+        // seed). 3.0.1 rendered d3.curveBasis through [S, mid, D], whose
+        // apex sits at 2/3 of the midpoint displacement; a quadratic Bézier
+        // apex sits at 1/2 of its control displacement — so the control
+        // point is the midpoint displacement scaled by 4/3 for an identical
+        // arc height. An emergency clamp (half the shorter viewport side)
+        // bounds only degenerate cases, not the normal 3.0.1 range.
+        const mid = calcMidpoint(S.x, S.y, D.x, D.y, bend, arcIntensity);
+        const M = { x: (S.x + D.x) / 2, y: (S.y + D.y) / 2 };
+        let ox = (mid.x - M.x) * (4 / 3);
+        let oy = (mid.y - M.y) * (4 / 3);
+        const el = this.map.getContainer ? this.map.getContainer() : null;
+        const maxOff = 0.5 * Math.min(el?.clientWidth || 800, el?.clientHeight || 600);
+        const offLen = Math.hypot(ox, oy);
+        if (offLen > maxOff) {
+          ox *= maxOff / offLen;
+          oy *= maxOff / offLen;
+        }
+        const C = { x: M.x + ox, y: M.y + oy };
 
         // Sample the full curve once and accumulate segment lengths: the trail
         // is revealed by ARC LENGTH, exactly like 3.0.1's stroke-dasharray /

@@ -3,28 +3,36 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   AttackRenderer,
-  bendPixels,
-  bendFactorFromSeed,
+  calcMidpoint,
+  arcIntensityFromSeed,
+  bendFromSeed,
   easeCubicInOut,
   quadraticPoint,
-  FACTOR, BEND_FACTOR_MIN, BEND_FACTOR_MAX,
-  MIN_BEND_PX, MAX_BEND_PX, MAX_EVENTS, TRAVEL_MS, LIFETIME_MS,
+  ARC_INTENSITY_MIN, ARC_INTENSITY_MAX,
+  MAX_EVENTS, TRAVEL_MS, LIFETIME_MS,
 } from '../../static/attack-renderer.mjs';
 
-// ---- pure presentation maths -----------------------------------------------
+// ---- pure presentation maths (3.0.1 calcMidpoint parity) --------------------
 
-test('bendPixels is monotone and respects both bounds', () => {
-  assert.equal(bendPixels(0), MIN_BEND_PX);
-  assert.equal(bendPixels(1e9), MAX_BEND_PX);
-  let prev = -1;
-  for (let d = 0; d <= 2000; d += 50) {
-    const b = bendPixels(d);
-    assert.ok(b >= prev, 'monotone');
-    assert.ok(b >= MIN_BEND_PX && b <= MAX_BEND_PX, 'bounded');
-    prev = b;
+test('calcMidpoint reproduces the 3.0.1 formula exactly (horizontal line)', () => {
+  // x1=0,y1=0 -> x2=100,y2=0: radian=0, r=sqrt(100)=10, offset = ±(0, r*i)
+  assert.deepEqual(calcMidpoint(0, 0, 100, 0, true, 5), { x: 50, y: -50 });
+  assert.deepEqual(calcMidpoint(0, 0, 100, 0, false, 5), { x: 50, y: 50 });
+  // deterministic and endpoint-order-normalised like 3.0.1's swap block
+  assert.deepEqual(calcMidpoint(100, 0, 0, 0, true, 5), calcMidpoint(0, 0, 100, 0, true, 5));
+});
+
+test('calcMidpoint scales with sqrt of the deltas, not linearly', () => {
+  const off = (d) => Math.abs(calcMidpoint(0, 0, d, 0, false, 5).y);
+  // 4x the distance doubles (not quadruples) the offset — allow the floor()
+  assert.ok(Math.abs(off(400) - 2 * off(100)) <= 1, `sqrt scaling: ${off(100)} vs ${off(400)}`);
+});
+
+test('calcMidpoint stays finite for vertical and steep lines', () => {
+  for (const [x2, y2] of [[0, 100], [1, 100], [-1, -100]]) {
+    const m = calcMidpoint(0, 0, x2, y2, true, 7.5);
+    assert.ok(Number.isFinite(m.x) && Number.isFinite(m.y), `finite for ${x2},${y2}`);
   }
-  const mid = (MIN_BEND_PX + MAX_BEND_PX) / 2 / FACTOR;
-  assert.ok(Math.abs(bendPixels(mid) - mid * FACTOR) < 1e-9, 'linear inside the bounds');
 });
 
 test('quadraticPoint returns the endpoints exactly', () => {
@@ -138,14 +146,31 @@ test('near travel end the trail reaches the destination and nothing vanishes ear
   }
 });
 
-test('bendFactorFromSeed: deterministic, bounded, varied', () => {
+test('arcIntensityFromSeed: deterministic, in [2.5, 7.5], 3.0.1-wide spread', () => {
   for (const seed of [0, 1, 2, 42, 999999, 2147483647]) {
-    const a = bendFactorFromSeed(seed);
-    assert.equal(a, bendFactorFromSeed(seed), 'deterministic');
-    assert.ok(a >= BEND_FACTOR_MIN && a <= BEND_FACTOR_MAX, `in range: ${a}`);
+    const a = arcIntensityFromSeed(seed);
+    assert.equal(a, arcIntensityFromSeed(seed), 'deterministic');
+    assert.ok(a >= ARC_INTENSITY_MIN && a <= ARC_INTENSITY_MAX, `in range: ${a}`);
   }
-  const distinct = new Set([1, 2, 3, 4, 5, 6, 7, 8].map(bendFactorFromSeed));
-  assert.ok(distinct.size >= 6, 'different seeds give different factors');
+  const seeds = Array.from({ length: 20 }, (_, i) => i + 1);
+  const vals = seeds.map(arcIntensityFromSeed);
+  const spread = Math.max(...vals) - Math.min(...vals);
+  assert.ok(spread > 2.5, `20 consecutive seeds span > half the 3.0.1 range (got ${spread})`);
+});
+
+test('bendFromSeed: real coin flip, NOT the parity of the sequential counter', () => {
+  const seeds = [1, 2, 3, 4, 5, 6, 7, 8];
+  const flips = seeds.map(bendFromSeed);
+  assert.deepEqual(flips, seeds.map(bendFromSeed), 'deterministic');
+  assert.ok(flips.includes(true) && flips.includes(false), 'both sides occur');
+  // regression for the seed % 2 bug: consecutive event counters must not
+  // strictly alternate up/down/up/down like 3.0.1 never did
+  const parity = seeds.map((s) => s % 2 === 1);
+  const antiParity = parity.map((p) => !p);
+  assert.ok(
+    flips.some((f, i) => f !== parity[i]) && flips.some((f, i) => f !== antiParity[i]),
+    `strictly alternating flips: ${flips}`,
+  );
 });
 
 test('head runs by arc length, not by Bézier parameter (3.0.1 parity)', () => {
@@ -215,7 +240,7 @@ test('worldCopyOffsetLng is frozen at spawn; projected midpoint moves continuous
     map._centerLng = centerLng;
     const re = r.queue[0];
     const S = map.project([re.event.src.lng + re.worldCopyOffsetLng, 0]);
-    const D = map.project([re.dstLngUnwrapped + re.worldCopyOffsetLng, 0]);
+    const D = map.project([re.dstLng + re.worldCopyOffsetLng, 0]);
     return (S.x + D.x) / 2;
   };
 
@@ -228,6 +253,21 @@ test('worldCopyOffsetLng is frozen at spawn; projected midpoint moves continuous
       `midpoint jumped ${Math.abs(mid - prevMid)} px between centres`);
     prevMid = mid;
   }
+});
+
+test('no antimeridian crossing (3.0.1 parity): HK -> SF stays on the visible map', () => {
+  // Europe-centred view (10°): the arc must run WESTWARDS across the map to
+  // the visible destination pin at -122°, never eastwards out of the frame
+  // to an unwrapped +238° copy (the reported bug).
+  const map = stubMap(10);
+  const { r } = makeRenderer(map);
+  r.spawn(EVENT({ src: { lng: 114, lat: 22 }, dst: { lng: -122, lat: 37 } }));
+  const re = r.queue[0];
+  assert.equal(re.dstLng, -122, 'destination longitude is used raw, never unwrapped');
+  assert.equal(re.worldCopyOffsetLng, 0);
+  const S = map.project([re.event.src.lng + re.worldCopyOffsetLng, 22]);
+  const D = map.project([re.dstLng + re.worldCopyOffsetLng, 37]);
+  assert.ok(D.x < S.x, `arc runs westwards over the map (S.x=${S.x}, D.x=${D.x})`);
 });
 
 test('a newly spawned event picks the copy nearest the CURRENT centre', () => {
