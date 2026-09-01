@@ -538,6 +538,23 @@
                     </div>
                     
                     <div class="settings-section">
+                        <h4 class="flex-center"><i class="fas fa-earth-europe"></i> Map</h4>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="choropleth-enabled" checked>
+                                <div class="setting-content">
+                                    <span class="setting-title">Country activity shading</span>
+                                    <span class="setting-description">Shade countries by observed event volume.
+                                        The shading shows where observed events geolocate by source IP address.
+                                        It is not attribution: it does not establish that an attacker, operator or
+                                        state actor is physically located in that country. Proxies, VPNs, hosting
+                                        providers and compromised hosts all shift the apparent origin.</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
                         <h4 class="flex-center"><i class="fas fa-database"></i> Data Management</h4>
                         <div class="setting-item">
                             <div class="setting-content">
@@ -562,8 +579,8 @@
         </div>
 
         <script src="static/cache-bridge.js" defer integrity="sha384-mMltIbf7JoxVuM6ZaB7TYkrLmY2njkbSTL9VvYqNKtmct/C2X1/JvKr8FeYHU0I+"></script>
-        <script src="static/map.js" defer integrity="sha384-EGyHTUZ6znw5ivqm6y9iLwuIWr1URb4tO8DB3vlhYim2SE306gPoO4QR1RkwTZ2l"></script>
-        <script src="static/dashboard.js" defer integrity="sha384-y+PPLukTwii8dd8UchehE+bYhKAnweMXQt8fTxqrXc+qjEGTdA9XDOaVe3Wmn8EM"></script>
+        <script src="static/map.js" defer integrity="sha384-XtipP/qbHR9ceIBtAXqEYoZd5HB5zsKAPAnMqmFKqZ6Ad6pD1vf7tSRXXejTHWhO"></script>
+        <script src="static/dashboard.js" defer integrity="sha384-gV879ok32jg0OFdBkZxrRfvZA3pJ0KBtub3JQTq8O6lGhemAaSPkkdcC4rHeqabo"></script>
     </body>
 
 </html>

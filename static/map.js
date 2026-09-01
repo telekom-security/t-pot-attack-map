@@ -62,9 +62,11 @@ function installSafeGlobals() {
   window.clearMapVisuals = function () {
     startupTrafficQueue.length = 0;
     pendingRestored.length = 0;
+    choroplethHits.clear();     // D38: all four choropleth state levels reset together
+    intensityCache.clear();
   };
 
-  // Replaced by the D39 bridge receiver when the choropleth initialises (WP7).
+  // Replaced synchronously below by the D39 bridge receiver (WP7).
   window.updateChoropleth = function () {};
 
   // §7.2: bounded queueing stub (keep-newest); swapped for the real
@@ -289,6 +291,144 @@ function addCircle(country, iso_code, src_ip, ip_rep, color, srcLatLng, protocol
         properties: { key: key, color: color }
     };
     syncAttackersSource();
+}
+
+// ---------------------------------------------------------------------------
+// Country activity choropleth (WP7 — D18/D28/D39, §8.5/§8.6).
+// State levels: countryTrackingStats (dashboard authority, never read here)
+//   -> window.updateChoropleth(iso2, absoluteHits)   the ONLY bridge (D39)
+//   -> choroplethHits (renderer-local raw-count mirror)
+//   -> intensityCache (derived)  -> MapLibre feature-state {intensity}
+// ---------------------------------------------------------------------------
+const choroplethHits = new Map();     // iso2 -> absolute hit count (mirror)
+const intensityCache = new Map();     // iso2 -> derived intensity [0,1]
+let choroplethFlushTimer = null;      // batches to at most one flush per second
+let choroplethEnabled = true;         // D28: on by default
+try {
+    const s = JSON.parse(localStorage.getItem('attack-map-settings') || '{}');
+    if (s.choroplethEnabled === false) choroplethEnabled = false;
+} catch (e) { /* default stays on */ }
+let countryIdSet = null;              // ISO codes present in the geometry
+const unmatchedIsoLogged = new Set(); // once-per-session logging (§8.5)
+
+function countriesSourceSpec() {
+    return {
+        type: 'geojson',
+        data: new URL('static/data/countries.geojson', document.baseURI).href,
+        promoteId: 'ISO_A2_EH'        // one feature per code (§8.5) -> unique ids
+    };
+}
+
+function choroplethLayerSpec() {
+    return {
+        id: 'choropleth',
+        type: 'fill',
+        source: 'countries',
+        layout: { visibility: choroplethEnabled ? 'visible' : 'none' },
+        // Fill only, no independent outline: the Protomaps boundary lines stay
+        // the visual boundary authority (§8.5). Opacity is driven per country
+        // via a match expression (see applyChoroplethIntensities).
+        paint: {
+            'fill-color': '#e20074',
+            'fill-opacity': 0
+        }
+    };
+}
+
+// D39 bridge receiver: absolute counts, never deltas — a missed call degrades
+// to a stale value, and renormalisation never needs history replay.
+window.updateChoropleth = function (iso2, absoluteHits) {
+    if (!iso2 || iso2 === 'XX') return;
+    choroplethHits.set(iso2, absoluteHits);
+    scheduleChoroplethFlush();
+};
+
+function scheduleChoroplethFlush() {
+    if (choroplethFlushTimer) return;
+    choroplethFlushTimer = setTimeout(flushChoropleth, 1000);
+}
+
+function flushChoropleth() {
+    choroplethFlushTimer = null;
+    if (mapLifecycle !== 'READY' || !map || !map.getLayer('choropleth')) return;
+    // maxHits recomputed on each flush; ALL intensities recomputed from the
+    // raw-count mirror so a new maximum renormalises everything (§8.6).
+    let maxHits = 0;
+    for (const hits of choroplethHits.values()) maxHits = Math.max(maxHits, hits);
+    const denom = Math.log1p(maxHits);
+    intensityCache.clear();
+    for (const [iso, hits] of choroplethHits) {
+        const intensity = denom > 0 ? Math.min(1, Math.max(0, Math.log1p(hits) / denom)) : 0;
+        intensityCache.set(iso, intensity);
+        if (countryIdSet && !countryIdSet.has(iso) && !unmatchedIsoLogged.has(iso)) {
+            unmatchedIsoLogged.add(iso);
+            console.info(`[CHOROPLETH] iso_code ${iso} matches no country polygon (see tools/iso_unsupported.txt)`);
+        }
+    }
+    applyChoroplethIntensities();
+}
+
+// Documented deviation from HANDOFF-v2 D18/§8.6 mechanics (semantics intact):
+// per-id feature-state on the promoteId GeoJSON source proved unreliable in
+// MapLibre 6.6.0 — individual setFeatureState writes are silently and
+// persistently lost for one (session-varying) id, reproduced in headless AND
+// headed Chromium. Intensities are therefore applied as a deterministic
+// style-level match expression on fill-opacity; the D39 state levels
+// (countryTrackingStats -> bridge -> choroplethHits -> intensityCache ->
+// rendered opacity) are unchanged. promoteId stays on the source for future use.
+function applyChoroplethIntensities() {
+    if (!map || !map.getLayer('choropleth')) return;
+    if (intensityCache.size === 0) {
+        map.setPaintProperty('choropleth', 'fill-opacity', 0);
+        return;
+    }
+    const expr = ['match', ['get', 'ISO_A2_EH']];
+    for (const [iso, intensity] of intensityCache) {
+        expr.push(iso, 0.35 * intensity);   // §8.6 scale: intensity 1 -> opacity 0.35
+    }
+    expr.push(0);
+    map.setPaintProperty('choropleth', 'fill-opacity', expr);
+}
+
+window.__choropleth = {
+    readd() {   // called from reAddCustomLayers (§7.6) — per-object guards
+        if (!map.getSource('countries')) map.addSource('countries', countriesSourceSpec());
+        if (!map.getLayer('choropleth')) map.addLayer(choroplethLayerSpec(), firstLabelLayerId());
+    },
+    reapplyFeatureState() {   // ALWAYS after a style (re)load (§7.6)
+        applyChoroplethIntensities();
+    },
+    clear() {   // Clear Cache (D38): all four state levels reset together
+        choroplethHits.clear();
+        intensityCache.clear();
+        applyChoroplethIntensities();
+    },
+    setEnabled(on) {   // settings toggle (D28); layout visibility only
+        choroplethEnabled = !!on;
+        if (mapLifecycle === 'READY' && map && map.getLayer('choropleth')) {
+            map.setLayoutProperty('choropleth', 'visibility', choroplethEnabled ? 'visible' : 'none');
+        }
+    },
+    debug() {   // test/diagnostic aid
+        return {
+            mirror: choroplethHits.size,
+            cache: intensityCache.size,
+            timerPending: !!choroplethFlushTimer,
+        };
+    },
+    intensities() {   // test hook: iso2 -> derived intensity [0,1]
+        return Object.fromEntries(intensityCache);
+    },
+};
+
+// The geometry's ISO id set, for once-per-session unmatched logging. The
+// browser already fetched this URL for the GeoJSON source; force-cache reuses
+// that response instead of a second download.
+function loadCountryIdSet() {
+    fetch(new URL('static/data/countries.geojson', document.baseURI).href, { cache: 'force-cache' })
+        .then((r) => r.json())
+        .then((fc) => { countryIdSet = new Set(fc.features.map((f) => f.properties.ISO_A2_EH)); })
+        .catch(() => { /* logging aid only */ });
 }
 
 // ---------------------------------------------------------------------------
@@ -1294,6 +1434,11 @@ async function initMap() {
     };
 
     mapLifecycle = 'READY';
+
+    // Choropleth: id set for unmatched-code logging, and a flush for counts
+    // mirrored while the map was still INITIALIZING (WP7)
+    loadCountryIdSet();
+    scheduleChoroplethFlush();
 
     // Drain the startup traffic queue in order, then the restore queue (§7.1/§7.2)
     for (const queued of startupTrafficQueue) renderMapTraffic(queued);

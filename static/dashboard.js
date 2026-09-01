@@ -2052,7 +2052,8 @@ Cache Statistics:
     loadSettings() {
         const defaultSettings = {
             soundAlerts: false,
-            alertSound: 'beep'
+            alertSound: 'beep',
+            choroplethEnabled: true   // D28: country choropleth on by default
         };
 
         const saved = localStorage.getItem('attack-map-settings');
@@ -2079,7 +2080,7 @@ Cache Statistics:
         const settings = {};
         
         // Collect all settings from UI
-        ['sound-alerts', 'alert-sound'].forEach(id => {
+        ['sound-alerts', 'alert-sound', 'choropleth-enabled'].forEach(id => {
             const element = document.getElementById(id);
             if (element) {
                 const key = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
@@ -2139,6 +2140,9 @@ Cache Statistics:
             // Ensure checkbox matches the setting
             soundAlerts.checked = this.settings.soundAlerts;
         }
+
+        // Country choropleth visibility (D28; map side handled by map.js)
+        window.__choropleth?.setEnabled(this.settings.choroplethEnabled !== false);
     }
 
     async clearCache() {
@@ -3266,7 +3270,15 @@ Cache Statistics:
                 this.countryTrackingStats[country].topProtocol = topProtocol;
             }
         }
-        
+
+        // D39 choropleth bridge (HANDOFF-v2 §8.6): push the ABSOLUTE count —
+        // never a delta — whenever a country's hit count changes. map.js keeps
+        // its own mirror and never reads countryTrackingStats.
+        const bridgeCode = this.countryTrackingStats[country].countryCode;
+        if (bridgeCode && bridgeCode !== 'XX') {
+            window.updateChoropleth?.(bridgeCode, this.countryTrackingStats[country].hits);
+        }
+
         // Update country table if it's the active tab
         if (this.activeTab === 'countries') {
             this.updateTopCountriesTable();
