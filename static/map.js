@@ -62,8 +62,9 @@ function installSafeGlobals() {
   window.clearMapVisuals = function () {
     startupTrafficQueue.length = 0;
     pendingRestored.length = 0;
-    choroplethHits.clear();     // D38: all four choropleth state levels reset together
+    choroplethHits.clear();     // D38: all shading state levels reset together
     intensityCache.clear();
+    heatHits.clear();
   };
 
   // Replaced synchronously below by the D39 bridge receiver (WP7).
@@ -382,42 +383,143 @@ function applyChoroplethIntensities() {
         map.setPaintProperty('choropleth', 'fill-opacity', 0);
         return;
     }
-    const expr = ['match', ['get', 'ISO_A2_EH']];
+    const matchExpr = ['match', ['get', 'ISO_A2_EH']];
     for (const [iso, intensity] of intensityCache) {
-        expr.push(iso, 0.35 * intensity);   // §8.6 scale: intensity 1 -> opacity 0.35
+        matchExpr.push(iso, 0.35 * intensity);   // §8.6 scale: intensity 1 -> opacity 0.35
     }
-    expr.push(0);
-    map.setPaintProperty('choropleth', 'fill-opacity', expr);
+    matchExpr.push(0);
+    // Zoom crossfade to the density heatmap: the country shading is the
+    // world-view story and fades out where the heatmap fades in (camera
+    // expression outside, data expression at the stops — allowed by MapLibre).
+    map.setPaintProperty('choropleth', 'fill-opacity',
+        ['interpolate', ['linear'], ['zoom'], HEAT_FADE_START, matchExpr, HEAT_FADE_END, 0]);
+}
+
+// ---------------------------------------------------------------------------
+// Density heatmap (zoomed-in counterpart of the choropleth). Built from the
+// event coordinates the wire format already carries (src_lat/src_long,
+// GeoLite2 city/centroid precision) — no new data, no wire change, offline.
+// Deliberately a soft density rendering instead of admin-1/city polygons:
+// GeoLite2's sub-country accuracy cannot honestly support crisp
+// administrative borders (discussed and decided with the maintainer).
+// ---------------------------------------------------------------------------
+const HEAT_FADE_START = 3.5;   // below: choropleth only
+const HEAT_FADE_END = 4.5;     // above: heatmap only
+const HEAT_MAX_POINTS = 5000;  // GeoIP coords are city centroids -> bounded set
+const heatHits = new Map();    // "lat,lng" -> {lng, lat, hits, lastSeen}
+let heatFlushTimer = null;
+
+function heatSourceSpec() {
+    return { type: 'geojson', data: heatFeatureCollection() };
+}
+
+function heatLayerSpec() {
+    return {
+        id: 'attack-heat',
+        type: 'heatmap',
+        source: 'heat',
+        layout: { visibility: choroplethEnabled ? 'visible' : 'none' },
+        paint: {
+            // w = log1p(hits) normalised at flush time; a floor of 0.3 keeps
+            // low-volume cities visible next to the busiest coordinate
+            // (calibrated in-browser against the seed-42 demo fixture)
+            'heatmap-weight': ['interpolate', ['linear'], ['get', 'w'], 0, 0.3, 1, 1],
+            'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 4, 0.9, 7, 1.6],
+            'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 4, 16, 7, 40],
+            'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], HEAT_FADE_START, 0, HEAT_FADE_END, 0.75]
+        }
+    };
+}
+
+function heatFeatureCollection() {
+    let maxHits = 0;
+    for (const e of heatHits.values()) maxHits = Math.max(maxHits, e.hits);
+    const denom = Math.log1p(maxHits);
+    const features = [];
+    for (const e of heatHits.values()) {
+        features.push({
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [e.lng, e.lat] },
+            properties: { w: denom > 0 ? Math.log1p(e.hits) / denom : 0 }
+        });
+    }
+    return { type: 'FeatureCollection', features: features };
+}
+
+function recordHeatHit(lat, lng) {
+    const key = lat + "," + lng;
+    let entry = heatHits.get(key);
+    if (!entry) {
+        if (heatHits.size >= HEAT_MAX_POINTS) {
+            // evict the least recently seen coordinate (O(n) only on overflow)
+            let oldestKey = null, oldest = Infinity;
+            for (const [k, v] of heatHits) {
+                if (v.lastSeen < oldest) { oldest = v.lastSeen; oldestKey = k; }
+            }
+            if (oldestKey) heatHits.delete(oldestKey);
+        }
+        entry = { lng: lng, lat: lat, hits: 0, lastSeen: 0 };
+        heatHits.set(key, entry);
+    }
+    entry.hits++;
+    entry.lastSeen = Date.now();
+    scheduleHeatFlush();
+}
+
+function scheduleHeatFlush() {
+    if (heatFlushTimer) return;
+    heatFlushTimer = setTimeout(flushHeat, 1000);   // batched, <= 1x/s
+}
+
+function flushHeat() {
+    heatFlushTimer = null;
+    if (mapLifecycle !== 'READY' || !map || !map.getSource('heat')) return;
+    map.getSource('heat').setData(heatFeatureCollection());
 }
 
 window.__choropleth = {
     readd() {   // called from reAddCustomLayers (§7.6) — per-object guards
         if (!map.getSource('countries')) map.addSource('countries', countriesSourceSpec());
         if (!map.getLayer('choropleth')) map.addLayer(choroplethLayerSpec(), firstLabelLayerId());
+        if (!map.getSource('heat')) map.addSource('heat', heatSourceSpec());
+        if (!map.getLayer('attack-heat')) map.addLayer(heatLayerSpec(), firstLabelLayerId());
     },
     reapplyFeatureState() {   // ALWAYS after a style (re)load (§7.6)
         applyChoroplethIntensities();
+        if (map && map.getSource('heat')) map.getSource('heat').setData(heatFeatureCollection());
     },
-    clear() {   // Clear Cache (D38): all four state levels reset together
+    clear() {   // Clear Cache (D38): all state levels reset together
         choroplethHits.clear();
         intensityCache.clear();
+        heatHits.clear();
         applyChoroplethIntensities();
+        if (map && map.getSource('heat')) map.getSource('heat').setData(heatFeatureCollection());
     },
-    setEnabled(on) {   // settings toggle (D28); layout visibility only
-        choroplethEnabled = !!on;
-        if (mapLifecycle === 'READY' && map && map.getLayer('choropleth')) {
-            map.setLayoutProperty('choropleth', 'visibility', choroplethEnabled ? 'visible' : 'none');
+    setEnabled(on) {   // settings toggle (D28); one switch, one narrative:
+        choroplethEnabled = !!on;   // governs country shading AND density heatmap
+        if (mapLifecycle === 'READY' && map) {
+            const vis = choroplethEnabled ? 'visible' : 'none';
+            if (map.getLayer('choropleth')) map.setLayoutProperty('choropleth', 'visibility', vis);
+            if (map.getLayer('attack-heat')) map.setLayoutProperty('attack-heat', 'visibility', vis);
         }
     },
     debug() {   // test/diagnostic aid
         return {
             mirror: choroplethHits.size,
             cache: intensityCache.size,
+            heatPoints: heatHits.size,
             timerPending: !!choroplethFlushTimer,
+            heatTimerPending: !!heatFlushTimer,
         };
     },
     intensities() {   // test hook: iso2 -> derived intensity [0,1]
         return Object.fromEntries(intensityCache);
+    },
+    heat() {   // test hook: "lat,lng" -> hits
+        return Object.fromEntries([...heatHits].map(([k, v]) => [k, v.hits]));
+    },
+    recordHeat(lat, lng) {   // test hook: the same entry point the traffic path uses
+        recordHeatHit(lat, lng);
     },
 };
 
@@ -1002,6 +1104,7 @@ function renderMapTraffic(msg) {
 
     addCircle(msg.country, msg.iso_code, msg.src_ip, msg.ip_rep, msg.color, srcLatLng, msg.protocol);
     addMarker(msg.dst_country_name, msg.dst_iso_code, msg.dst_ip, msg.tpot_hostname, dstLatLng);
+    recordHeatHit(srcLatLng.lat, srcLatLng.lng);   // density heatmap accumulator
 
     // Transient animation — the tab-wake suppression of 3.0.1 is preserved
     if (renderer && !document.hidden && !isWakingUp) {
@@ -1219,6 +1322,7 @@ function restoreMarkerData(restoredMsg, srcLatLng, dstLatLng, originalEvent) {
              restoredMsg.ip_rep, restoredMsg.color, srcLatLng, restoredMsg.protocol);
     addMarker(restoredMsg.dst_country_name, restoredMsg.dst_iso_code,
              restoredMsg.dst_ip, restoredMsg.tpot_hostname, dstLatLng);
+    recordHeatHit(srcLatLng.lat, srcLatLng.lng);
 }
 
 // ---------------------------------------------------------------------------
@@ -1440,6 +1544,7 @@ async function initMap() {
     // mirrored while the map was still INITIALIZING (WP7)
     loadCountryIdSet();
     scheduleChoroplethFlush();
+    scheduleHeatFlush();
 
     // Drain the startup traffic queue in order, then the restore queue (§7.1/§7.2)
     for (const queued of startupTrafficQueue) renderMapTraffic(queued);

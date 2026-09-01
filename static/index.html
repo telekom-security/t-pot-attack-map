@@ -539,12 +539,14 @@
                             <label class="setting-label">
                                 <input type="checkbox" id="choropleth-enabled" checked>
                                 <div class="setting-content">
-                                    <span class="setting-title">Country activity shading</span>
-                                    <span class="setting-description">Shade countries by observed event volume.
-                                        The shading shows where observed events geolocate by source IP address.
-                                        It is not attribution: it does not establish that an attacker, operator or
-                                        state actor is physically located in that country. Proxies, VPNs, hosting
-                                        providers and compromised hosts all shift the apparent origin.</span>
+                                    <span class="setting-title">Activity shading (countries &amp; density)</span>
+                                    <span class="setting-description">Shade countries by observed event volume;
+                                        when zooming in, a density heatmap takes over. Both show where observed
+                                        events geolocate by source IP address — not attribution: they do not
+                                        establish that an attacker, operator or state actor is physically located
+                                        there. Positions are GeoIP city/centroid estimates and frequently mark
+                                        hosting providers and data centres; proxies, VPNs and compromised hosts
+                                        all shift the apparent origin.</span>
                                 </div>
                             </label>
                         </div>
@@ -575,7 +577,7 @@
         </div>
 
         <script src="static/cache-bridge.js" defer integrity="sha384-mMltIbf7JoxVuM6ZaB7TYkrLmY2njkbSTL9VvYqNKtmct/C2X1/JvKr8FeYHU0I+"></script>
-        <script src="static/map.js" defer integrity="sha384-xMU6qe3+HOHofq61JCRyHYYwYGRG+APObZn7Z11PuIwwX/1ARKD9D2XxrLEEdF1H"></script>
+        <script src="static/map.js" defer integrity="sha384-LA1xovzPQ9DYuzw6HAGJez762BTk6MUIa6T20G0LNiu4qf2DEYtITYo0J4CiLxm3"></script>
         <script src="static/dashboard.js" defer integrity="sha384-gV879ok32jg0OFdBkZxrRfvZA3pJ0KBtub3JQTq8O6lGhemAaSPkkdcC4rHeqabo"></script>
     </body>
 

@@ -3,7 +3,7 @@
 This fork of the GeoIP Attack Map was adjusted for [T-Pot](https://github.com/telekom-security/tpotce), also introducing new features (i.e. dynamic destination IPs to represent T-Pots), better performance for the Attack Map Server by using aiohttp and asyncio and, since 4.0.0, a **fully offline map stack**: no CDN, no tile service, no API key.
 
 ### T-Pot Attack Map Visualization
-This geoip attack map visualizer was forked and adjusted to display T-Pot Honeypot events in real time. The data server connects to elasticsearch, parses out source IP, destination IP, source port, destination port, timestamp, honeypot type and honeypot statistics (events per last 1m, 1h, 1d). Protocols are determined via common ports, and the visualizations vary in color based on protocol type while keeping stats regarding top source IPs and countries. Since 4.0.0 a country choropleth shades countries by observed event volume (source-IP geolocation — not attribution; a settings toggle turns it off).
+This geoip attack map visualizer was forked and adjusted to display T-Pot Honeypot events in real time. The data server connects to elasticsearch, parses out source IP, destination IP, source port, destination port, timestamp, honeypot type and honeypot statistics (events per last 1m, 1h, 1d). Protocols are determined via common ports, and the visualizations vary in color based on protocol type while keeping stats regarding top source IPs and countries. Since 4.0.0 an activity shading layer shades countries by observed event volume at world view and crossfades into a density heatmap (built from the same GeoIP coordinates) when zooming in — source-IP geolocation, not attribution, with city/centroid precision at best; a settings toggle turns it off.
 
 ![img.png](docs/img.png)
 
