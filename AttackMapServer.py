@@ -121,6 +121,13 @@ async def my_websocket_handler(request):
 async def my_index_handler(request):
     return web.FileResponse('static/index.html')
 
+async def my_poc_handler(request):
+    # TEMPORARY (WP4 PoC gate only, removed with static/poc.html): serves the
+    # PoC at the real base directory '/', mirroring production's '/map/' via
+    # nginx — static/poc.html at /map/static/poc.html would have the wrong
+    # base directory (HANDOFF-v2 §11 WP4).
+    return web.FileResponse('static/poc.html')
+
 async def start_background_tasks(app):
     app['websockets'] = []
     args = app['args']
@@ -159,6 +166,7 @@ async def make_webapp(args=None):
     app['args'] = args
     app.add_routes([
         web.get('/', my_index_handler),
+        web.get('/poc.html', my_poc_handler),  # TEMPORARY — WP4 PoC gate
         web.get('/websocket', my_websocket_handler),
         web.static('/static/', 'static'),
         web.static('/images/', 'static/images'),
