@@ -474,6 +474,14 @@ body {
     font-size: var(--font-sm);
     color: var(--text-primary);
     line-height: 1.6;
+    /* 3.0.1 Leaflet pane order: arcs (overlayPane) < pins (markerPane)
+       < popups (popupPane) — see the .attack-canvas / .maplibregl-marker
+       z-index chain 2 < 3 < 4 */
+    z-index: 4;
+}
+
+.maplibregl-marker {
+    z-index: 3;   /* pins above the attack canvas, below popups */
 }
 
 .stat-label {
@@ -2687,7 +2695,9 @@ html[data-theme="light"] .maplibregl-map {
 }
 
 /* 4.0 attack animation overlay (HANDOFF-v2 §9.4, WP5): above .maplibregl-canvas,
-   below .maplibregl-marker / .maplibregl-popup (verified visually in WP6). */
+   below pins and popups via the explicit z-index chain
+   .attack-canvas 2 < .maplibregl-marker 3 < .maplibregl-popup 4
+   (3.0.1 Leaflet pane order: overlayPane < markerPane < popupPane). */
 .attack-canvas {
     position: absolute;
     inset: 0;
