@@ -1,5 +1,0 @@
-/* TEMPORARY — WP4 PoC styles (external file: style-src 'self' forbids inline <style>) */
-body { margin: 0; font: 13px/1.4 monospace; background: #111; color: #ddd; }
-#map { position: absolute; inset: 0 0 40% 0; }
-#results { position: absolute; inset: 60% 0 0 0; overflow: auto; padding: 8px; white-space: pre-wrap; }
-.pass { color: #6f6; } .fail { color: #f66; }
