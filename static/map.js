@@ -1575,6 +1575,8 @@ function connectWebSocket() {
 
       var msg = JSON.parse(e.data);
 
+      if (msg.demo) markDemoData();   // D27
+
       let handler = messageHandlers[msg.type];
       if (handler) {
         handler(msg);
@@ -1610,6 +1612,17 @@ function stopHeartbeat() {
     clearInterval(heartbeatInterval);
     heartbeatInterval = null;
   }
+}
+
+// DEMO DATA badge (D27): visible while incoming messages carry demo: true;
+// hides itself when no demo message has arrived for 15 s.
+let demoBadgeTimer = null;
+function markDemoData() {
+  const badge = document.getElementById('demo-badge');
+  if (!badge) return;
+  badge.hidden = false;
+  if (demoBadgeTimer) clearTimeout(demoBadgeTimer);
+  demoBadgeTimer = setTimeout(() => { badge.hidden = true; }, 15000);
 }
 
 // Enhanced function to check connection health

@@ -779,291 +779,279 @@ static/basemaps/sprites/v4/light.json	sha384-6CNe1ItAdO6O4ntvnvQYt4aYTX1YNa79Rub
 static/basemaps/sprites/v4/light.png	sha384-JWC4EJhu/t5ASsN2hCwxLEmjc43DJQgtQquvqQL4H/TjSPgeFMRqAkPULgPrGoGe	vendored	protomaps/basemaps-assets@028c18f7	-
 static/basemaps/sprites/v4/light@2x.json	sha384-dZnGJ0O9HSun3Tk/DlSM1GUzBV1vm7evuqN1CUFw5Vv7g8JZZrtZmHiTsKEJ5QV4	vendored	protomaps/basemaps-assets@028c18f7	-
 static/basemaps/sprites/v4/light@2x.png	sha384-hHNJloAHUaHga0g5jGqQGoywkxXoKN0d6wvKsTIsAebDE4RQeMzMzi2ErIB467vP	vendored	protomaps/basemaps-assets@028c18f7	-
-static/bootstrap.min.css	sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/bootstrap.min.css.map	sha384-/rzPHZkVMzBrKijP2xaa8iyA5zrt5UTEzO9RRLEr91xNtCYw8i4t+/Kv+dMlhdOa	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/bootstrap.min.js	sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/chart.umd.js	sha384-FcQlsUOd0TJjROrBxhJdUhXTUgNJQxTMcxZe6nHbaEfFL1zjQ+bq/uRoBQxb0KMo	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
+static/bootstrap.min.css	sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB	vendored	npm:bootstrap/dist/css/bootstrap.min.css	5.3.8
+static/chart.umd.js	sha384-hfkuqrKeWFmnTMWN31VWyoe8xgdTADD11kgxmdpx2uyE6j5Az5uZq6u6AKYYmAOw	vendored	npm:chart.js/dist/chart.umd.js	4.5.1
 static/data/countries.geojson	sha384-qxk2k0gNbdtv0zCoXdp+fyhEVVhvpkUq8r5evd80H7F7xK6CUU7z0zJYxNajlE/B	generated	tools/vendor_countries.mjs	Natural Earth v5.1.2 50m admin-0 map units
 static/data/countries.geojson.gz	sha384-23Xo+DHTzEYZ6n1yYxXjB3Xv0jK5YOGuCWP+te+eb/sYvHRxCyPsm9ot2SKgdQWb	generated	tools/vendor_countries.mjs	Natural Earth v5.1.2 50m admin-0 map units
 static/fflate.mjs	sha384-SNKgXdor2lJGkzPBg9ywUthk1cf7jcEOGewjMgbgasovEnR+wHQyNIf318oz4E/E	vendored	npm:fflate/esm/browser.js	0.8.2
-static/flags/AD.svg	sha384-NM17S2MPeqPjps6lYJ+yHQJCn7Q8eQg3FKhMUE4nDf+VLELgsdGUBcPci8iuF7C+	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/AE.svg	sha384-epPOgnz/Xv/gDYlds4ZK4jOBr9kFxmQL10Vw540tqT17uFxmwKzJ3JLTz43KFDeB	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/AF.svg	sha384-dIW7bDw4xdPCkrkHkFbeAnZeNhW47oQk2ppeEAUAHj4zYmpPGHSRbX2SkHdJ7xS2	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/AG.svg	sha384-7Bfq5pyJfR+5mJcGG8MxwBdcrISziWqOJp0I6Nlcl8zrgNmqaSd8LkzAcc7yJv1F	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/AI.svg	sha384-htg75V8xxtfq1XAkgEctalX+wemyFi6nnuD/eEoFq1I8qwY8HyQtQ48M7tehTkLe	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/AL.svg	sha384-DtuHkTFA6D7L2LXWn8Ed+Gfc/GKVyOTiV4qB5SUJYWeUDrKxWuoDignCNskYlpG3	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/AM.svg	sha384-awDc5kvHQA37xta2KY6DG+pjyoRIf7LnnHvvGPujfLzVLRIudHawlpsRD54qjqyv	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/AO.svg	sha384-GeEW8XmpPcEcHLFn93tyfwTqkFTQ78cteu2nNul5V7bRcUsEBGJbusMyED+3ZyaH	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/AQ.svg	sha384-cJlus/knW/wenboD/M4teJGU+CpLAb8XHw35hsZbV8G2e2AaKJ+FEEF247ngwj+/	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/AR.svg	sha384-t9VMdrI59HKXtLv36LfeJUcrob75S9zSlP9cPPnL7ZzR2qOyVRcS+JRKfxZ6Tr3E	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/AS.svg	sha384-fWn+ighACuJeYY0hBHnU79JLLpOTxgHTNOAHkEGyD6gYxjMe4aLfT+lcwpP3+sPn	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/AT.svg	sha384-79NABziHjvk+Xk6/ojZWTdkWGkQDOd48bBUAPdmfeCUW8v4grpjzhk5tArRcmr1N	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/AU.svg	sha384-angvo9oE7i0viBM2lnDG/3kfpFDpzXIKNBqn8oxPhfhlHnFw8XhTGNv/3wR2b7Jh	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/AW.svg	sha384-O7dvoj/b5OgpsPyz0oG+x7CcvUzJedv4iovSVmckSavDCh6j7wvwlPJiCQkbgiGt	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/AX.svg	sha384-9XHA4P3CjsX/iLs2JnSrF0y/B3RIPfhEZ7OmlhgGfHaikrFBCAxe0nnLFrQ5CsvS	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/AZ.svg	sha384-IyTxiDSLcCKert/PU36Ej4NJwvoZLeXzww1MPkBk/WjNWnSkQBQPgwECQKbexHX6	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BA.svg	sha384-0XT3M/Mflr/BnSWOPPevdgkR/HGoRea6o/1HvYn3J5xnpVj16ENuXbMf6l4gZmdn	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BB.svg	sha384-+5XtrmN9jaTaad6bpe79nrH5kGqcQ2usONoWE2KrkjD5KIkamjE9ubPupDaVaP3P	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BD.svg	sha384-AJK3rLhBp2sOeUfjZHh252Nc6n+V2JMWJwwVVPZYJCfeZVzHJhmL0CIxd/B0pS2h	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BE.svg	sha384-yaXIgv6/T5p5qTG9xecInj4v0w24P2zrohP3OPZ2pevEzQuPaDFkzPqX0hsKfeSb	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BF.svg	sha384-BFP8YOi28FZX9aOU0ttBL91P6UL3lCiSrO9HRALw+R0KF1a3uFBKCJnIB7Ob8mBn	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BG.svg	sha384-Br3xccDGIC3vZiDdZRnOpK095FRxETJq5Vy1P6JLU/zniUXJWXwSmem0/yEFQGMD	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BH.svg	sha384-NtZS+omXPRGUHIkfLDCorKM0caHPZFGunL+OBldx9FA1MXjdGCnt66aECw0vmcE8	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BI.svg	sha384-6y1JKjnJ4q65xYpmcWxkMU8qe53VUCEQBmvljK1vu254xvQbiTRsLq7F6T6oG55r	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BJ.svg	sha384-nIXXyvtylDnTFn2sFa8CtU+adSo4iFA2aQFp2wZTWMH0qel8TFsoRWQ9pBXfMfw9	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BL.svg	sha384-0aiO8W/CNMjNPuxoFw+5bZFPG8WZzv2v3dlEhhokCD3IXjf24MfUzWMYQdlfbeIQ	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BM.svg	sha384-th97jReKLPDUGJDPehiom+EwtFQmI2xo4c1eimKAbtDCLZMr5ruvV4Di1tuLsBuJ	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BN.svg	sha384-W+R+p1I7woLfWAWxFbxMR5fmYbcsJhQcNE2su6Yz+gjeOXi75sLw8pWtRhBG0qTd	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BO.svg	sha384-7ePgoBUTtWiTW7UUDuTcX096CQuGBzhq3GltR6yM81lF/l+cSArxtCmnAHlorFmG	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BQ.svg	sha384-nDazCdS9DWd/Vflm7oTOQxwSwoi2SwfQRmJhGODi2ubEbv4eyJNokXTNEJUz2tU0	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BR.svg	sha384-GOtVoNt5xUaBQLK+oR2lXyVdnN1Rx1KHwi11B1fzMqOgSM17Bs+NGvS5BnBBdgSr	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BS.svg	sha384-UXtVEg4dYJEcpOY4grKonVLjyaBeQXWfYJbns6q2UTROXcqvo2M08kpPXBfgFoR9	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BT.svg	sha384-bQc7A7SvJk0P7h+ClSXmTLopVZ+99K8TvVpklqztnBQP3icv0t68tlhUXfOoBYXb	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BV.svg	sha384-wEkglDdILexdma99U/xx7A8LFmOJ4jt1rDVHKIf14xQGFEd1Fjh67UjHmx11LN4t	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BW.svg	sha384-EKOzOWfjR2pUiQial+d+3qejIseIaF44Yau6xC64mVFgUToesZ5hL+oUzgJylKUP	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BY.svg	sha384-rjc5cVc0G1MX1Lz0hmmc9SAOkqtRa7ZlzhXNYJmhwSjUG2t8M7mnzf5pAE9954mE	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/BZ.svg	sha384-sdQvZf5V9S3ExDBMQLdRSwg3/S+dfn+idVlLdZlfxpY3Mc++KtVRhpLW2Lh27Bur	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CA.svg	sha384-tUEfpTMK6XoDWP8qjrNc/3/STh+46jnwUzbCszh2H8lJGlQpeVLaHNfZ5q98hjYh	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CC.svg	sha384-lCwoDxB1w2PUBTLcYRUbJPkiCJ3Bu2/SjcEqu+cKZMsleBP/xRvntolGsxftO9pM	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CD.svg	sha384-Vjz30lWG/+nwGLh55pbaXc1tV5xonjfz0qNZhZo224GV8NOR6j1IXviCUm8md3EP	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CF.svg	sha384-PuTldm7cqnthipNdMzLGHs6YlztB2wf4TO8lK3Azx5we8dhgWJcnwSHJlj9fycaf	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CG.svg	sha384-DtwWHnjKxu1ExETXR9XnGWd7RmafTNH3Isc6fe3ApXUnXHtJ7r2sj8UYsZibpNUU	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CH.svg	sha384-Iib5j5i3hTvy20+PrnDNNlANpboBCeHCLlI80iNvKJBE3GY02nKqcCFs8FXR6CBl	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CI.svg	sha384-W5GJ4zfPfU/RvMQR4bG/t2WFkcIMCo+dqcW+ZnWh8nR8Nv5+0XlVEzJHG/53P8cT	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CK.svg	sha384-USqLyUzcrig/ZVjniwYde4/h6r5ypw+1YJ9jAuJGpgntvluI08YBr9qfp9EynZKa	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CL.svg	sha384-IhEtqwQQNOXwf2VzvkvcANjvubblHLw2WJg880w/2SZQPZiPYgsUjSyPhWxLt6QW	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CM.svg	sha384-3jOFNmLZaNlKF0qnKPT3g6I2sgWXeSG5FaU1jLGrncBMBfcgky0mkRUoUQpfzHaq	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CN.svg	sha384-DDJ9uulxp10X+WHDWs1AwV+ig9wdFPijbfLo0xMq+GrXFnMG/gzE1BV2N7oqTw/1	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CO.svg	sha384-hOtZoKxn9BZthZFtP/MrQCUgG9dOL/uX9rcu8tTck69tF1qkugdSjBNFgJh6P+FL	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CR.svg	sha384-BCFi+rkhHTVT2d5JDcRQn6chx9PzQrA7IlY3G41oPr8nf3cLQ6v1pVq8k2moR2dl	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CU.svg	sha384-kkS0bggzHWzQQxbZUTGFKVNPSnZ9ERW0IeKCm8UMP9//DTRDR9xBmBqjkOwid35n	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CV.svg	sha384-9qK+6AytT5x7sBGJeTJjB6SlnjbDZjPghFtbGcdfqRPpUJUpr6hCD8/xKAvxyNDN	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CW.svg	sha384-KlwDyiA7TruwQZxsJt9M0K5ZQfVZVoXte6ZYrHqckwbcIOzKI9xbKsYUEf90lVeN	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CX.svg	sha384-P/qP0MgKrflGcnenpcEIDJJA1bToB8hkUGh8BIHIn47RDvkKkQT4p28DTfzUBM9l	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CY.svg	sha384-qxsSZn7sk9i4oqNstxru+On2CdsT8Z18ldFICNQEHGjvj0Pj+uYkRa+5TpySiatb	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/CZ.svg	sha384-HJ+WqJE37nrP4fDgKk0Nwaj5kKR6AaAeaPDQBDCAIOMp+irN94XmiZky3v3cr/dB	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/DE.svg	sha384-tVi3FYIXqbwV4sL88GDhyRs30TzPUlwRbNhFRhiDOB5FzMqH8AGXxrimoukKJ1HX	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/DJ.svg	sha384-9yw9T+BpRVW0z/aVdRitUUF+Hv8A9n11q/7c+4OqTc/XxBPH2hgoVhwq8AIIMj5z	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/DK.svg	sha384-Ebtr6r43qBZSEp2cs7QxJD1eprELKkizokCJQjddrizGewwioyIzF+vAmh3YElXX	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/DM.svg	sha384-rb9WzDasoQEXz4eCy/5qvn2Au0vYRyZEnjfJxlaooRvyD8NgIZgaAuG3OoM6sXcl	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/DO.svg	sha384-1quoRfukVWBs384nQSdHughypvQroGGoly20CEa+wAcZDV2Kd/xHR2Uu+wsu08og	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/DZ.svg	sha384-1S9jtXeyLjBB0sexjdfmzF+Zu5SMCesqEuLoRg28ZEqDZtvhtzA3aZUXK0A21iF6	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/EC.svg	sha384-OEDcKzoS2uD26nTAiUMn5FpCADKHt+H73ty1V0tApu/o24euYY7hF+3KNZUzh3k9	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/EE.svg	sha384-t8IPLJOieMOj/zVQcgTJ8a7PLDlclJ5JQT0Yrm3b7fJ+Vu9vYRl+jrcIIpeylVJ0	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/EG.svg	sha384-FjScnYbF97xZj6VUAzJMxuSZiU8elrFCE2dgNnTThKShPEqZnC2/j22CuvlgHK89	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/EH.svg	sha384-pdxasItw3MZQ9oNSIanQT2HYwKrKipxFWQtgP4Y3pYuZMyrzTmBdE8oPJ11j7dfY	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/ER.svg	sha384-OCJ1QikSjss75f56uw56aEQPKyuQ7DwlMo4ynTDdtBFGd+j5zlOS4czzLqnZmtlq	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/ES.svg	sha384-Px5NYOxbfVciK6jAKuoBA62sdmT6jQ8MSsw/BG6sqxbB3AgCDsM1qk3n+QoYHqi5	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/ET.svg	sha384-2po/y7TIy482G25teUyDi7DQJZZoF31vwbpMoQz+O6qXq1vjM134XC0R3UHoQyVf	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/FI.svg	sha384-VUb9hp05LuctoDzXcA3wWTos2nbD9GsEXtJNzm9oBUtoTnQgGg9VPeFDnCIVRDD4	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/FJ.svg	sha384-Gru9foH01YpBf+O+PvqWwV+DfybSlr0s3+yKSGy3Dsj5LjfathBix1FREC3Ph+YB	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/FK.svg	sha384-iNE2knfY6so+sSrtxw8FP5fRnlCW+w3EueSSA5CNwzt1a3pN9WQYS5yIunqCZX3Y	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/FM.svg	sha384-DZ36KM34teH7NspQCD8hBm8xNHe6Pcz1FG8mHlbZ1SKwtQC4/fZ5ClcTJxh59Fo4	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/FO.svg	sha384-lKEwkEhwkadWcScyzldvhL2TsiHGMjgZH/ClemyWWh1mUYVSWNLLPNVrOi5Hafu4	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/FR.svg	sha384-yvSFPhppPAXHVePcGq8fU5hXvv4xMjHcsp2H1skUeMBIbgVKyUkKhRx+1yviU9oc	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GA.svg	sha384-AjV+D/QavtmEwg/CMU13A1i/zhifNumdZfYSROPQ/hTOOIcD1L2RduG39BkKU5G1	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GB.svg	sha384-/aJKnMANAIvBPcD3NYwF0j/HtCtel+R2vN4NoUOgR1wQP65yM8mr+mN9TvG4wl5o	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GD.svg	sha384-3IFjYCirNjh1P5HOWJL2a7/SuDdiDAyzx7oRK9ToJ2eWFgZuHXoUE2ScgXrCmTi6	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GE.svg	sha384-2evDaScHI25CrLwigd5AkBETS/jYVi++qUGGnqJmGHTgD+fQaHLU0r/jsOYKhjq7	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GF.svg	sha384-UJwPV2dsZOx0+pwTwNE66y1TopUp/NSyvwb8Lf0HtQ1nZNm2c+LFIh374LDq6x9A	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GG.svg	sha384-7IqAiLzMcrD+Dd6L0BuQtTQFCSaXUoKtVkO4btysXHpvv04AV/myRxN2Ti9CcKpK	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GH.svg	sha384-MP012VXaz6UYSNEuJtLILuQz/2CnWjIErzDs6r+SbvgCAqqO0ZSJK4BRbu4EJh0c	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GI.svg	sha384-kU2BUISXm5tBb47L8FtbPHZF0b6Wts9lHY5G7iHoE1wG1xNLd2aFbEDP1fkyIMKu	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GL.svg	sha384-fbIUIHTz2VjPu602yRdi+6kH9HXMMnx1ngh2fCuR4vDZRedHkxqAkbVpM1lRZSDi	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GM.svg	sha384-JqnRK8lqqA0QVfySLWOJpeSTOjDIvDdh/mBAv83z256GVRpr7v+ayt0Nib10t9aI	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GN.svg	sha384-KMmlySpzbWkTDiZI6vJu2V9F+B2aRUeGr5jLiPVkWATa+G1qjuvPC385DBH248LZ	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GP.svg	sha384-wnysrRkhDfZbfPjDsl9HzZUVzNRcaqcxsPx3rGOynNYJjBFN0fmYMewYb2kc1XLP	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GQ.svg	sha384-Dkfzmtx4yF2NCMkUOsCZbk9i35O7/RUuig/LFrkyDk5wQ3wGokJbQ2z9ZltJFk7F	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GR.svg	sha384-+iDoPQo6cMGx+DhkPGj97h1X7+qDjQTLZXM7NJky3DBTkVIdMRyRC0WR7pd65V9E	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GS.svg	sha384-LGKk5ezxZGwJdpH8moLMDrNHqDXC0ER6eLBtzRaJWv9VvxXtIUy2FEKB9ZLJix9g	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GT.svg	sha384-dTCTSX+k09Ne53jIAO5h9sgBIpSv/bHaIPUk3pNA6wKSExARBQh8fjtdtdo8Jcam	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GU.svg	sha384-LbZQXe0UAmT5r+0uO1HS7ttI05B0KlXmi41BcjxJU9Pynhuna9+fQQoWmhbY+w9C	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GW.svg	sha384-nKEvzYVvxNK6ILyTkio5dWhFeNvUVLkZtvUR7F6Ex0BJ5UVTl8wzjPMqfVrqGDF2	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/GY.svg	sha384-8QU2smhU3kOUwrqrsTo41XPVzOMFosekHqOJYP2rkHJ1QYrUPJa2q7fBrCFT4ecb	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/HK.svg	sha384-HZRLskWHK+tyFj9/8NA2nIqDJSO5Gf4fsOSgCNsvdYLIlNf0rHuve6QA8cGTOVe5	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/HM.svg	sha384-KmYEC6LKX58uPpk8BZ9lZH5YFy3dIkHoZyEWyV7814rwuMu6jAsqNEK13lQAXeFE	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/HN.svg	sha384-V8fAjc9Jh/NRGrubo/1tQEFcI/iKOM0zQfDAvCbnVDUyascDorP4ZqJBJ5ARc3sE	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/HR.svg	sha384-vZc7oeaXrdDyCDwTAhAm8umJLX4TOlCR4LzgWpHQn/fXCo6by2hnpVatAO2AB2wZ	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/HT.svg	sha384-KfUpax9PQsXJWq8X2q1a3UUUYAZFtyPegOAHnscRARhf+byJRqrQ9PmC9v3tvZfN	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/HU.svg	sha384-4EJ9AJio0rMc8P0crL9XFhGSv35x8ks+2Uei4wURGwilps9//HePf87II9vTpCsv	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/ID.svg	sha384-IwyCfmszicH3HLvICwFalueYDHFLY5xbSJuFVtWsleGbIrSb5XUVX+oCn5CWPOBc	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/IE.svg	sha384-o2SDFsgqTMbwjcVTysjpzGk9QRvh6BD91cBqwjnbuCsxa5uez1Q4XzOgg5j//8v1	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/IL.svg	sha384-8D01UM/+03z5mMG/Up2L6+K3Mb9ZvZ7bTuPoKUEI9CXxsjfXJIol6DF2YSn64rig	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/IM.svg	sha384-W5KQZd2LpXpF2zianJzq6GQJAEsZqYsX2RKvuu9QKWHe+11kdAcGUj/h5pOCnBYK	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/IN.svg	sha384-//0kpWD9ICYn+MUFBHtORt+2nWnblTeJRIpAWp91IgIf4FYgB0anmCqHDjFiJsam	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/IO.svg	sha384-7/WavTyfPRZOqgSVhp9wCYjfQjdSczHOtYyLiBqTkLNcxTbpjMbgYalroWouDmr8	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/IQ.svg	sha384-QnTSUIiTnSyKARLBkX02b6KJmb6I+WSkIB818XXYmnAnDLz34C8ysyQle1inQ7Kc	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/IR.svg	sha384-RVypKquK9volMet2X3OSu2sP6NS5YW0cYIA67a2D8BBrTCNSUXuhJaiO/VMLgHZN	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/IS.svg	sha384-oqaeX8YFF0DeL1u9NSPo8YUL8d9vYgE+QKQt51aoVnKqzULg8yMYFn/bFHXDkfE+	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/IT.svg	sha384-bzGo9nsISI3yzT11rj5TmEB4358kx/NuuMPYOonoV2Xqhb8BZmwh/wqOLdPXCXkd	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/JE.svg	sha384-+ysVatvkFPgOAU+eevBvreh6rpmskTzb017ZvHHQlm1lVyeMRB4Dkrp1DVBnvT8p	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/JM.svg	sha384-kvdXWwOvRaPtog9fubMgwypDRQYWeILO4JNt7Lw85e2GNqEqBzKN8BoZR+Pq0mDg	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/JO.svg	sha384-79wp1M+ZbHy0DkqzvNAHwHkRJFlugheZr+s1zO8pgzjlZkNixDq6EeY0OQcdIty9	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/JP.svg	sha384-z88/ay5VBWLufxQ7n5jda9oRmmMkBhlBjMyz0gd8qtxJ8BxOgQrVC4uCc/aOlluS	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/KE.svg	sha384-0mHmhQAE75mCHLeiWPWLXGVnoGsGgR37ch5uCSA900/5GBxTQheBV+sDv0aw86qp	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/KG.svg	sha384-CfAEEPHv9nRsUQzGMAQy5M1U6is3XYol+lN/yisDQ1uD0oUKR6oyD5i2QCXcKdEz	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/KH.svg	sha384-pEV7JK32vOQXSkBXQhGDAebO/EbrSP3KMwYgM0BT2MH54XEhjXeCliveXjlgp6xr	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/KI.svg	sha384-LB/bRk3xVJdqGMpUXSfxWs2FosYQjsio2ng4a7PUAve1FvqZhSOzjABPzKWiEfgx	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/KM.svg	sha384-VpzPf16t8Lb0lV5bR56Ovfs7h+V34pJOO3LEpWcEwYG1Sz7wPq07etD3PKEuAOCP	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/KN.svg	sha384-d061B+83hMDISaGACN52whePM1CjTh7e+UiYdWSf8rVex4dX2TWuqvA81YjpEzPX	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/KP.svg	sha384-Oct1AtUHo/nfvQlFfoaw60azfhd56XBb59XPB0va6eCtVHegNUPRN1c8SO1nfX8e	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/KR.svg	sha384-mVZRdMTqg9a+p44CJweQ2CMT+nt0/FdwyfWqraNcILXPV3XgA09mDzZGQ9Wca8pp	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/KW.svg	sha384-733h20/auIh79cAL7qsDfYyfWatogPp4Zs7kz9op0SWlXZHKqssndwPpjfQ0Nujf	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/KY.svg	sha384-HTDZAX5chwSoHKSW7hM+hAgF7bHVyB2K54FLUZGvNs+kgZ4GsesmZOsVpD/WnPBu	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/KZ.svg	sha384-FoqYwTe0prV+CzWOi72a2Ws2hnTPOrfd2s8n0Hcs/G/Dqtxg4giVyffRKYmejtIp	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/LA.svg	sha384-ywES2CpyubnRr0aacUdM+2bY0QVzN3zQ3ZTs/vV4oFkXAUyDqDjOhY3eVQ9+K4ub	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/LB.svg	sha384-rADD+YdrSXiWmxy4g84+vBoVtfGXQHZ8pPvCnAzhnistBFcvesMBLy3eN3C6pHwh	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/LC.svg	sha384-U0CGxxYkwwZHhkYiQVSfABSDE4fODtmU1knmyeeCMSsEHp17HIO0YEn5XYFDYrD5	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/LI.svg	sha384-jDijhSRZbkQDcT0Ynqm5zV5NddRmKYOPn5ekLrLLGEhnZWDqUKnhZHu1JG6FkktN	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/LK.svg	sha384-6EgdytESBOVl7Np2TpJmO1JRaFwQtdBX8zaofmuzyEf8v8nh1L2tCYn2R6M5LaR2	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/LR.svg	sha384-neXc+gjabaIZUTMS9Utfq/KahADqw/9NDI5I0VYThHAGOMXuej6jxTGUNSHi+Nod	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/LS.svg	sha384-CXO/8tcaXByafi8Qd4zgRoeQ9+ykz/wDjebIasWdSh4EEfG/XkMN0hrtDnbJRjXu	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/LT.svg	sha384-OVPL9th01DbamnVuDUrmyp749mQ94PomovtWMOAXPVID4OaEHDpdPXDLWgLjJfSv	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/LU.svg	sha384-BC/5di4cCwHgxOGF9FuN5jA7x9k0BjJSVbK6q6pEfCTKg+WYOaSyTA/Ce5HneZmT	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/LV.svg	sha384-RjGSiXpojKmB7t6hkblNSOPLsTew98RG6qPnT1f98U8xJHSrKVwJJMa38Tfmfijd	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/LY.svg	sha384-cMWRn2dQPIDenlikqydkwV2XhCy9Kk9dnpRLVOutNAJKNC6ikeqQeEX6anegrr20	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MA.svg	sha384-y+rRK5N6QJ1Pdk7YisicOgnxF8fT2wLALXGFA6y9dVUzxG2Ha7WUDOno6zaqfEbB	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MC.svg	sha384-0DU4mQsT23YQA0ASuDSt0DIuJfZ3dP9o/l2Vhjyd7MmpO6RT/diqVErbWVU7NFx3	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MD.svg	sha384-yMiHgcJKoHIBa+rYyHkROEE/1zZvyAIbMzmcoPc8trrO0BxN8wNMBv48YK2W+47g	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/ME.svg	sha384-HXUn/Z2scbk6Ju8wIogaX83UEkX31e3W9Q2A9OMnEK3HkRMJA2G4p/kliAckvFc6	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MF.svg	sha384-5zF8IIKiC36DH6DAvwyuavYQVO1xymZOCaWq+NguqFB1FkyaVoRZFeVjyQg88muH	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MG.svg	sha384-xmDx6QaIoQ9+lSFrc6iIw748DiU2lT/GzoSlZEAnl6mZMckg8uWe74VahsXaPDo8	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MH.svg	sha384-CNGmQKdSD8vTy9KRUKvqE992ElPXFHKZlpt/oaqOnCFjZUYE8eJUUPGuVPKkSrNq	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MK.svg	sha384-nJZoyvXn1q5zyVp7AK5QW3O6l7BaKQIONr6rSFDeLrR8N18+LNA0Wr30pHgBs4pU	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/ML.svg	sha384-a90+2TPvCbQFdfeUxWhHpMhy/cqXRy7LlNkAVaMoKVu/G3EVlDI7SZaYhdFXwhgO	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MM.svg	sha384-GeMFEsfpovlBfgvpan98/XusyTPM4Poak48ldgXNPsXL7P8CE1mF9nO/uR5qSgaO	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MN.svg	sha384-6cxFGIpBVCtsX9+r6VZX/VYz7JlW3QDmMQKmLQJT+PE924Hkbp5JTGEa+Y/PlFIu	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MO.svg	sha384-nBzpbFmZS4BOIK7ma1XNWm4OzKXRvPohQjb19m4nvFSjRO6ygFaOTapT3B+c0NND	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MP.svg	sha384-l0WH8lT+k/HO8QOkMGEDM75bq8ntVDka2Tft/XFRHlR0A3N/7Huom8ggm7NJR1+1	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MQ.svg	sha384-/1khZodxMAAXWUF4BCe0FWUUi0GnNpYXE5gZhFGIdgc/92R37PQ4XO2TF6A6B1iT	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MR.svg	sha384-mVzqkhL0tfntnAkMYK0DKi/LLDgYOQznmGSQVMPQMKPnq+6ljwKF6Eafgsgh3ent	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MS.svg	sha384-z3pJFhIEvUB6whAcgrhK5e6/C2QpNklqslE3r0EyBu1KBJfMIx6nT8buFZcqkKps	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MT.svg	sha384-SjOqL2rYrFA/ZtbTGqaxj4npZHJCXScaurfol+di5FeHEcl13bP7ZzTT+WNN2HCG	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MU.svg	sha384-3IOO54h/Zw0Cx2oCfPE2yvEcnQuNNRDoCWiwPa1DpazFStCML329qHOy9spv2Iv7	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MV.svg	sha384-qVMxSs12P4w5WQOtU93CbmmMl9etS5fkh+3FQm497FCd6Xh7zmz9i01twtK2DmZ9	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MW.svg	sha384-+ORzmriQhWlIHMPwUvY+uS9jeUIRFYL9hB9cm/Ppt3GPS8d7N9r9r4ObCsmWPmSx	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MX.svg	sha384-J0QzNP5YYHNXA0Z48XL2TK7ec2Tz1E0eTTvIJQY+BU3NzXhW/2J4Q0GzuOn7TNuT	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MY.svg	sha384-tsEt4fIaL/65pS6WVIcl2297z4eqgEL95+rOaUL9m+RXEyDW9wX53yJk2+bunVCa	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/MZ.svg	sha384-bO5AFqVLeVFHVidjMV1vjpCF5bEHL5Fs0DmSyMbj6Au4xMV/dclzlxrFCzaB5UVv	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/NA.svg	sha384-OtxAhIvj5Z4JKgvjkPTpm3kJDuLIbDTX4zN3KH76C/RnSsbs5LVk+CVY5EP9ZRrP	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/NC.svg	sha384-91br4DBwFefgpZse8gNHZqysdiEQy6BRULMIWfL3I8VyHLLTOo3d1N6J7aEoptbr	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/NE.svg	sha384-bcQtF1po16eTLKchZIxDl39Rex+yXwdEcQfY9pC6xpDk3zNXItP2YLB+mfVArKIX	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/NF.svg	sha384-Se5rzfbYXlb2pg+HqSUWL7WFM6CoAVLJFTO56A2FwVVXg8dm5/KOGg9vxUGIbcvZ	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/NG.svg	sha384-CzwZOnt6B6BQmWx9lpGlrtjxI/sWI2A5D+dqspn8SWJU4hLXQ6w81NfbWG2FAhfl	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/NI.svg	sha384-/n+Gy2qqEkr0zTIQ7rQY+O9cz9yhlLYdKfW6uGzA5DFsbCuZAWUKj12ycQRGPg9R	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/NL.svg	sha384-cbVU7kG9Y4dLTk7L41Hg2CsT9eNkuI25iyeHFkAfW6dwH9mgYsPlzun+KGrnB78h	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/NO.svg	sha384-JjOAUqnSQD8fURfhmGWLmFc16Q9G2zVwNjl7TZjpDfvDgoqU3lTSnpHrAIceF3On	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/NP.svg	sha384-zEVCQAsjt4rPN//JkVxWd0OJBnfQcoO4YQWANwj9any1meN3zTlUGbd3KV1DlcBi	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/NR.svg	sha384-XCmUz8lPtEGBkTmRO0EH3n6Ly+5E89lAq2drfq6VA9qS6W7JALq+dertlIJH+aQr	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/NU.svg	sha384-Xezkuzt8ewCRHi6+b9AWKfiW0uIDk2qfIBdH6UReQYs7ZqDmS09KaJoHN0nylfGH	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/NZ.svg	sha384-Rzdflyg0VWM+Oa040nbgyMpSf7CSYMMu1lhvs0yeuE05KjRlVED+OV/ojU/sqVra	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/OM.svg	sha384-XPzdkNO/XzghneoxtZVYVs+//x/Rd+rGSYWZhDBdmPQuKsV4JH7R/RkeU8/XtODH	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/PA.svg	sha384-qKLYfzO0EQpcR91EEGqDtJKuhqdCrqgj7nuTGhnGddVXKBIFmFFEOSbQ5QjURvL4	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/PE.svg	sha384-LlwBt3SsN+ONrCWwCb7AiWoTZmKP6zGN3CQG/8HPCa5Dqr+tJrDQf0zQBHBk7IjH	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/PF.svg	sha384-Y+Lkrp00vedIfQKcmyXZ+LKa3c79MBHWCXvjFeCBCanb6EVJvqA2HHtcHR7cZZlx	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/PG.svg	sha384-V9m7iNGc0HYwJN2B1vKyG/FtMW8KADRQpXHZOAtkRD/GcdaH7WyWsx/1hNxXC9CH	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/PH.svg	sha384-kGdY1aFD32n/VNvCXqY12EguroKwA1xQvMY4VmGI2XOBuoe+gbAD1UDpYbWB6Xaj	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/PK.svg	sha384-zOg6vLNEUXXwh/IKVJ+8+E4nqg4ZCnGC2e+lIzhRqapiXaq38z/BTOaA38wqt1az	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/PL.svg	sha384-MVNMNg7ukXPx85UqRG3Um+UuG9SUpQ+5GXB7udCi8zZ+b7A5UYv5G68a33I10N3U	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/PM.svg	sha384-2XoOYZA3N+1tGeEv/nmieLGtdJnVnnBQaEcflEmByWGIrtfYkdZJzMLbXc6iBq4+	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/PN.svg	sha384-rXfn8+iba5fiikK3s0759ZaXBHVtARke4R74LHjpf3tsswNdF4+hsFMtE90dPbca	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/PR.svg	sha384-qsrsPOnHV8AGULHuTgksT6WFbQ2xYC6sP/ie7wQWxEduIsnDtU/YjTRVzgnCUEDG	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/PS.svg	sha384-brL3DergHa0O586XWxxfORPUXm+72WkldoIniuxKHggQ7Ty7hp5JqCVXwpn6Xhcy	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/PT.svg	sha384-08awhTe/49z0Tm/vKZzfAK2YsV20tYvvl4hxXqG4HFYJqXWTZRM/uVqjMzIvfRwO	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/PW.svg	sha384-a2dLKMTWpKWmPYEuqhUnrhbiVJvGoMoksoLZ3EpOz6AOA+awwLZPEg4b6u8+keQZ	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/PY.svg	sha384-ZtXFqdz+SfzioZYkjYmKWN6Ao6zuYR2UEquCk0VEq0EvdzAp/XyINJ1tTcuD7Euq	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/QA.svg	sha384-pI+9XytSMvxwZsKW/BFCUx98kqBTTAz0r9zWUB6dSRtgIsM2OmQXswyMZsGAPv7j	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/RE.svg	sha384-TYa+FSKCCZvU8CKchEOYRB2LgjGh84npEeKYJC4KBJqYjHdNNtDyfkZkiJBd/7mO	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/RO.svg	sha384-VsDKR/cSzz0Tl+49vOiAwlGCIlILSvA3C8hotq2M/bKljH1VLeOk4dObEeVA+rCV	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/RS.svg	sha384-Lfovrcy2yBHlw3UTbxKvwSdK0OnU4u6/IucebM2bh6XVbtkcQdI279NAI1Rjyjo4	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/RU.svg	sha384-ZzLmqjSrnDow4qU6m79Tl5CippkTFw4pZwV6lPDCrne3Kfz7MBqVSd9HyFIBppo5	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/RW.svg	sha384-p4DO2e5KUbmhE5u/E8Vvp4L2wz3YiRfDo1Fcq9Obk09UpTuq2sLyD/y/8OegdpIU	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SA.svg	sha384-vRF55NH6+dRZPgLpz/6hGNu7TMU2jJLcSsjnAc5ND++HKH1EQ6bLggJMYnFibsJM	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SB.svg	sha384-Rm3eXHMp1MLMWlcCUi+d8+wZZheAIYyljTnjM9E/bz7PJAFL8p4fUePLebyy8JRv	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SC.svg	sha384-XnHdt78Y10fyKDfNomgzSvio0WE7kr4Fo8MCLfEyblHu79mnKmduixAXnw5X2JHp	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SD.svg	sha384-3HnIX9ZPiITExgD6TDRy82xOmi+cF0fF/DSSTXU2BtkmlE/3qJtdUp4ibnL+Ky3Y	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SE.svg	sha384-jJRfbygXYp0EbzP7OKFze2ix4wCVq/pFWKOmsx6h23azpSq15CpFcr8R8uAQedEq	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SG.svg	sha384-wJCrlOIv9Cy0bOa2CvnEmGFOpqL9llFdYvQUzgGbftLvZzQNwTnLBAQRHcKlno7F	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SH.svg	sha384-pMD0jCKNtaY195gxac/Zfftcnx7a8LdKOkfInIVP0ZSXLk6tk9y6T2Su9Y/PpxRN	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SI.svg	sha384-T+Ji+mBuVC1lGOSWFr7LOqRPwm5rEd4ptV6zgmsafgib2hAQ9+miHbLTsyNCqMAH	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SJ.svg	sha384-7hs5g/yK9y2iJUJNIvy8Sf6jA1Gv0OEP86BOA/jweFG0yqNdcbIOsSIky7KBomo3	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SK.svg	sha384-PYgGPWbN9AhsGiYfspKSy0qDHtCasqabYjJoGEDrvqMqtpKIMI00tRdLxAl/AmG8	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SL.svg	sha384-wmGxjTueO9+HPjdBwxwQHekoUvBZ3Tfel/SFhYi409q6hbdBWV4igEIIiFyPjw17	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SM.svg	sha384-AniRDNz3Z2gISCgYmLmPeRxvoFry1+WhENV8oEz65qNwnccbZZ9gAbdaZmNSJYGJ	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SN.svg	sha384-Dcsug1Vl25BjkSkRR4f9Jh/RVxs1z/3iE0Z8moBVPMJ2YeV0qtpW5sDrAVskjFkC	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SO.svg	sha384-hC3u+p5NKVLHzwYIOT9PWrtJc2j0xaYMlopCQcMgIc2ojUfcfJz65AwRs4Buhths	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SR.svg	sha384-WHk1Y3os1EcFs8lcKrg9y42jJR1XldekjnfyFXQE7UxxgseaKLOmCFN44E+fHdyq	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SS.svg	sha384-/D8MLYduJCeoYrgY8c1f3dNWge8BM2bIZpoXVzcP/0KbxtAj7JMdY1DZEHr1dfnX	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/ST.svg	sha384-RiCXChiDkEK5TbAkPkH7VqWh6lfpySZnNmxy+qX9l3Rfm94UkdqyTJByzdEKaGJd	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SV.svg	sha384-YYRGYgB9mcRHlhQRP431L9PWsgD4yqu7vDsbac96+4vbqDR2XtvJjDc9i3HZ7vTX	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SX.svg	sha384-a4NeNxygAUe699Kn2BFvcwWu5KJYz7rYij6svjEMqXK4t0EnLkiDOcG9FzByPcvD	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SY.svg	sha384-HcVuUrj7Cfi68p6IyMkaa6IzeVGp1d5WrzUgW/VEaeqJ/Gf7Rivqrv/oimwJdZlx	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/SZ.svg	sha384-JGVeqcqSj/1tN6LXHdoOJVmz9W1/mLDvW+is5sVDIcuG/fm3+gj0VKxPybFwp9T3	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/TC.svg	sha384-g1Uo2bQm4NOyqsbWanIAW/SgEhBfuFS0YyD7gwfbG+MD0j36sbzlWxulAwAmGRKQ	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/TD.svg	sha384-BPn2LOMyZSzsZqWQMR1Tv5CfpmvbGBNVMLXENMOiuOr3Ydlo9aetz4MiVHtmUp2h	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/TF.svg	sha384-QA02fY4FH15fFBWqKGL4pMUghY0+YaGjNEvOhzKOehWWfV2YIxSszZt19Me4EEbh	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/TG.svg	sha384-FWK3xQQWuCd7VVGS9yxbXtB9Hi0H754ti1ORRzdI3nrpKgg2XsaeXEDsJw6QgazW	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/TH.svg	sha384-YUpvoG64fOvhCdcqj2wjfETVvxoWx9Wed/x3eq/mLhVBJiwqogADVm66Zo8nmGih	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/TJ.svg	sha384-x2/z1RsxwuCBoPULV+3b0d3pUTUoSKvfsXjkXmvXbtzTKPt8dUikOhSAqoyNr0CN	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/TK.svg	sha384-zPEHHYS87xHIKMpo0h8+LAFS2zKQDnmZrdfxrqZly8qgAncmbO/ya93jUYRoW3DL	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/TL.svg	sha384-mp8eG4HUFHGS1JhIO5bV7FQU3A6X6F6woKGKmnRXUy26Bmx6Ca0FYqIxI5aQGgrx	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/TM.svg	sha384-829bLzFt99SB8nPZsi10ouIhqNGt2YrXrVpJXTWX0rWmrBuZ9FQSbHIcABDZVQlU	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/TN.svg	sha384-ukZKS2rnSJncjgCInsywr7mbqj3k3PsBEnCcq8ZXyQurdBo5HVVaTgJi/TDJxSS/	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/TO.svg	sha384-5e/Ak2fYk+Tkjxk0LmFSEty9CeWSUsdlqD4OUUMCcwwBN2t4pmmbCXfA2e21Pan5	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/TR.svg	sha384-GgjB+7HvLsUmQQ6dTmp/gJVxyYmJNLpluZX63bE5ViI6j8dm/AX75A+SRXUCi0Ak	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/TT.svg	sha384-q0tNXJ8m5QeJrCOEfn1B79jLJqw0/K/XEx3CVULjKu3JBt4PctBImCa0Cvtl+H1V	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/TV.svg	sha384-WQ5/nFRMq133oeYBNi/ni6axn901LMRj2QErzlHPEaMMWvl5uoT6CaFfuRYdUPZU	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/TW.svg	sha384-VbOIrU7OlFzctkHkrIqkWV2ou69fBY2kW4OoMxRd0qxm6x8Knf/SXbKs36VouZOB	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/TZ.svg	sha384-WKT5PQF8/AUCNK9f+dqMft+0or1dUqLcm9iIrlK/drLowZkddEBwpsuTbTejy7zC	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/UA.svg	sha384-hVOQSzFaZnkMN2vaOj2F5qsb5OQ4K5HbA4TcLlIdrwzb6FOLXSoYcUHwN5ZCE5wi	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/UG.svg	sha384-Kd5c9RN1zsempG/1a4mOSrZdo+kh123Ur1XLkEAVDnjc43nA3WDUEfPlk4Ablupe	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/UM.svg	sha384-7oKjtLuCQIdL+cIzz9ZfgjqgEP7HQT+V+KkfbU3t8tpGjhKawveF/qgOrTMJ/bmg	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/US.svg	sha384-wBUyQPppW31A9TmszIdCsJbFDxEwyhTdmvqAOGym5UAwOybMM9R7VZmeyf8Zz7+c	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/UY.svg	sha384-iapAcTbEp6Tf6yYzVI7ngRxa79crbgwPRhWRVwfsuE8JVV54U/gIVcjhSw2bKYtv	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/UZ.svg	sha384-8Vylz3qQHb8Hr8NLuQMmvIJXJWVPRO60L7v87YzBKSlnDqid4Zc8whrFlQfFATd9	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/VA.svg	sha384-ZZLNxdkfbm/le+6GzMkdQ7nKBen0XSzJn++uydyynl35QJydmoZX1yPF0nl3ZGdv	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/VC.svg	sha384-5jdrymJhpvDvObmAWRtN7Iy2yW/OhYTARaH3VTQlL2Oiv0TkyOHSAwTqh52bY0e4	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/VE.svg	sha384-7CPKA85UaSK4GxpmBb3anHTqNHJzUTk29UAt0MvK5n1mIuV5gIYJnJ4YoDqqQZIL	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/VG.svg	sha384-Gmyn1s3jeqr2JZTBl/6l6tn1HqslBXH+oDkQgInocqyUwIuF+glGYQdw6k/axy7p	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/VI.svg	sha384-6wttCX/hEM+hPwk8Ru3Deigfm1GEW5sMObsl8wlZSF3WQIs2qFPwc3cMMZ/hdvjd	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/VN.svg	sha384-EdP3pMPuO9sK3sjDBziyFnQ5+YPucQgCKQ4tjzeNx//uGQtso8YGbD9SbHFsGdaa	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/VU.svg	sha384-h+rRW8Rj7tLIXZYXHOtpFEEhQYVk1pbRFE3BArowpfLUQ6mboBfOdt/ipMMtT7Tg	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/WF.svg	sha384-XjYoi145oLK5hjaYEOkMf5leTvnsQcycbF72gVJmCpC5tLwGrsTZSEOmm6/ANlk4	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/WS.svg	sha384-UB1k8mGTCZc3W7RAeA7VAJS15LY1+SgSDcakZSVV+MXqyBsHRgGUfO+Q+CbmdpPv	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/XK.svg	sha384-JXLztZN4n9+z7XdoJ3VqMD27vd8WCC9WftJTI1EMMpiU3mvXOiI/pSBqKjLyC2mb	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/XX.svg	sha384-Z9PYvsIT9bnP3aChmhx22tUi9ghCFOfrz1N5MGSR9l0OM6MzRxeL4qE68nf1FQUL	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/YE.svg	sha384-IcvftsOj9SCk3mv5guaX9AnOt7LkeZDBjNST26EO9XTngAsV+jz3tLNcCyG9Lm+f	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/YT.svg	sha384-hm+AJfYIY3/MGfHnu8ydLPIIxjA3UpF2AfhJFDZmWgGjuajFWNl9GTjve+8/yZJ9	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/ZA.svg	sha384-DuaXum6rhlfIq5EsoPvLn2WVjtiOkfGdp0+eWTzn8InHhZ/IX9cTus5jAd+nf1GI	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/ZM.svg	sha384-5T3rULf3krPiRDv1B3Xz09CFHGKzHrHwmCMvTNIt8AZYpy7hlifQErdgeyhjkoW+	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/flags/ZW.svg	sha384-y0yonaezG5HP8R1BeETGgdS1Ss2lKcRVLsFqiawhlLFmr+p2BCHUSz6z9a/WPG1v	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fontawesome/css/all.min.css	sha384-t1nt8BQoYMLFN5p42tRAtuAAFQaCQODekUVeKKZrEnEyp4H2R0RHFz0KWpmj7i8g	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fontawesome/webfonts/fa-brands-400.ttf	sha384-z6ErMQpm9VO+PSzFwaRYqupTfPdf/8FqehfXiAegd1OsCVEwyxGfXRitsOAlSwL8	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fontawesome/webfonts/fa-brands-400.woff2	sha384-bkcB7e1rvHdmNnhkhQO4nuNk9I0RiTPMW8QUEuAB43yV0a+pj+4wcq0TqdEjkAG0	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fontawesome/webfonts/fa-regular-400.ttf	sha384-U8lQh2H28bJCCd0UDMYkUilXo/MkC+X4bagXkhsKG7nSiMTjR7PXEol7FOqOfiRv	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fontawesome/webfonts/fa-regular-400.woff2	sha384-2hgsGQjjgVclDGAvWslIa+GwYh3Bn/ztuvakT4ICpV95tadfxcw0WMPHsEKjsPVT	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fontawesome/webfonts/fa-solid-900.ttf	sha384-2VoAADNdfW/EPlkrhW8xHXpt8CCvqmFA3HH12T2EfU1VBBJfvTPNbKLxMk84zc5O	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fontawesome/webfonts/fa-solid-900.woff2	sha384-YxWlWCDksuL6Ljn1HkJNPH8l+jSRIWPpMpPw3pFa0QnmLXjwV/uPwpDm/b9vn/o1	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fontawesome/webfonts/fa-v4compatibility.ttf	sha384-fy+FP2ydsiGfVpPo1oIsziMqzjK/YDNdc4+l8weogolQQFKATFndVcYagbZVMF8z	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fontawesome/webfonts/fa-v4compatibility.woff2	sha384-6yorJ/xqzXG3JEHRf9/CTu1dz8bBnMqYf652Dy8345NBoSPcA7DDsScvfnCbJEOf	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fontawesome/webfonts/static/fonts/Inter-normal-300.woff2	sha384-xF/ZPLO2KarXbEpQJ9rsrheJxCRrBV5rU1jjBA80UdOHZybjlCkK14oirxe1FTC6	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fontawesome/webfonts/static/fonts/JetBrainsMono-normal-400.woff2	sha384-65ZACg0BrYSxrmYo3+1J56n+8OoKh+NBjQB0NKpmVDAqolMbkS4deR75LXMFGLgB	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fontawesome/webfonts/static/fonts/fonts.css	sha384-ovtzb2UXgscL2+QjQN83qZkrMRS4BYnVVJLZA8vN47dTbfSwGO8HpH1eXjQSm7mR	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fonts/Inter-normal-300-1ab1ad55.woff2	sha384-xF/ZPLO2KarXbEpQJ9rsrheJxCRrBV5rU1jjBA80UdOHZybjlCkK14oirxe1FTC6	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fonts/Inter-normal-300-656bbed6.woff2	sha384-Zq+y71niFevEj9dk6dpDDovZhyoeQOaDdPBIIyrko3X7QLo9UOLNHfmUzicq/fvj	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fonts/Inter-normal-300-6e1a6b2b.woff2	sha384-CePtRpXlcDPpptlb/1wXMaUPI5ZRkKyTd8XuOnwdiZ1wMbLvcO/3DenTMT58lJvc	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fonts/Inter-normal-300-7249155f.woff2	sha384-E3qkTQuJgrI+uCf+VN+jyIRuwTHdwqZCR2jPE8ngyQMDCEPkH7bZ7MR6FaiI7gvY	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fonts/Inter-normal-300-749a3084.woff2	sha384-FHzVskAWCps1wqFoFWL2uG8fXatMEtp+fZ+3zosPPx9qJqO6i1l5wnpF68T3XFr4	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fonts/Inter-normal-300-e34c5f1b.woff2	sha384-a1vXUeVkptEGH7zGdHFbkR38VcwVZggEJxclNd3fGNw9hgIS3rYPh3C09o3/UH/h	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fonts/Inter-normal-300-fc83e075.woff2	sha384-Arl3ap9P/DXzH71eICwVpn8MZEbMji9fZbGM4Bc0kmi6TUZyrXS526DhhgxHLIjY	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fonts/JetBrainsMono-normal-400-1cd702cd.woff2	sha384-65ZACg0BrYSxrmYo3+1J56n+8OoKh+NBjQB0NKpmVDAqolMbkS4deR75LXMFGLgB	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fonts/JetBrainsMono-normal-400-76306ee8.woff2	sha384-qxdW3hqK8ddm0Cr7HVcxLJ/SBAiUhTplD5WNTRkyCIEp/jH1gZL4CTk+uHu6uz6U	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fonts/JetBrainsMono-normal-400-8ea5e194.woff2	sha384-zUGTmW29yrJB8kxIspikLjjPY+41zQv4SkFqW8zZC+EGbu4ykzc9KqSXfoS3j0Ub	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fonts/JetBrainsMono-normal-400-982bf4a9.woff2	sha384-vyE73h99vRoDo9fhNawq6R/w2GdRRE2lDuZn8vlf83aDnkB1XOAMcxW2hNtME13y	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fonts/JetBrainsMono-normal-400-9cb20f35.woff2	sha384-hASKJ+xVb4LXydNlI0sWbXg0NJr3DIwXJkIkx/m4qFhlQAI+kGRskoCj8Jc8q0yH	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fonts/JetBrainsMono-normal-400-ffa6bbab.woff2	sha384-7PUbokNsqz5KoputvXSoKgypwijF1jK+YiOl3Ivo775fGuKry6b3W0Jm53oyoVsd	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/fonts/fonts.css	sha384-hfuGJk4QqYM6FMHlIjLQUEioQvJ1nPENVylKK8+JSZTBQ/KG7GwoJe29Mpw+2p11	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
-static/jquery-3.7.1.min.js	sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
+static/flags/AD.svg	sha384-NM17S2MPeqPjps6lYJ+yHQJCn7Q8eQg3FKhMUE4nDf+VLELgsdGUBcPci8iuF7C+	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/AE.svg	sha384-epPOgnz/Xv/gDYlds4ZK4jOBr9kFxmQL10Vw540tqT17uFxmwKzJ3JLTz43KFDeB	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/AF.svg	sha384-dIW7bDw4xdPCkrkHkFbeAnZeNhW47oQk2ppeEAUAHj4zYmpPGHSRbX2SkHdJ7xS2	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/AG.svg	sha384-7Bfq5pyJfR+5mJcGG8MxwBdcrISziWqOJp0I6Nlcl8zrgNmqaSd8LkzAcc7yJv1F	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/AI.svg	sha384-htg75V8xxtfq1XAkgEctalX+wemyFi6nnuD/eEoFq1I8qwY8HyQtQ48M7tehTkLe	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/AL.svg	sha384-DtuHkTFA6D7L2LXWn8Ed+Gfc/GKVyOTiV4qB5SUJYWeUDrKxWuoDignCNskYlpG3	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/AM.svg	sha384-awDc5kvHQA37xta2KY6DG+pjyoRIf7LnnHvvGPujfLzVLRIudHawlpsRD54qjqyv	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/AO.svg	sha384-GeEW8XmpPcEcHLFn93tyfwTqkFTQ78cteu2nNul5V7bRcUsEBGJbusMyED+3ZyaH	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/AQ.svg	sha384-cJlus/knW/wenboD/M4teJGU+CpLAb8XHw35hsZbV8G2e2AaKJ+FEEF247ngwj+/	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/AR.svg	sha384-t9VMdrI59HKXtLv36LfeJUcrob75S9zSlP9cPPnL7ZzR2qOyVRcS+JRKfxZ6Tr3E	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/AS.svg	sha384-fWn+ighACuJeYY0hBHnU79JLLpOTxgHTNOAHkEGyD6gYxjMe4aLfT+lcwpP3+sPn	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/AT.svg	sha384-79NABziHjvk+Xk6/ojZWTdkWGkQDOd48bBUAPdmfeCUW8v4grpjzhk5tArRcmr1N	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/AU.svg	sha384-angvo9oE7i0viBM2lnDG/3kfpFDpzXIKNBqn8oxPhfhlHnFw8XhTGNv/3wR2b7Jh	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/AW.svg	sha384-O7dvoj/b5OgpsPyz0oG+x7CcvUzJedv4iovSVmckSavDCh6j7wvwlPJiCQkbgiGt	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/AX.svg	sha384-9XHA4P3CjsX/iLs2JnSrF0y/B3RIPfhEZ7OmlhgGfHaikrFBCAxe0nnLFrQ5CsvS	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/AZ.svg	sha384-IyTxiDSLcCKert/PU36Ej4NJwvoZLeXzww1MPkBk/WjNWnSkQBQPgwECQKbexHX6	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BA.svg	sha384-0XT3M/Mflr/BnSWOPPevdgkR/HGoRea6o/1HvYn3J5xnpVj16ENuXbMf6l4gZmdn	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BB.svg	sha384-+5XtrmN9jaTaad6bpe79nrH5kGqcQ2usONoWE2KrkjD5KIkamjE9ubPupDaVaP3P	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BD.svg	sha384-AJK3rLhBp2sOeUfjZHh252Nc6n+V2JMWJwwVVPZYJCfeZVzHJhmL0CIxd/B0pS2h	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BE.svg	sha384-yaXIgv6/T5p5qTG9xecInj4v0w24P2zrohP3OPZ2pevEzQuPaDFkzPqX0hsKfeSb	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BF.svg	sha384-BFP8YOi28FZX9aOU0ttBL91P6UL3lCiSrO9HRALw+R0KF1a3uFBKCJnIB7Ob8mBn	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BG.svg	sha384-Br3xccDGIC3vZiDdZRnOpK095FRxETJq5Vy1P6JLU/zniUXJWXwSmem0/yEFQGMD	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BH.svg	sha384-NtZS+omXPRGUHIkfLDCorKM0caHPZFGunL+OBldx9FA1MXjdGCnt66aECw0vmcE8	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BI.svg	sha384-6y1JKjnJ4q65xYpmcWxkMU8qe53VUCEQBmvljK1vu254xvQbiTRsLq7F6T6oG55r	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BJ.svg	sha384-nIXXyvtylDnTFn2sFa8CtU+adSo4iFA2aQFp2wZTWMH0qel8TFsoRWQ9pBXfMfw9	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BL.svg	sha384-0aiO8W/CNMjNPuxoFw+5bZFPG8WZzv2v3dlEhhokCD3IXjf24MfUzWMYQdlfbeIQ	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BM.svg	sha384-th97jReKLPDUGJDPehiom+EwtFQmI2xo4c1eimKAbtDCLZMr5ruvV4Di1tuLsBuJ	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BN.svg	sha384-W+R+p1I7woLfWAWxFbxMR5fmYbcsJhQcNE2su6Yz+gjeOXi75sLw8pWtRhBG0qTd	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BO.svg	sha384-7ePgoBUTtWiTW7UUDuTcX096CQuGBzhq3GltR6yM81lF/l+cSArxtCmnAHlorFmG	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BQ.svg	sha384-nDazCdS9DWd/Vflm7oTOQxwSwoi2SwfQRmJhGODi2ubEbv4eyJNokXTNEJUz2tU0	local	repository source (not in Flagpack v2.1.0)	-
+static/flags/BR.svg	sha384-GOtVoNt5xUaBQLK+oR2lXyVdnN1Rx1KHwi11B1fzMqOgSM17Bs+NGvS5BnBBdgSr	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BS.svg	sha384-UXtVEg4dYJEcpOY4grKonVLjyaBeQXWfYJbns6q2UTROXcqvo2M08kpPXBfgFoR9	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BT.svg	sha384-bQc7A7SvJk0P7h+ClSXmTLopVZ+99K8TvVpklqztnBQP3icv0t68tlhUXfOoBYXb	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BV.svg	sha384-wEkglDdILexdma99U/xx7A8LFmOJ4jt1rDVHKIf14xQGFEd1Fjh67UjHmx11LN4t	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BW.svg	sha384-EKOzOWfjR2pUiQial+d+3qejIseIaF44Yau6xC64mVFgUToesZ5hL+oUzgJylKUP	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BY.svg	sha384-rjc5cVc0G1MX1Lz0hmmc9SAOkqtRa7ZlzhXNYJmhwSjUG2t8M7mnzf5pAE9954mE	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/BZ.svg	sha384-sdQvZf5V9S3ExDBMQLdRSwg3/S+dfn+idVlLdZlfxpY3Mc++KtVRhpLW2Lh27Bur	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CA.svg	sha384-tUEfpTMK6XoDWP8qjrNc/3/STh+46jnwUzbCszh2H8lJGlQpeVLaHNfZ5q98hjYh	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CC.svg	sha384-lCwoDxB1w2PUBTLcYRUbJPkiCJ3Bu2/SjcEqu+cKZMsleBP/xRvntolGsxftO9pM	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CD.svg	sha384-Vjz30lWG/+nwGLh55pbaXc1tV5xonjfz0qNZhZo224GV8NOR6j1IXviCUm8md3EP	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CF.svg	sha384-PuTldm7cqnthipNdMzLGHs6YlztB2wf4TO8lK3Azx5we8dhgWJcnwSHJlj9fycaf	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CG.svg	sha384-DtwWHnjKxu1ExETXR9XnGWd7RmafTNH3Isc6fe3ApXUnXHtJ7r2sj8UYsZibpNUU	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CH.svg	sha384-Iib5j5i3hTvy20+PrnDNNlANpboBCeHCLlI80iNvKJBE3GY02nKqcCFs8FXR6CBl	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CI.svg	sha384-W5GJ4zfPfU/RvMQR4bG/t2WFkcIMCo+dqcW+ZnWh8nR8Nv5+0XlVEzJHG/53P8cT	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CK.svg	sha384-USqLyUzcrig/ZVjniwYde4/h6r5ypw+1YJ9jAuJGpgntvluI08YBr9qfp9EynZKa	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CL.svg	sha384-IhEtqwQQNOXwf2VzvkvcANjvubblHLw2WJg880w/2SZQPZiPYgsUjSyPhWxLt6QW	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CM.svg	sha384-3jOFNmLZaNlKF0qnKPT3g6I2sgWXeSG5FaU1jLGrncBMBfcgky0mkRUoUQpfzHaq	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CN.svg	sha384-DDJ9uulxp10X+WHDWs1AwV+ig9wdFPijbfLo0xMq+GrXFnMG/gzE1BV2N7oqTw/1	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CO.svg	sha384-hOtZoKxn9BZthZFtP/MrQCUgG9dOL/uX9rcu8tTck69tF1qkugdSjBNFgJh6P+FL	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CR.svg	sha384-BCFi+rkhHTVT2d5JDcRQn6chx9PzQrA7IlY3G41oPr8nf3cLQ6v1pVq8k2moR2dl	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CU.svg	sha384-kkS0bggzHWzQQxbZUTGFKVNPSnZ9ERW0IeKCm8UMP9//DTRDR9xBmBqjkOwid35n	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CV.svg	sha384-9qK+6AytT5x7sBGJeTJjB6SlnjbDZjPghFtbGcdfqRPpUJUpr6hCD8/xKAvxyNDN	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CW.svg	sha384-KlwDyiA7TruwQZxsJt9M0K5ZQfVZVoXte6ZYrHqckwbcIOzKI9xbKsYUEf90lVeN	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CX.svg	sha384-P/qP0MgKrflGcnenpcEIDJJA1bToB8hkUGh8BIHIn47RDvkKkQT4p28DTfzUBM9l	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CY.svg	sha384-qxsSZn7sk9i4oqNstxru+On2CdsT8Z18ldFICNQEHGjvj0Pj+uYkRa+5TpySiatb	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/CZ.svg	sha384-HJ+WqJE37nrP4fDgKk0Nwaj5kKR6AaAeaPDQBDCAIOMp+irN94XmiZky3v3cr/dB	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/DE.svg	sha384-tVi3FYIXqbwV4sL88GDhyRs30TzPUlwRbNhFRhiDOB5FzMqH8AGXxrimoukKJ1HX	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/DJ.svg	sha384-9yw9T+BpRVW0z/aVdRitUUF+Hv8A9n11q/7c+4OqTc/XxBPH2hgoVhwq8AIIMj5z	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/DK.svg	sha384-Ebtr6r43qBZSEp2cs7QxJD1eprELKkizokCJQjddrizGewwioyIzF+vAmh3YElXX	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/DM.svg	sha384-rb9WzDasoQEXz4eCy/5qvn2Au0vYRyZEnjfJxlaooRvyD8NgIZgaAuG3OoM6sXcl	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/DO.svg	sha384-1quoRfukVWBs384nQSdHughypvQroGGoly20CEa+wAcZDV2Kd/xHR2Uu+wsu08og	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/DZ.svg	sha384-1S9jtXeyLjBB0sexjdfmzF+Zu5SMCesqEuLoRg28ZEqDZtvhtzA3aZUXK0A21iF6	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/EC.svg	sha384-OEDcKzoS2uD26nTAiUMn5FpCADKHt+H73ty1V0tApu/o24euYY7hF+3KNZUzh3k9	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/EE.svg	sha384-t8IPLJOieMOj/zVQcgTJ8a7PLDlclJ5JQT0Yrm3b7fJ+Vu9vYRl+jrcIIpeylVJ0	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/EG.svg	sha384-FjScnYbF97xZj6VUAzJMxuSZiU8elrFCE2dgNnTThKShPEqZnC2/j22CuvlgHK89	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/EH.svg	sha384-pdxasItw3MZQ9oNSIanQT2HYwKrKipxFWQtgP4Y3pYuZMyrzTmBdE8oPJ11j7dfY	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/ER.svg	sha384-OCJ1QikSjss75f56uw56aEQPKyuQ7DwlMo4ynTDdtBFGd+j5zlOS4czzLqnZmtlq	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/ES.svg	sha384-Px5NYOxbfVciK6jAKuoBA62sdmT6jQ8MSsw/BG6sqxbB3AgCDsM1qk3n+QoYHqi5	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/ET.svg	sha384-2po/y7TIy482G25teUyDi7DQJZZoF31vwbpMoQz+O6qXq1vjM134XC0R3UHoQyVf	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/FI.svg	sha384-VUb9hp05LuctoDzXcA3wWTos2nbD9GsEXtJNzm9oBUtoTnQgGg9VPeFDnCIVRDD4	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/FJ.svg	sha384-Gru9foH01YpBf+O+PvqWwV+DfybSlr0s3+yKSGy3Dsj5LjfathBix1FREC3Ph+YB	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/FK.svg	sha384-iNE2knfY6so+sSrtxw8FP5fRnlCW+w3EueSSA5CNwzt1a3pN9WQYS5yIunqCZX3Y	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/FM.svg	sha384-DZ36KM34teH7NspQCD8hBm8xNHe6Pcz1FG8mHlbZ1SKwtQC4/fZ5ClcTJxh59Fo4	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/FO.svg	sha384-lKEwkEhwkadWcScyzldvhL2TsiHGMjgZH/ClemyWWh1mUYVSWNLLPNVrOi5Hafu4	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/FR.svg	sha384-yvSFPhppPAXHVePcGq8fU5hXvv4xMjHcsp2H1skUeMBIbgVKyUkKhRx+1yviU9oc	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GA.svg	sha384-AjV+D/QavtmEwg/CMU13A1i/zhifNumdZfYSROPQ/hTOOIcD1L2RduG39BkKU5G1	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GB.svg	sha384-/aJKnMANAIvBPcD3NYwF0j/HtCtel+R2vN4NoUOgR1wQP65yM8mr+mN9TvG4wl5o	local	repository source (not in Flagpack v2.1.0)	-
+static/flags/GD.svg	sha384-3IFjYCirNjh1P5HOWJL2a7/SuDdiDAyzx7oRK9ToJ2eWFgZuHXoUE2ScgXrCmTi6	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GE.svg	sha384-2evDaScHI25CrLwigd5AkBETS/jYVi++qUGGnqJmGHTgD+fQaHLU0r/jsOYKhjq7	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GF.svg	sha384-UJwPV2dsZOx0+pwTwNE66y1TopUp/NSyvwb8Lf0HtQ1nZNm2c+LFIh374LDq6x9A	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GG.svg	sha384-7IqAiLzMcrD+Dd6L0BuQtTQFCSaXUoKtVkO4btysXHpvv04AV/myRxN2Ti9CcKpK	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GH.svg	sha384-MP012VXaz6UYSNEuJtLILuQz/2CnWjIErzDs6r+SbvgCAqqO0ZSJK4BRbu4EJh0c	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GI.svg	sha384-kU2BUISXm5tBb47L8FtbPHZF0b6Wts9lHY5G7iHoE1wG1xNLd2aFbEDP1fkyIMKu	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GL.svg	sha384-fbIUIHTz2VjPu602yRdi+6kH9HXMMnx1ngh2fCuR4vDZRedHkxqAkbVpM1lRZSDi	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GM.svg	sha384-JqnRK8lqqA0QVfySLWOJpeSTOjDIvDdh/mBAv83z256GVRpr7v+ayt0Nib10t9aI	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GN.svg	sha384-KMmlySpzbWkTDiZI6vJu2V9F+B2aRUeGr5jLiPVkWATa+G1qjuvPC385DBH248LZ	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GP.svg	sha384-wnysrRkhDfZbfPjDsl9HzZUVzNRcaqcxsPx3rGOynNYJjBFN0fmYMewYb2kc1XLP	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GQ.svg	sha384-Dkfzmtx4yF2NCMkUOsCZbk9i35O7/RUuig/LFrkyDk5wQ3wGokJbQ2z9ZltJFk7F	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GR.svg	sha384-+iDoPQo6cMGx+DhkPGj97h1X7+qDjQTLZXM7NJky3DBTkVIdMRyRC0WR7pd65V9E	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GS.svg	sha384-LGKk5ezxZGwJdpH8moLMDrNHqDXC0ER6eLBtzRaJWv9VvxXtIUy2FEKB9ZLJix9g	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GT.svg	sha384-dTCTSX+k09Ne53jIAO5h9sgBIpSv/bHaIPUk3pNA6wKSExARBQh8fjtdtdo8Jcam	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GU.svg	sha384-LbZQXe0UAmT5r+0uO1HS7ttI05B0KlXmi41BcjxJU9Pynhuna9+fQQoWmhbY+w9C	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GW.svg	sha384-nKEvzYVvxNK6ILyTkio5dWhFeNvUVLkZtvUR7F6Ex0BJ5UVTl8wzjPMqfVrqGDF2	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/GY.svg	sha384-8QU2smhU3kOUwrqrsTo41XPVzOMFosekHqOJYP2rkHJ1QYrUPJa2q7fBrCFT4ecb	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/HK.svg	sha384-HZRLskWHK+tyFj9/8NA2nIqDJSO5Gf4fsOSgCNsvdYLIlNf0rHuve6QA8cGTOVe5	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/HM.svg	sha384-KmYEC6LKX58uPpk8BZ9lZH5YFy3dIkHoZyEWyV7814rwuMu6jAsqNEK13lQAXeFE	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/HN.svg	sha384-V8fAjc9Jh/NRGrubo/1tQEFcI/iKOM0zQfDAvCbnVDUyascDorP4ZqJBJ5ARc3sE	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/HR.svg	sha384-vZc7oeaXrdDyCDwTAhAm8umJLX4TOlCR4LzgWpHQn/fXCo6by2hnpVatAO2AB2wZ	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/HT.svg	sha384-KfUpax9PQsXJWq8X2q1a3UUUYAZFtyPegOAHnscRARhf+byJRqrQ9PmC9v3tvZfN	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/HU.svg	sha384-4EJ9AJio0rMc8P0crL9XFhGSv35x8ks+2Uei4wURGwilps9//HePf87II9vTpCsv	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/ID.svg	sha384-IwyCfmszicH3HLvICwFalueYDHFLY5xbSJuFVtWsleGbIrSb5XUVX+oCn5CWPOBc	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/IE.svg	sha384-o2SDFsgqTMbwjcVTysjpzGk9QRvh6BD91cBqwjnbuCsxa5uez1Q4XzOgg5j//8v1	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/IL.svg	sha384-8D01UM/+03z5mMG/Up2L6+K3Mb9ZvZ7bTuPoKUEI9CXxsjfXJIol6DF2YSn64rig	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/IM.svg	sha384-W5KQZd2LpXpF2zianJzq6GQJAEsZqYsX2RKvuu9QKWHe+11kdAcGUj/h5pOCnBYK	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/IN.svg	sha384-//0kpWD9ICYn+MUFBHtORt+2nWnblTeJRIpAWp91IgIf4FYgB0anmCqHDjFiJsam	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/IO.svg	sha384-7/WavTyfPRZOqgSVhp9wCYjfQjdSczHOtYyLiBqTkLNcxTbpjMbgYalroWouDmr8	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/IQ.svg	sha384-QnTSUIiTnSyKARLBkX02b6KJmb6I+WSkIB818XXYmnAnDLz34C8ysyQle1inQ7Kc	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/IR.svg	sha384-RVypKquK9volMet2X3OSu2sP6NS5YW0cYIA67a2D8BBrTCNSUXuhJaiO/VMLgHZN	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/IS.svg	sha384-oqaeX8YFF0DeL1u9NSPo8YUL8d9vYgE+QKQt51aoVnKqzULg8yMYFn/bFHXDkfE+	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/IT.svg	sha384-bzGo9nsISI3yzT11rj5TmEB4358kx/NuuMPYOonoV2Xqhb8BZmwh/wqOLdPXCXkd	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/JE.svg	sha384-+ysVatvkFPgOAU+eevBvreh6rpmskTzb017ZvHHQlm1lVyeMRB4Dkrp1DVBnvT8p	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/JM.svg	sha384-kvdXWwOvRaPtog9fubMgwypDRQYWeILO4JNt7Lw85e2GNqEqBzKN8BoZR+Pq0mDg	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/JO.svg	sha384-79wp1M+ZbHy0DkqzvNAHwHkRJFlugheZr+s1zO8pgzjlZkNixDq6EeY0OQcdIty9	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/JP.svg	sha384-z88/ay5VBWLufxQ7n5jda9oRmmMkBhlBjMyz0gd8qtxJ8BxOgQrVC4uCc/aOlluS	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/KE.svg	sha384-0mHmhQAE75mCHLeiWPWLXGVnoGsGgR37ch5uCSA900/5GBxTQheBV+sDv0aw86qp	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/KG.svg	sha384-CfAEEPHv9nRsUQzGMAQy5M1U6is3XYol+lN/yisDQ1uD0oUKR6oyD5i2QCXcKdEz	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/KH.svg	sha384-pEV7JK32vOQXSkBXQhGDAebO/EbrSP3KMwYgM0BT2MH54XEhjXeCliveXjlgp6xr	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/KI.svg	sha384-LB/bRk3xVJdqGMpUXSfxWs2FosYQjsio2ng4a7PUAve1FvqZhSOzjABPzKWiEfgx	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/KM.svg	sha384-VpzPf16t8Lb0lV5bR56Ovfs7h+V34pJOO3LEpWcEwYG1Sz7wPq07etD3PKEuAOCP	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/KN.svg	sha384-d061B+83hMDISaGACN52whePM1CjTh7e+UiYdWSf8rVex4dX2TWuqvA81YjpEzPX	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/KP.svg	sha384-Oct1AtUHo/nfvQlFfoaw60azfhd56XBb59XPB0va6eCtVHegNUPRN1c8SO1nfX8e	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/KR.svg	sha384-mVZRdMTqg9a+p44CJweQ2CMT+nt0/FdwyfWqraNcILXPV3XgA09mDzZGQ9Wca8pp	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/KW.svg	sha384-733h20/auIh79cAL7qsDfYyfWatogPp4Zs7kz9op0SWlXZHKqssndwPpjfQ0Nujf	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/KY.svg	sha384-HTDZAX5chwSoHKSW7hM+hAgF7bHVyB2K54FLUZGvNs+kgZ4GsesmZOsVpD/WnPBu	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/KZ.svg	sha384-FoqYwTe0prV+CzWOi72a2Ws2hnTPOrfd2s8n0Hcs/G/Dqtxg4giVyffRKYmejtIp	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/LA.svg	sha384-ywES2CpyubnRr0aacUdM+2bY0QVzN3zQ3ZTs/vV4oFkXAUyDqDjOhY3eVQ9+K4ub	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/LB.svg	sha384-rADD+YdrSXiWmxy4g84+vBoVtfGXQHZ8pPvCnAzhnistBFcvesMBLy3eN3C6pHwh	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/LC.svg	sha384-U0CGxxYkwwZHhkYiQVSfABSDE4fODtmU1knmyeeCMSsEHp17HIO0YEn5XYFDYrD5	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/LI.svg	sha384-jDijhSRZbkQDcT0Ynqm5zV5NddRmKYOPn5ekLrLLGEhnZWDqUKnhZHu1JG6FkktN	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/LK.svg	sha384-6EgdytESBOVl7Np2TpJmO1JRaFwQtdBX8zaofmuzyEf8v8nh1L2tCYn2R6M5LaR2	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/LR.svg	sha384-neXc+gjabaIZUTMS9Utfq/KahADqw/9NDI5I0VYThHAGOMXuej6jxTGUNSHi+Nod	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/LS.svg	sha384-CXO/8tcaXByafi8Qd4zgRoeQ9+ykz/wDjebIasWdSh4EEfG/XkMN0hrtDnbJRjXu	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/LT.svg	sha384-OVPL9th01DbamnVuDUrmyp749mQ94PomovtWMOAXPVID4OaEHDpdPXDLWgLjJfSv	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/LU.svg	sha384-BC/5di4cCwHgxOGF9FuN5jA7x9k0BjJSVbK6q6pEfCTKg+WYOaSyTA/Ce5HneZmT	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/LV.svg	sha384-RjGSiXpojKmB7t6hkblNSOPLsTew98RG6qPnT1f98U8xJHSrKVwJJMa38Tfmfijd	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/LY.svg	sha384-cMWRn2dQPIDenlikqydkwV2XhCy9Kk9dnpRLVOutNAJKNC6ikeqQeEX6anegrr20	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MA.svg	sha384-y+rRK5N6QJ1Pdk7YisicOgnxF8fT2wLALXGFA6y9dVUzxG2Ha7WUDOno6zaqfEbB	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MC.svg	sha384-0DU4mQsT23YQA0ASuDSt0DIuJfZ3dP9o/l2Vhjyd7MmpO6RT/diqVErbWVU7NFx3	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MD.svg	sha384-yMiHgcJKoHIBa+rYyHkROEE/1zZvyAIbMzmcoPc8trrO0BxN8wNMBv48YK2W+47g	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/ME.svg	sha384-HXUn/Z2scbk6Ju8wIogaX83UEkX31e3W9Q2A9OMnEK3HkRMJA2G4p/kliAckvFc6	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MF.svg	sha384-5zF8IIKiC36DH6DAvwyuavYQVO1xymZOCaWq+NguqFB1FkyaVoRZFeVjyQg88muH	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MG.svg	sha384-xmDx6QaIoQ9+lSFrc6iIw748DiU2lT/GzoSlZEAnl6mZMckg8uWe74VahsXaPDo8	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MH.svg	sha384-CNGmQKdSD8vTy9KRUKvqE992ElPXFHKZlpt/oaqOnCFjZUYE8eJUUPGuVPKkSrNq	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MK.svg	sha384-nJZoyvXn1q5zyVp7AK5QW3O6l7BaKQIONr6rSFDeLrR8N18+LNA0Wr30pHgBs4pU	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/ML.svg	sha384-a90+2TPvCbQFdfeUxWhHpMhy/cqXRy7LlNkAVaMoKVu/G3EVlDI7SZaYhdFXwhgO	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MM.svg	sha384-GeMFEsfpovlBfgvpan98/XusyTPM4Poak48ldgXNPsXL7P8CE1mF9nO/uR5qSgaO	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MN.svg	sha384-6cxFGIpBVCtsX9+r6VZX/VYz7JlW3QDmMQKmLQJT+PE924Hkbp5JTGEa+Y/PlFIu	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MO.svg	sha384-nBzpbFmZS4BOIK7ma1XNWm4OzKXRvPohQjb19m4nvFSjRO6ygFaOTapT3B+c0NND	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MP.svg	sha384-l0WH8lT+k/HO8QOkMGEDM75bq8ntVDka2Tft/XFRHlR0A3N/7Huom8ggm7NJR1+1	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MQ.svg	sha384-/1khZodxMAAXWUF4BCe0FWUUi0GnNpYXE5gZhFGIdgc/92R37PQ4XO2TF6A6B1iT	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MR.svg	sha384-mVzqkhL0tfntnAkMYK0DKi/LLDgYOQznmGSQVMPQMKPnq+6ljwKF6Eafgsgh3ent	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MS.svg	sha384-z3pJFhIEvUB6whAcgrhK5e6/C2QpNklqslE3r0EyBu1KBJfMIx6nT8buFZcqkKps	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MT.svg	sha384-SjOqL2rYrFA/ZtbTGqaxj4npZHJCXScaurfol+di5FeHEcl13bP7ZzTT+WNN2HCG	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MU.svg	sha384-3IOO54h/Zw0Cx2oCfPE2yvEcnQuNNRDoCWiwPa1DpazFStCML329qHOy9spv2Iv7	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MV.svg	sha384-qVMxSs12P4w5WQOtU93CbmmMl9etS5fkh+3FQm497FCd6Xh7zmz9i01twtK2DmZ9	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MW.svg	sha384-+ORzmriQhWlIHMPwUvY+uS9jeUIRFYL9hB9cm/Ppt3GPS8d7N9r9r4ObCsmWPmSx	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MX.svg	sha384-J0QzNP5YYHNXA0Z48XL2TK7ec2Tz1E0eTTvIJQY+BU3NzXhW/2J4Q0GzuOn7TNuT	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MY.svg	sha384-tsEt4fIaL/65pS6WVIcl2297z4eqgEL95+rOaUL9m+RXEyDW9wX53yJk2+bunVCa	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/MZ.svg	sha384-bO5AFqVLeVFHVidjMV1vjpCF5bEHL5Fs0DmSyMbj6Au4xMV/dclzlxrFCzaB5UVv	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/NA.svg	sha384-OtxAhIvj5Z4JKgvjkPTpm3kJDuLIbDTX4zN3KH76C/RnSsbs5LVk+CVY5EP9ZRrP	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/NC.svg	sha384-91br4DBwFefgpZse8gNHZqysdiEQy6BRULMIWfL3I8VyHLLTOo3d1N6J7aEoptbr	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/NE.svg	sha384-bcQtF1po16eTLKchZIxDl39Rex+yXwdEcQfY9pC6xpDk3zNXItP2YLB+mfVArKIX	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/NF.svg	sha384-Se5rzfbYXlb2pg+HqSUWL7WFM6CoAVLJFTO56A2FwVVXg8dm5/KOGg9vxUGIbcvZ	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/NG.svg	sha384-CzwZOnt6B6BQmWx9lpGlrtjxI/sWI2A5D+dqspn8SWJU4hLXQ6w81NfbWG2FAhfl	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/NI.svg	sha384-/n+Gy2qqEkr0zTIQ7rQY+O9cz9yhlLYdKfW6uGzA5DFsbCuZAWUKj12ycQRGPg9R	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/NL.svg	sha384-cbVU7kG9Y4dLTk7L41Hg2CsT9eNkuI25iyeHFkAfW6dwH9mgYsPlzun+KGrnB78h	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/NO.svg	sha384-JjOAUqnSQD8fURfhmGWLmFc16Q9G2zVwNjl7TZjpDfvDgoqU3lTSnpHrAIceF3On	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/NP.svg	sha384-zEVCQAsjt4rPN//JkVxWd0OJBnfQcoO4YQWANwj9any1meN3zTlUGbd3KV1DlcBi	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/NR.svg	sha384-XCmUz8lPtEGBkTmRO0EH3n6Ly+5E89lAq2drfq6VA9qS6W7JALq+dertlIJH+aQr	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/NU.svg	sha384-Xezkuzt8ewCRHi6+b9AWKfiW0uIDk2qfIBdH6UReQYs7ZqDmS09KaJoHN0nylfGH	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/NZ.svg	sha384-Rzdflyg0VWM+Oa040nbgyMpSf7CSYMMu1lhvs0yeuE05KjRlVED+OV/ojU/sqVra	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/OM.svg	sha384-XPzdkNO/XzghneoxtZVYVs+//x/Rd+rGSYWZhDBdmPQuKsV4JH7R/RkeU8/XtODH	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/PA.svg	sha384-qKLYfzO0EQpcR91EEGqDtJKuhqdCrqgj7nuTGhnGddVXKBIFmFFEOSbQ5QjURvL4	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/PE.svg	sha384-LlwBt3SsN+ONrCWwCb7AiWoTZmKP6zGN3CQG/8HPCa5Dqr+tJrDQf0zQBHBk7IjH	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/PF.svg	sha384-Y+Lkrp00vedIfQKcmyXZ+LKa3c79MBHWCXvjFeCBCanb6EVJvqA2HHtcHR7cZZlx	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/PG.svg	sha384-V9m7iNGc0HYwJN2B1vKyG/FtMW8KADRQpXHZOAtkRD/GcdaH7WyWsx/1hNxXC9CH	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/PH.svg	sha384-kGdY1aFD32n/VNvCXqY12EguroKwA1xQvMY4VmGI2XOBuoe+gbAD1UDpYbWB6Xaj	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/PK.svg	sha384-zOg6vLNEUXXwh/IKVJ+8+E4nqg4ZCnGC2e+lIzhRqapiXaq38z/BTOaA38wqt1az	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/PL.svg	sha384-MVNMNg7ukXPx85UqRG3Um+UuG9SUpQ+5GXB7udCi8zZ+b7A5UYv5G68a33I10N3U	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/PM.svg	sha384-2XoOYZA3N+1tGeEv/nmieLGtdJnVnnBQaEcflEmByWGIrtfYkdZJzMLbXc6iBq4+	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/PN.svg	sha384-rXfn8+iba5fiikK3s0759ZaXBHVtARke4R74LHjpf3tsswNdF4+hsFMtE90dPbca	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/PR.svg	sha384-qsrsPOnHV8AGULHuTgksT6WFbQ2xYC6sP/ie7wQWxEduIsnDtU/YjTRVzgnCUEDG	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/PS.svg	sha384-brL3DergHa0O586XWxxfORPUXm+72WkldoIniuxKHggQ7Ty7hp5JqCVXwpn6Xhcy	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/PT.svg	sha384-08awhTe/49z0Tm/vKZzfAK2YsV20tYvvl4hxXqG4HFYJqXWTZRM/uVqjMzIvfRwO	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/PW.svg	sha384-a2dLKMTWpKWmPYEuqhUnrhbiVJvGoMoksoLZ3EpOz6AOA+awwLZPEg4b6u8+keQZ	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/PY.svg	sha384-ZtXFqdz+SfzioZYkjYmKWN6Ao6zuYR2UEquCk0VEq0EvdzAp/XyINJ1tTcuD7Euq	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/QA.svg	sha384-pI+9XytSMvxwZsKW/BFCUx98kqBTTAz0r9zWUB6dSRtgIsM2OmQXswyMZsGAPv7j	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/RE.svg	sha384-TYa+FSKCCZvU8CKchEOYRB2LgjGh84npEeKYJC4KBJqYjHdNNtDyfkZkiJBd/7mO	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/RO.svg	sha384-VsDKR/cSzz0Tl+49vOiAwlGCIlILSvA3C8hotq2M/bKljH1VLeOk4dObEeVA+rCV	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/RS.svg	sha384-Lfovrcy2yBHlw3UTbxKvwSdK0OnU4u6/IucebM2bh6XVbtkcQdI279NAI1Rjyjo4	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/RU.svg	sha384-ZzLmqjSrnDow4qU6m79Tl5CippkTFw4pZwV6lPDCrne3Kfz7MBqVSd9HyFIBppo5	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/RW.svg	sha384-p4DO2e5KUbmhE5u/E8Vvp4L2wz3YiRfDo1Fcq9Obk09UpTuq2sLyD/y/8OegdpIU	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SA.svg	sha384-vRF55NH6+dRZPgLpz/6hGNu7TMU2jJLcSsjnAc5ND++HKH1EQ6bLggJMYnFibsJM	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SB.svg	sha384-Rm3eXHMp1MLMWlcCUi+d8+wZZheAIYyljTnjM9E/bz7PJAFL8p4fUePLebyy8JRv	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SC.svg	sha384-XnHdt78Y10fyKDfNomgzSvio0WE7kr4Fo8MCLfEyblHu79mnKmduixAXnw5X2JHp	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SD.svg	sha384-3HnIX9ZPiITExgD6TDRy82xOmi+cF0fF/DSSTXU2BtkmlE/3qJtdUp4ibnL+Ky3Y	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SE.svg	sha384-jJRfbygXYp0EbzP7OKFze2ix4wCVq/pFWKOmsx6h23azpSq15CpFcr8R8uAQedEq	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SG.svg	sha384-wJCrlOIv9Cy0bOa2CvnEmGFOpqL9llFdYvQUzgGbftLvZzQNwTnLBAQRHcKlno7F	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SH.svg	sha384-pMD0jCKNtaY195gxac/Zfftcnx7a8LdKOkfInIVP0ZSXLk6tk9y6T2Su9Y/PpxRN	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SI.svg	sha384-T+Ji+mBuVC1lGOSWFr7LOqRPwm5rEd4ptV6zgmsafgib2hAQ9+miHbLTsyNCqMAH	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SJ.svg	sha384-7hs5g/yK9y2iJUJNIvy8Sf6jA1Gv0OEP86BOA/jweFG0yqNdcbIOsSIky7KBomo3	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SK.svg	sha384-PYgGPWbN9AhsGiYfspKSy0qDHtCasqabYjJoGEDrvqMqtpKIMI00tRdLxAl/AmG8	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SL.svg	sha384-wmGxjTueO9+HPjdBwxwQHekoUvBZ3Tfel/SFhYi409q6hbdBWV4igEIIiFyPjw17	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SM.svg	sha384-AniRDNz3Z2gISCgYmLmPeRxvoFry1+WhENV8oEz65qNwnccbZZ9gAbdaZmNSJYGJ	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SN.svg	sha384-Dcsug1Vl25BjkSkRR4f9Jh/RVxs1z/3iE0Z8moBVPMJ2YeV0qtpW5sDrAVskjFkC	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SO.svg	sha384-hC3u+p5NKVLHzwYIOT9PWrtJc2j0xaYMlopCQcMgIc2ojUfcfJz65AwRs4Buhths	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SR.svg	sha384-WHk1Y3os1EcFs8lcKrg9y42jJR1XldekjnfyFXQE7UxxgseaKLOmCFN44E+fHdyq	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SS.svg	sha384-/D8MLYduJCeoYrgY8c1f3dNWge8BM2bIZpoXVzcP/0KbxtAj7JMdY1DZEHr1dfnX	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/ST.svg	sha384-RiCXChiDkEK5TbAkPkH7VqWh6lfpySZnNmxy+qX9l3Rfm94UkdqyTJByzdEKaGJd	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SV.svg	sha384-YYRGYgB9mcRHlhQRP431L9PWsgD4yqu7vDsbac96+4vbqDR2XtvJjDc9i3HZ7vTX	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SX.svg	sha384-a4NeNxygAUe699Kn2BFvcwWu5KJYz7rYij6svjEMqXK4t0EnLkiDOcG9FzByPcvD	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SY.svg	sha384-HcVuUrj7Cfi68p6IyMkaa6IzeVGp1d5WrzUgW/VEaeqJ/Gf7Rivqrv/oimwJdZlx	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/SZ.svg	sha384-JGVeqcqSj/1tN6LXHdoOJVmz9W1/mLDvW+is5sVDIcuG/fm3+gj0VKxPybFwp9T3	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/TC.svg	sha384-g1Uo2bQm4NOyqsbWanIAW/SgEhBfuFS0YyD7gwfbG+MD0j36sbzlWxulAwAmGRKQ	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/TD.svg	sha384-BPn2LOMyZSzsZqWQMR1Tv5CfpmvbGBNVMLXENMOiuOr3Ydlo9aetz4MiVHtmUp2h	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/TF.svg	sha384-QA02fY4FH15fFBWqKGL4pMUghY0+YaGjNEvOhzKOehWWfV2YIxSszZt19Me4EEbh	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/TG.svg	sha384-FWK3xQQWuCd7VVGS9yxbXtB9Hi0H754ti1ORRzdI3nrpKgg2XsaeXEDsJw6QgazW	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/TH.svg	sha384-YUpvoG64fOvhCdcqj2wjfETVvxoWx9Wed/x3eq/mLhVBJiwqogADVm66Zo8nmGih	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/TJ.svg	sha384-x2/z1RsxwuCBoPULV+3b0d3pUTUoSKvfsXjkXmvXbtzTKPt8dUikOhSAqoyNr0CN	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/TK.svg	sha384-zPEHHYS87xHIKMpo0h8+LAFS2zKQDnmZrdfxrqZly8qgAncmbO/ya93jUYRoW3DL	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/TL.svg	sha384-mp8eG4HUFHGS1JhIO5bV7FQU3A6X6F6woKGKmnRXUy26Bmx6Ca0FYqIxI5aQGgrx	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/TM.svg	sha384-829bLzFt99SB8nPZsi10ouIhqNGt2YrXrVpJXTWX0rWmrBuZ9FQSbHIcABDZVQlU	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/TN.svg	sha384-ukZKS2rnSJncjgCInsywr7mbqj3k3PsBEnCcq8ZXyQurdBo5HVVaTgJi/TDJxSS/	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/TO.svg	sha384-5e/Ak2fYk+Tkjxk0LmFSEty9CeWSUsdlqD4OUUMCcwwBN2t4pmmbCXfA2e21Pan5	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/TR.svg	sha384-GgjB+7HvLsUmQQ6dTmp/gJVxyYmJNLpluZX63bE5ViI6j8dm/AX75A+SRXUCi0Ak	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/TT.svg	sha384-q0tNXJ8m5QeJrCOEfn1B79jLJqw0/K/XEx3CVULjKu3JBt4PctBImCa0Cvtl+H1V	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/TV.svg	sha384-WQ5/nFRMq133oeYBNi/ni6axn901LMRj2QErzlHPEaMMWvl5uoT6CaFfuRYdUPZU	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/TW.svg	sha384-VbOIrU7OlFzctkHkrIqkWV2ou69fBY2kW4OoMxRd0qxm6x8Knf/SXbKs36VouZOB	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/TZ.svg	sha384-WKT5PQF8/AUCNK9f+dqMft+0or1dUqLcm9iIrlK/drLowZkddEBwpsuTbTejy7zC	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/UA.svg	sha384-hVOQSzFaZnkMN2vaOj2F5qsb5OQ4K5HbA4TcLlIdrwzb6FOLXSoYcUHwN5ZCE5wi	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/UG.svg	sha384-Kd5c9RN1zsempG/1a4mOSrZdo+kh123Ur1XLkEAVDnjc43nA3WDUEfPlk4Ablupe	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/UM.svg	sha384-7oKjtLuCQIdL+cIzz9ZfgjqgEP7HQT+V+KkfbU3t8tpGjhKawveF/qgOrTMJ/bmg	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/US.svg	sha384-wBUyQPppW31A9TmszIdCsJbFDxEwyhTdmvqAOGym5UAwOybMM9R7VZmeyf8Zz7+c	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/UY.svg	sha384-iapAcTbEp6Tf6yYzVI7ngRxa79crbgwPRhWRVwfsuE8JVV54U/gIVcjhSw2bKYtv	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/UZ.svg	sha384-8Vylz3qQHb8Hr8NLuQMmvIJXJWVPRO60L7v87YzBKSlnDqid4Zc8whrFlQfFATd9	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/VA.svg	sha384-ZZLNxdkfbm/le+6GzMkdQ7nKBen0XSzJn++uydyynl35QJydmoZX1yPF0nl3ZGdv	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/VC.svg	sha384-5jdrymJhpvDvObmAWRtN7Iy2yW/OhYTARaH3VTQlL2Oiv0TkyOHSAwTqh52bY0e4	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/VE.svg	sha384-7CPKA85UaSK4GxpmBb3anHTqNHJzUTk29UAt0MvK5n1mIuV5gIYJnJ4YoDqqQZIL	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/VG.svg	sha384-Gmyn1s3jeqr2JZTBl/6l6tn1HqslBXH+oDkQgInocqyUwIuF+glGYQdw6k/axy7p	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/VI.svg	sha384-6wttCX/hEM+hPwk8Ru3Deigfm1GEW5sMObsl8wlZSF3WQIs2qFPwc3cMMZ/hdvjd	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/VN.svg	sha384-EdP3pMPuO9sK3sjDBziyFnQ5+YPucQgCKQ4tjzeNx//uGQtso8YGbD9SbHFsGdaa	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/VU.svg	sha384-h+rRW8Rj7tLIXZYXHOtpFEEhQYVk1pbRFE3BArowpfLUQ6mboBfOdt/ipMMtT7Tg	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/WF.svg	sha384-XjYoi145oLK5hjaYEOkMf5leTvnsQcycbF72gVJmCpC5tLwGrsTZSEOmm6/ANlk4	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/WS.svg	sha384-UB1k8mGTCZc3W7RAeA7VAJS15LY1+SgSDcakZSVV+MXqyBsHRgGUfO+Q+CbmdpPv	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/XK.svg	sha384-JXLztZN4n9+z7XdoJ3VqMD27vd8WCC9WftJTI1EMMpiU3mvXOiI/pSBqKjLyC2mb	local	repository source (not in Flagpack v2.1.0)	-
+static/flags/XX.svg	sha384-Z9PYvsIT9bnP3aChmhx22tUi9ghCFOfrz1N5MGSR9l0OM6MzRxeL4qE68nf1FQUL	local	repository source (not in Flagpack v2.1.0)	-
+static/flags/YE.svg	sha384-IcvftsOj9SCk3mv5guaX9AnOt7LkeZDBjNST26EO9XTngAsV+jz3tLNcCyG9Lm+f	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/YT.svg	sha384-hm+AJfYIY3/MGfHnu8ydLPIIxjA3UpF2AfhJFDZmWgGjuajFWNl9GTjve+8/yZJ9	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/ZA.svg	sha384-DuaXum6rhlfIq5EsoPvLn2WVjtiOkfGdp0+eWTzn8InHhZ/IX9cTus5jAd+nf1GI	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/ZM.svg	sha384-5T3rULf3krPiRDv1B3Xz09CFHGKzHrHwmCMvTNIt8AZYpy7hlifQErdgeyhjkoW+	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/flags/ZW.svg	sha384-y0yonaezG5HP8R1BeETGgdS1Ss2lKcRVLsFqiawhlLFmr+p2BCHUSz6z9a/WPG1v	vendored	Yummygum/flagpack-core@v2.1.0 (svg/l)	2.1.0
+static/fontawesome/css/all.min.css	sha384-qrALq7+6jBOZIQsNnT6xGkMDru64qD6uTlDra39xrt2SoXl4pO3FX6Roz/RpR/BS	vendored	npm:@fortawesome/fontawesome-free	7.3.1
+static/fontawesome/webfonts/fa-brands-400.ttf	sha384-z6ErMQpm9VO+PSzFwaRYqupTfPdf/8FqehfXiAegd1OsCVEwyxGfXRitsOAlSwL8	vendored	npm:@fortawesome/fontawesome-free	7.3.1
+static/fontawesome/webfonts/fa-brands-400.woff2	sha384-QSzlW1NKpLQ4F3Vyt5v6/78tJC+q3tbKZBx6mmL4357XJJMQwKo3s0VxJ0Fp8l78	vendored	npm:@fortawesome/fontawesome-free	7.3.1
+static/fontawesome/webfonts/fa-regular-400.ttf	sha384-U8lQh2H28bJCCd0UDMYkUilXo/MkC+X4bagXkhsKG7nSiMTjR7PXEol7FOqOfiRv	vendored	npm:@fortawesome/fontawesome-free	7.3.1
+static/fontawesome/webfonts/fa-regular-400.woff2	sha384-78Wu/Ea/cmf/TbrN4bDVNmemhBWOSesv4mzA40dUVsj9Hb5E2CTaukY/7qGGVmBg	vendored	npm:@fortawesome/fontawesome-free	7.3.1
+static/fontawesome/webfonts/fa-solid-900.ttf	sha384-2VoAADNdfW/EPlkrhW8xHXpt8CCvqmFA3HH12T2EfU1VBBJfvTPNbKLxMk84zc5O	vendored	npm:@fortawesome/fontawesome-free	7.3.1
+static/fontawesome/webfonts/fa-solid-900.woff2	sha384-TeBDWCQ2a4tojAZRcJzXsEgFI2EzW27W0GYt9HIpqXdUiPIauuYxz9RpAgJM1x9+	vendored	npm:@fortawesome/fontawesome-free	7.3.1
+static/fontawesome/webfonts/fa-v4compatibility.ttf	sha384-fy+FP2ydsiGfVpPo1oIsziMqzjK/YDNdc4+l8weogolQQFKATFndVcYagbZVMF8z	vendored	npm:@fortawesome/fontawesome-free	7.3.1
+static/fontawesome/webfonts/fa-v4compatibility.woff2	sha384-8KTmqdoloZhvcK32d80Lp8nxp3p7P6hdL/QoVw5cbuiay6wfLwRGcPwp6tdkAaBu	vendored	npm:@fortawesome/fontawesome-free	7.3.1
+static/fontawesome/webfonts/static/fonts/Inter-normal-300.woff2	sha384-xF/ZPLO2KarXbEpQJ9rsrheJxCRrBV5rU1jjBA80UdOHZybjlCkK14oirxe1FTC6	vendored	npm:@fortawesome/fontawesome-free	7.3.1
+static/fontawesome/webfonts/static/fonts/JetBrainsMono-normal-400.woff2	sha384-65ZACg0BrYSxrmYo3+1J56n+8OoKh+NBjQB0NKpmVDAqolMbkS4deR75LXMFGLgB	vendored	npm:@fortawesome/fontawesome-free	7.3.1
+static/fontawesome/webfonts/static/fonts/fonts.css	sha384-ovtzb2UXgscL2+QjQN83qZkrMRS4BYnVVJLZA8vN47dTbfSwGO8HpH1eXjQSm7mR	vendored	npm:@fortawesome/fontawesome-free	7.3.1
+static/fonts/InterVariable-Italic.woff2	sha384-+pocGl6FOSWnp4EfCuCmR4FRG6NwOodWQT87ubcbauVYEZBIKjab2d+pHGSMiomy	vendored	rsms/inter (web woff2)	v4.1
+static/fonts/InterVariable.woff2	sha384-NDj3qtsUEjin1XBDZ9zwBRsJjDf51qDfUnZZfiNICq+3AWnh8dTXCRjW9qQHFnEK	vendored	rsms/inter (web woff2)	v4.1
+static/fonts/JetBrainsMono-Bold.woff2	sha384-dYEoBJwd80Ry1p0Wa4jkE/kvz9C8hP4GDVb578g0QRp/TJyPKLHQfKlG3i3uguXe	vendored	JetBrains/JetBrainsMono (webfonts)	v2.304
+static/fonts/JetBrainsMono-Regular.woff2	sha384-Q7P8LTSqU5heIrhzzG3SuJDn9fQ9qb9cjvjrvyYUe5xpePOJv4LcnBAXf3pRFM2J	vendored	JetBrains/JetBrainsMono (webfonts)	v2.304
+static/fonts/fonts.css	sha384-n138lt+vFMyu24Fv1itVvEQokyUNV3NNKUZNsuBW+omxRqQSOEShiH/5ymOzEV8r	generated	tools/vendor_frontend.sh --fonts	-
 static/licenses/basemap-data-ODbL.txt	sha384-TWmOWqlOpCRyYWu6ZInjMoHjmbqzJfsXOqIFMmsQowYkbgkMLg6cnNKoxOTo2AC5	vendored	opendatacommons.org ODbL 1.0	-
 static/licenses/bootstrap-MIT.txt	sha384-WyeULmOarnkxIWJQ6Byifrdakj+J3Z1ONoIjyqqdmUvfwML66D4izPruHb7zDZbG	vendored	npm:bootstrap	5.3.8
 static/licenses/chartjs-MIT.txt	sha384-OkVNKEzJVHeD+74l3M5PpGUZo41MILTzZ1HFy8WjsWiTBQKiieUUB7mWw69IBHFS	vendored	npm:chart.js	4.5.1
@@ -1078,7 +1066,6 @@ static/licenses/noto-OFL-1.1.txt	sha384-wymZC7wopvna5OncYBmtaHQUX5E8t+fQZGzbYNUu
 static/licenses/pmtiles-BSD-3-Clause.txt	sha384-RFnPkbKvGmFvmD0ZeHlat3oWwnF4Ha8FkHvetb4gsTm80zwFnP96iUNTyTfPQ2Yx	vendored	npm:pmtiles	4.5.0
 static/licenses/protomaps-basemaps-BSD-3-Clause.txt	sha384-ZuGrJCUkc1XtwyFVYXyDjId+QAjZw9yqjP9PBUDuBQ8TM2xpQoUraUF/IqSQ/5kI	vendored	npm:@protomaps/basemaps	5.7.2
 static/licenses/tangram-icons-MIT.txt	sha384-qP02QaMIdkKOZ7dPBq2N00kk1euPBV5aclL+kNg2dk6IBesHVhWIGG4GEYWh+sKV	vendored	tangrams/icons@92510779	-
-static/luxon.min.js	sha384-CU0J6nu6GO5gWB5IqOOhPQsG0LKyjpotF5Gw502R+0zbkzKHjDWc6FKSZsNTJfLX	legacy	repository baseline e798fcb (upstream_ref = unknown)	-
 static/map-boot.mjs	sha384-AScU/9GLzBrZAxf3GCgTgXcM3YcyYRS2LbrYqYuMm28tOeqq14p6aDu/W4DkP4ot	local	repository source	-
 static/maplibre-gl-shared.mjs	sha384-BOGwfR1zlfKJlXWbHSaENskAbBb0zGUa0i76kRTASFlqCIQEvPJMgE6ghvw6Gdp5	vendored	npm:maplibre-gl/dist/maplibre-gl-shared.mjs	6.6.0
 static/maplibre-gl-worker.mjs	sha384-RJ0GRrHq9wcRqfdIfCduLTuHbK43iYETqiQv+XR8OL1CjLqCyFRpso/oFGCynFLA	vendored	npm:maplibre-gl/dist/maplibre-gl-worker.mjs	6.6.0

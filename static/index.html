@@ -4,24 +4,17 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' https://*.cartocdn.com https://*.openstreetmap.org data:; object-src 'none'; connect-src 'self' wss: ws:">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'none'">
         <title>T-Pot Attack Map - Real-time Cybersecurity Visualization</title>
         <meta name="description" content="Real-time visualization of T-Pot honeypot attacks and cybersecurity threats">
 
         <!-- Check integrity: openssl dgst -sha384 -binary your.file.name | openssl base64 -A-->
 
-        <!--Setup JQuery-->
-        <script src="static/jquery-3.7.1.min.js" defer integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs"></script>
-
-        <!--Setup Luxon-->
-        <script src="static/luxon.min.js" defer integrity="sha384-CU0J6nu6GO5gWB5IqOOhPQsG0LKyjpotF5Gw502R+0zbkzKHjDWc6FKSZsNTJfLX"></script>
-
         <!--Setup Chart.js for enhanced visualizations-->
-        <script src="static/chart.umd.js" defer integrity="sha384-FcQlsUOd0TJjROrBxhJdUhXTUgNJQxTMcxZe6nHbaEfFL1zjQ+bq/uRoBQxb0KMo"></script>
+        <script src="static/chart.umd.js" defer integrity="sha384-hfkuqrKeWFmnTMWN31VWyoe8xgdTADD11kgxmdpx2uyE6j5Az5uZq6u6AKYYmAOw"></script>
 
         <!--Setup Bootstrap-->
-        <link href="static/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"/>
-        <script src="static/bootstrap.min.js" defer integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"></script>
+        <link href="static/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"/>
 
         <!--Setup MapLibre GL (self-hosted, HANDOFF-v2 D1). The ESM graph
             (map-boot.mjs -> maplibre-gl.mjs / pmtiles.mjs / fflate.mjs and the
@@ -37,15 +30,18 @@
         <link rel="modulepreload" href="static/attack-geometry.mjs" integrity="sha384-w+pNaH459HOzDWNBwjWzFCyTMydVxGOYOX4w3tLyiHxmiZGxyfqPckrEbNUOA20L">
 
         <!-- Local Fonts (Inter & JetBrains Mono) -->
-        <link href="static/fonts/fonts.css" rel="stylesheet" integrity="sha384-hfuGJk4QqYM6FMHlIjLQUEioQvJ1nPENVylKK8+JSZTBQ/KG7GwoJe29Mpw+2p11">
+        <link href="static/fonts/fonts.css" rel="stylesheet" integrity="sha384-n138lt+vFMyu24Fv1itVvEQokyUNV3NNKUZNsuBW+omxRqQSOEShiH/5ymOzEV8r">
 
         <!-- Local Icons (Font Awesome) -->
-        <link rel="stylesheet" href="static/fontawesome/css/all.min.css" integrity="sha384-t1nt8BQoYMLFN5p42tRAtuAAFQaCQODekUVeKKZrEnEyp4H2R0RHFz0KWpmj7i8g">
+        <link rel="stylesheet" href="static/fontawesome/css/all.min.css" integrity="sha384-qrALq7+6jBOZIQsNnT6xGkMDru64qD6uTlDra39xrt2SoXl4pO3FX6Roz/RpR/BS">
 
-        <link href="static/index.css?v=6" rel="stylesheet" integrity="sha384-n3pw8J9s2HGWjxr93sT9oCckLBe19zHOSkzDct9PdLwdhMtDISiabwg2T6pvtvPo"/>
+        <link href="static/index.css?v=7" rel="stylesheet" integrity="sha384-bHSUJSj4tSdMw4tuhxXz0gQX6mugxLGf64hUFgMxeiRzn8Ef/iPk37fsEYga0oux"/>
     </head>
 
     <body>
+        <!-- DEMO DATA badge (D27): shown while incoming messages carry demo: true -->
+        <div id="demo-badge" hidden>DEMO DATA</div>
+
         <!-- Loading Screen -->
         <div id="loading-screen" class="loading-screen">
             <div class="loading-content">
@@ -579,7 +575,7 @@
         </div>
 
         <script src="static/cache-bridge.js" defer integrity="sha384-mMltIbf7JoxVuM6ZaB7TYkrLmY2njkbSTL9VvYqNKtmct/C2X1/JvKr8FeYHU0I+"></script>
-        <script src="static/map.js" defer integrity="sha384-XtipP/qbHR9ceIBtAXqEYoZd5HB5zsKAPAnMqmFKqZ6Ad6pD1vf7tSRXXejTHWhO"></script>
+        <script src="static/map.js" defer integrity="sha384-M8yY7H5YsxHxDOnNlmnCErACynSh+qihoPklv69FlRJGDTZflUDex/b3pufmCdKo"></script>
         <script src="static/dashboard.js" defer integrity="sha384-gV879ok32jg0OFdBkZxrRfvZA3pJ0KBtub3JQTq8O6lGhemAaSPkkdcC4rHeqabo"></script>
     </body>
 

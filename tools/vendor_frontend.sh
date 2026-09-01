@@ -369,7 +369,14 @@ if LEGACY_DONE:
     add_glob(static, "fonts/JetBrainsMono*", "vendored", "JetBrains/JetBrainsMono (webfonts)", E["JBMONO_TAG"])
     p = static / "fonts" / "fonts.css"
     if p.exists(): add(p, "generated", "tools/vendor_frontend.sh --fonts", "-")
-    add_glob(static, "flags/*.svg", "vendored", f"Yummygum/flagpack-core@{E['FLAGPACK_TAG']} (svg/l)", E["FLAGPACK_TAG"][1:])
+    # BQ/GB/XK/XX are not part of Flagpack v2.1.0 and stay repo-maintained —
+    # never labelled 'vendored' from a ref they are not byte-identical to (§14.4)
+    NOT_IN_FLAGPACK = {"BQ.svg", "GB.svg", "XK.svg", "XX.svg"}
+    for p in sorted((static / "flags").glob("*.svg")):
+        if p.name in NOT_IN_FLAGPACK:
+            add(p, "local", "repository source (not in Flagpack v2.1.0)", "-")
+        else:
+            add(p, "vendored", f"Yummygum/flagpack-core@{E['FLAGPACK_TAG']} (svg/l)", E["FLAGPACK_TAG"][1:])
 else:
     baseline = "repository baseline e798fcb (upstream_ref = unknown)"
     for name in ("jquery-3.7.1.min.js", "luxon.min.js", "bootstrap.min.js",
