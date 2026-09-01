@@ -35,7 +35,7 @@
         <!-- Local Icons (Font Awesome) -->
         <link rel="stylesheet" href="static/fontawesome/css/all.min.css" integrity="sha384-qrALq7+6jBOZIQsNnT6xGkMDru64qD6uTlDra39xrt2SoXl4pO3FX6Roz/RpR/BS">
 
-        <link href="static/index.css?v=7" rel="stylesheet" integrity="sha384-bHSUJSj4tSdMw4tuhxXz0gQX6mugxLGf64hUFgMxeiRzn8Ef/iPk37fsEYga0oux"/>
+        <link href="static/index.css?v=7" rel="stylesheet" integrity="sha384-dhFJPvzjv4oe8DDAGIfSaMtRF+ay7ig/KtwBR8WNYXpF5rK03mYy6iHTG9/9wOkb"/>
     </head>
 
     <body>
@@ -127,7 +127,8 @@
             <!-- Side Panel (Collapsible) -->
             <div class="side-panel" id="side-panel">
                 <div class="panel-toggle" id="panel-toggle">
-                    <i class="fas fa-chevron-left"></i>
+                    <!-- panel collapses to the RIGHT: open shows '>', collapsed rotates to '<' -->
+                    <i class="fas fa-chevron-right"></i>
                 </div>
                 
                 <div class="panel-content">
@@ -536,19 +537,21 @@
                     <div class="settings-section">
                         <h4 class="flex-center"><i class="fas fa-earth-europe"></i> Map</h4>
                         <div class="setting-item">
-                            <label class="setting-label">
-                                <input type="checkbox" id="choropleth-enabled" checked>
-                                <div class="setting-content">
-                                    <span class="setting-title">Activity shading (countries &amp; density)</span>
-                                    <span class="setting-description">Shade countries by observed event volume;
-                                        when zooming in, a density heatmap takes over. Both show where observed
-                                        events geolocate by source IP address — not attribution: they do not
-                                        establish that an attacker, operator or state actor is physically located
-                                        there. Positions are GeoIP city/centroid estimates and frequently mark
-                                        hosting providers and data centres; proxies, VPNs and compromised hosts
-                                        all shift the apparent origin.</span>
-                                </div>
-                            </label>
+                            <div class="setting-content">
+                                <span class="setting-title">Activity shading</span>
+                                <select id="shading-mode" class="setting-select" title="Activity shading mode">
+                                    <option value="mixed">Mixed (countries, heatmap when zoomed in)</option>
+                                    <option value="choropleth">Countries only</option>
+                                    <option value="heatmap">Heatmap only</option>
+                                    <option value="off">Off</option>
+                                </select>
+                                <span class="setting-description">Shades where observed events geolocate
+                                    by source IP address — not attribution: it does not establish that an
+                                    attacker, operator or state actor is physically located there. Positions
+                                    are GeoIP city/centroid estimates and frequently mark hosting providers
+                                    and data centres; proxies, VPNs and compromised hosts all shift the
+                                    apparent origin.</span>
+                            </div>
                         </div>
                     </div>
 
@@ -577,8 +580,8 @@
         </div>
 
         <script src="static/cache-bridge.js" defer integrity="sha384-mMltIbf7JoxVuM6ZaB7TYkrLmY2njkbSTL9VvYqNKtmct/C2X1/JvKr8FeYHU0I+"></script>
-        <script src="static/map.js" defer integrity="sha384-LA1xovzPQ9DYuzw6HAGJez762BTk6MUIa6T20G0LNiu4qf2DEYtITYo0J4CiLxm3"></script>
-        <script src="static/dashboard.js" defer integrity="sha384-gV879ok32jg0OFdBkZxrRfvZA3pJ0KBtub3JQTq8O6lGhemAaSPkkdcC4rHeqabo"></script>
+        <script src="static/map.js" defer integrity="sha384-3kSsITtYPyjfvn9eKy2dc/7kvF70UosAWbIhcrzORv+VYJxZFcOE8smgpjZ6pMws"></script>
+        <script src="static/dashboard.js" defer integrity="sha384-7SSGK2GCkypMVVAgLYSmV5ceOqfFdBKFR3Yh6zt57UbdWNJ1LzMi+d5jN0wDWfTp"></script>
     </body>
 
 </html>

@@ -304,11 +304,15 @@ function addCircle(country, iso_code, src_ip, ip_rep, color, srcLatLng, protocol
 const choroplethHits = new Map();     // iso2 -> absolute hit count (mirror)
 const intensityCache = new Map();     // iso2 -> derived intensity [0,1]
 let choroplethFlushTimer = null;      // batches to at most one flush per second
-let choroplethEnabled = true;         // D28: on by default
+const SHADING_MODES = ['mixed', 'choropleth', 'heatmap', 'off'];
+let shadingMode = 'mixed';            // D28: shading on by default (zoom crossfade)
 try {
     const s = JSON.parse(localStorage.getItem('attack-map-settings') || '{}');
-    if (s.choroplethEnabled === false) choroplethEnabled = false;
-} catch (e) { /* default stays on */ }
+    if (SHADING_MODES.includes(s.shadingMode)) shadingMode = s.shadingMode;
+    else if (s.choroplethEnabled === false) shadingMode = 'off';   // pre-mode settings migration
+} catch (e) { /* default stays mixed */ }
+const choroplethVisible = () => shadingMode === 'mixed' || shadingMode === 'choropleth';
+const heatVisible = () => shadingMode === 'mixed' || shadingMode === 'heatmap';
 let countryIdSet = null;              // ISO codes present in the geometry
 const unmatchedIsoLogged = new Set(); // once-per-session logging (§8.5)
 
@@ -325,7 +329,7 @@ function choroplethLayerSpec() {
         id: 'choropleth',
         type: 'fill',
         source: 'countries',
-        layout: { visibility: choroplethEnabled ? 'visible' : 'none' },
+        layout: { visibility: choroplethVisible() ? 'visible' : 'none' },
         // Fill only, no independent outline: the Protomaps boundary lines stay
         // the visual boundary authority (§8.5). Opacity is driven per country
         // via a match expression (see applyChoroplethIntensities).
@@ -388,9 +392,14 @@ function applyChoroplethIntensities() {
         matchExpr.push(iso, 0.35 * intensity);   // §8.6 scale: intensity 1 -> opacity 0.35
     }
     matchExpr.push(0);
-    // Zoom crossfade to the density heatmap: the country shading is the
-    // world-view story and fades out where the heatmap fades in (camera
-    // expression outside, data expression at the stops — allowed by MapLibre).
+    if (shadingMode === 'choropleth') {
+        // countries-only mode: shading on every zoom level, no crossfade
+        map.setPaintProperty('choropleth', 'fill-opacity', matchExpr);
+        return;
+    }
+    // Mixed (default): zoom crossfade to the density heatmap — the country
+    // shading is the world-view story and fades out where the heatmap fades in
+    // (camera expression outside, data expression at the stops).
     map.setPaintProperty('choropleth', 'fill-opacity',
         ['interpolate', ['linear'], ['zoom'], HEAT_FADE_START, matchExpr, HEAT_FADE_END, 0]);
 }
@@ -418,7 +427,7 @@ function heatLayerSpec() {
         id: 'attack-heat',
         type: 'heatmap',
         source: 'heat',
-        layout: { visibility: choroplethEnabled ? 'visible' : 'none' },
+        layout: { visibility: heatVisible() ? 'visible' : 'none' },
         paint: {
             // w = log1p(hits) normalised at flush time; a floor of 0.3 keeps
             // low-volume cities visible next to the busiest coordinate
@@ -426,9 +435,30 @@ function heatLayerSpec() {
             'heatmap-weight': ['interpolate', ['linear'], ['get', 'w'], 0, 0.3, 1, 1],
             'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 4, 0.9, 7, 1.6],
             'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 4, 16, 7, 40],
-            'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], HEAT_FADE_START, 0, HEAT_FADE_END, 0.75]
+            'heatmap-opacity': heatOpacityForMode()
         }
     };
+}
+
+// heatmap-only mode shows density on every zoom level; mixed fades it in
+// over the crossfade zone (the layer is hidden in the other modes).
+function heatOpacityForMode() {
+    if (shadingMode === 'heatmap') return 0.75;
+    return ['interpolate', ['linear'], ['zoom'], HEAT_FADE_START, 0, HEAT_FADE_END, 0.75];
+}
+
+// Applies the current shading mode to both layers: visibility plus the
+// mode-dependent paint expressions (fill crossfade wrap, heat opacity).
+function applyShadingMode() {
+    if (mapLifecycle !== 'READY' || !map) return;
+    if (map.getLayer('choropleth')) {
+        map.setLayoutProperty('choropleth', 'visibility', choroplethVisible() ? 'visible' : 'none');
+    }
+    if (map.getLayer('attack-heat')) {
+        map.setLayoutProperty('attack-heat', 'visibility', heatVisible() ? 'visible' : 'none');
+        map.setPaintProperty('attack-heat', 'heatmap-opacity', heatOpacityForMode());
+    }
+    applyChoroplethIntensities();
 }
 
 function heatFeatureCollection() {
@@ -485,7 +515,7 @@ window.__choropleth = {
         if (!map.getLayer('attack-heat')) map.addLayer(heatLayerSpec(), firstLabelLayerId());
     },
     reapplyFeatureState() {   // ALWAYS after a style (re)load (§7.6)
-        applyChoroplethIntensities();
+        applyShadingMode();
         if (map && map.getSource('heat')) map.getSource('heat').setData(heatFeatureCollection());
     },
     clear() {   // Clear Cache (D38): all state levels reset together
@@ -495,16 +525,17 @@ window.__choropleth = {
         applyChoroplethIntensities();
         if (map && map.getSource('heat')) map.getSource('heat').setData(heatFeatureCollection());
     },
-    setEnabled(on) {   // settings toggle (D28); one switch, one narrative:
-        choroplethEnabled = !!on;   // governs country shading AND density heatmap
-        if (mapLifecycle === 'READY' && map) {
-            const vis = choroplethEnabled ? 'visible' : 'none';
-            if (map.getLayer('choropleth')) map.setLayoutProperty('choropleth', 'visibility', vis);
-            if (map.getLayer('attack-heat')) map.setLayoutProperty('attack-heat', 'visibility', vis);
-        }
+    setMode(mode) {   // settings dropdown: mixed | choropleth | heatmap | off
+        if (!SHADING_MODES.includes(mode)) mode = 'mixed';
+        shadingMode = mode;
+        applyShadingMode();
+    },
+    setEnabled(on) {   // legacy boolean API kept as a thin wrapper
+        this.setMode(on ? 'mixed' : 'off');
     },
     debug() {   // test/diagnostic aid
         return {
+            mode: shadingMode,
             mirror: choroplethHits.size,
             cache: intensityCache.size,
             heatPoints: heatHits.size,

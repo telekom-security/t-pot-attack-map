@@ -2053,11 +2053,19 @@ Cache Statistics:
         const defaultSettings = {
             soundAlerts: false,
             alertSound: 'beep',
-            choroplethEnabled: true   // D28: country choropleth on by default
+            shadingMode: 'mixed'   // D28: activity shading on by default (zoom crossfade)
         };
 
         const saved = localStorage.getItem('attack-map-settings');
-        return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+        const stored = saved ? JSON.parse(saved) : {};
+        const settings = { ...defaultSettings, ...stored };
+        // migration from the pre-mode boolean setting — decided on the RAW
+        // stored value, before the default 'mixed' fills the gap
+        if (!['mixed', 'choropleth', 'heatmap', 'off'].includes(stored.shadingMode)) {
+            settings.shadingMode = stored.choroplethEnabled === false ? 'off' : 'mixed';
+        }
+        delete settings.choroplethEnabled;
+        return settings;
     }
 
     loadSettingsUI() {
@@ -2080,7 +2088,7 @@ Cache Statistics:
         const settings = {};
         
         // Collect all settings from UI
-        ['sound-alerts', 'alert-sound', 'choropleth-enabled'].forEach(id => {
+        ['sound-alerts', 'alert-sound', 'shading-mode'].forEach(id => {
             const element = document.getElementById(id);
             if (element) {
                 const key = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
@@ -2141,8 +2149,8 @@ Cache Statistics:
             soundAlerts.checked = this.settings.soundAlerts;
         }
 
-        // Country choropleth visibility (D28; map side handled by map.js)
-        window.__choropleth?.setEnabled(this.settings.choroplethEnabled !== false);
+        // Activity shading mode (D28; map side handled by map.js)
+        window.__choropleth?.setMode(this.settings.shadingMode ?? 'mixed');
     }
 
     async clearCache() {
