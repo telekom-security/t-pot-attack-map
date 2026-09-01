@@ -1414,6 +1414,7 @@ async function initMap() {
     // Transient animation renderer (WP5)
     renderer = new rendererModule.AttackRenderer();
     renderer.attach(map);
+    window.__attackRenderer = renderer;   // test/diagnostic hook (like __choropleth)
 
     // Full Clear-Cache implementation (D38): queues in every state (the stub
     // already does that) plus renderer queue, attacker source/registry, marker

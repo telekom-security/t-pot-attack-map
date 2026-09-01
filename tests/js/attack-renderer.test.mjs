@@ -4,8 +4,11 @@ import assert from 'node:assert/strict';
 import {
   AttackRenderer,
   bendPixels,
+  bendFactorFromSeed,
+  easeCubicInOut,
   quadraticPoint,
-  FACTOR, MIN_BEND_PX, MAX_BEND_PX, MAX_EVENTS, TRAVEL_MS, LIFETIME_MS,
+  FACTOR, BEND_FACTOR_MIN, BEND_FACTOR_MAX,
+  MIN_BEND_PX, MAX_BEND_PX, MAX_EVENTS, TRAVEL_MS, LIFETIME_MS,
 } from '../../static/attack-renderer.mjs';
 
 // ---- pure presentation maths -----------------------------------------------
@@ -94,15 +97,72 @@ test('travel phase draws source ring, trail and head dot', () => {
   assert.ok(o.includes('fill'), 'head dot');
 });
 
-test('impact phase draws only the destination ring', () => {
+test('fade phase keeps the completed trail (fading) plus the impact ring — no head dot', () => {
   const { r } = makeRenderer(stubMap());
   r.spawn(EVENT());
   r.ctx.__calls.length = 0;
-  r.renderFrame(1000); // impact phase (700-1400)
+  r.renderFrame(1000); // fade/impact phase (700-1400)
+  const calls = r.ctx.__calls;
   const o = ops(r);
-  assert.ok(o.includes('stroke'), 'impact ring');
-  assert.ok(!o.includes('lineTo'), 'no trail after travel');
+  assert.ok(o.includes('stroke'), 'impact ring + fading trail stroke');
+  assert.ok(o.includes('lineTo'), 'the COMPLETED trail stays visible while fading (3.0.1 parity)');
   assert.ok(!o.includes('fill'), 'no head dot after travel');
+  // the fading trail runs at reduced opacity (0.8 -> 0, cubicInOut)
+  const alphas = calls.filter((c) => c[0] === 'set:globalAlpha').map((c) => c[1]);
+  const fadeAlpha = 0.8 * (1 - easeCubicInOut((1000 - TRAVEL_MS) / (LIFETIME_MS - TRAVEL_MS)));
+  assert.ok(alphas.some((a) => Math.abs(a - fadeAlpha) < 1e-9), `fade alpha ${fadeAlpha} applied`);
+  // the trail's last point is exactly the projected destination
+  const lineTos = calls.filter((c) => c[0] === 'lineTo');
+  const last = lineTos[lineTos.length - 1];
+  const D = stubMap().project([EVENT().dst.lng, EVENT().dst.lat]);
+  assert.ok(Math.abs(last[1] - D.x) < 1e-9 && Math.abs(last[2] - D.y) < 1e-9, 'trail ends at the destination');
+});
+
+test('impact ring starts at the head-dot radius (6 -> 50, 3.0.1 parity)', () => {
+  const { r } = makeRenderer(stubMap());
+  r.spawn(EVENT());
+  r.ctx.__calls.length = 0;
+  r.renderFrame(TRAVEL_MS); // first impact frame
+  const arcs = r.ctx.__calls.filter((c) => c[0] === 'arc');
+  assert.ok(arcs.some((c) => Math.abs(c[3] - 6) < 1e-9), `ring starts at r=6 (got radii ${arcs.map((c) => c[3])})`);
+});
+
+test('near travel end the trail reaches the destination and nothing vanishes early', () => {
+  const { r } = makeRenderer(stubMap());
+  r.spawn(EVENT());
+  // one frame just before the phase boundary, one just after
+  for (const t of [TRAVEL_MS - 1, TRAVEL_MS + 1]) {
+    r.ctx.__calls.length = 0;
+    r.renderFrame(t);
+    assert.ok(ops(r).includes('lineTo'), `trail drawn at t=${t}`);
+  }
+});
+
+test('bendFactorFromSeed: deterministic, bounded, varied', () => {
+  for (const seed of [0, 1, 2, 42, 999999, 2147483647]) {
+    const a = bendFactorFromSeed(seed);
+    assert.equal(a, bendFactorFromSeed(seed), 'deterministic');
+    assert.ok(a >= BEND_FACTOR_MIN && a <= BEND_FACTOR_MAX, `in range: ${a}`);
+  }
+  const distinct = new Set([1, 2, 3, 4, 5, 6, 7, 8].map(bendFactorFromSeed));
+  assert.ok(distinct.size >= 6, 'different seeds give different factors');
+});
+
+test('head runs by arc length, not by Bézier parameter (3.0.1 parity)', () => {
+  const map = stubMap();
+  const { r } = makeRenderer(map);
+  r.spawn(EVENT());
+  // pick t so that easeCircleIn(t/TRAVEL_MS) = 0.5  ->  t = TRAVEL_MS * sqrt(0.75)
+  const t = TRAVEL_MS * Math.sqrt(0.75);
+  r.ctx.__calls.length = 0;
+  r.renderFrame(t);
+  const partial = r.ctx.__calls.filter((c) => c[0] === 'lineTo' || c[0] === 'moveTo').map((c) => [c[1], c[2]]);
+  r.ctx.__calls.length = 0;
+  r.renderFrame(1000); // fade phase draws the full curve
+  const full = r.ctx.__calls.filter((c) => c[0] === 'lineTo' || c[0] === 'moveTo').map((c) => [c[1], c[2]]);
+  const len = (pts) => pts.reduce((acc, p, i) => i ? acc + Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]) : 0, 0);
+  const ratio = len(partial) / len(full);
+  assert.ok(Math.abs(ratio - 0.5) < 0.02, `drawn length ratio ${ratio} ≈ eased progress 0.5`);
 });
 
 test('events self-expire after the 1.4 s lifetime', () => {
