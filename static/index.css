@@ -2653,3 +2653,12 @@ html[data-theme="light"] .leaflet-container {
 #sound-options {
     display: none;
 }
+
+/* 4.0 attack animation overlay (HANDOFF-v2 §9.4, WP5): above .maplibregl-canvas,
+   below .maplibregl-marker / .maplibregl-popup (verified visually in WP6). */
+.attack-canvas {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+}
