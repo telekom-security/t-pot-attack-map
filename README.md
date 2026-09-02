@@ -29,6 +29,8 @@ python3 AttackMapServer.py --demo          # deterministic synthetic events
 ```
 Demo flags: `--demo-seed N` (default 42), `--demo-rate R` (events/s, default 2),
 `--demo-burst N`, `--demo-scenario basic|antimeridian|single-location|flood`.
+The server listens on `127.0.0.1` by default (`--host`); the T-Pot container starts it
+with `--host 0.0.0.0` explicitly so nginx can reach it on the docker network.
 Demo mode is **CLI-only, never a default and never enabled via environment variable**; every
 demo message carries `demo: true` and the UI shows a DEMO DATA badge. Never run demo mode in
 production.
