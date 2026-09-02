@@ -1,9 +1,9 @@
-# Basemap artefact — provenance, measurement and lifecycle (WP2)
+# Basemap artefact — provenance, measurement and lifecycle
 
 The Attack Map's basemap is a single PMTiles archive (`static/dist/world.pmtiles`),
 served by the existing aiohttp server via HTTP range requests. It is **never committed**;
 it is pinned by URL + SHA-256 in `tools/basemap.lock` and obtained through
-`tools/fetch_basemap.sh`. See HANDOFF-v2 §8, §14.
+`tools/fetch_basemap.sh`.
 
 ## Pinned artefact
 
@@ -19,9 +19,9 @@ it is pinned by URL + SHA-256 in `tools/basemap.lock` and obtained through
 | CLI | go-pmtiles **1.31.2** via `tools/pmtiles_cli.sh` |
 | Measured | 2026-09-01 (macOS Apple Silicon) |
 
-## Maxzoom measurement and decision (rule D23)
+## Maxzoom measurement and decision
 
-Rule D23: `PM_MAXZOOM = 7` if the z7 artefact is ≤ 150 MB, otherwise 6.
+Maxzoom rule: `PM_MAXZOOM = 7` if the z7 artefact is ≤ 150 MB, otherwise 6.
 
 | Candidate | Command | Exact size | SHA-256 |
 |---|---|---|---|
@@ -31,7 +31,7 @@ Rule D23: `PM_MAXZOOM = 7` if the z7 artefact is ≤ 150 MB, otherwise 6.
 187 MB > 150 MB → **`PM_MAXZOOM = 6`**. The z6 candidate byte-identical becomes the
 release asset. Docker image delta: +45 MB (one layer, shared by `map_web` and `map_data`).
 
-Zoom semantics at runtime are header-driven (§7.4): MapLibre's `maxZoom` is read from the
+Zoom semantics at runtime are header-driven: MapLibre's `maxZoom` is read from the
 PMTiles header, so display limit and data limit cannot disagree. Visual scale note: MapLibre
 vector tiles are 512 px, so z6 corresponds to the old Leaflet raster z7.
 
@@ -46,33 +46,23 @@ immutable T-Pot GitHub release asset; Protomaps is touched only by the re-pin pa
 
 1. Enable **immutable releases** in the repository settings (once; existing releases stay
    mutable — the basemap release must be created after the setting is on).
-2. **Verify the local artefact against the lock BEFORE uploading** — an immutable release
-   cannot be corrected afterwards, only superseded:
+2. Run the publish script — first as a dry run, then for real:
 
 ```sh
-tools/fetch_basemap.sh --check     # must print: OK ... matches the pinned artefact
+tools/publish_basemap.sh --dry-run   # every preflight check + prints the exact commands, writes nothing
+tools/publish_basemap.sh             # verify -> draft -> upload -> publish -> re-verify
 ```
 
-3. Create a draft release, attach the artefact, then publish. Tag (`basemap-20260901-z6`)
-   and asset name (`world.pmtiles`) must match `WORLD_PMTILES_URL` in `tools/basemap.lock`
-   exactly — the download URL is derived from them:
+The script derives repository, tag, asset name and release notes from
+`tools/basemap.lock` (nothing is re-typed, so nothing can mismatch the pinned
+download URL), refuses to run unless the local artefact matches the pinned
+SHA-256 (an immutable release cannot be corrected afterwards, only superseded),
+refuses if the release already exists, and after publishing re-downloads the
+asset and verifies it end to end. It needs an authenticated `gh` CLI with
+release permissions on the repository.
 
-```sh
-gh release create basemap-20260901-z6 --draft \
-  --title "Basemap 2026-09-01 (z6)" \
-  --notes "Immutable basemap artefact for Attack Map 4.0.0.
-Protomaps build 20260831, extracted z0-6 (go-pmtiles 1.31.2).
-SHA-256 world.pmtiles: 375d8d83385b7bba46a518f97edff487d4c0f54d9ceea42ef4f1e76dbe773ff8
-Licence: ODbL (© OpenStreetMap contributors), see https://www.openstreetmap.org/copyright" \
-  --repo telekom-security/t-pot-attack-map
-gh release upload basemap-20260901-z6 static/dist/world.pmtiles \
-  --repo telekom-security/t-pot-attack-map
-gh release edit basemap-20260901-z6 --draft=false \
-  --repo telekom-security/t-pot-attack-map
-```
-
-4. Verify the pinned path end to end: `tools/fetch_basemap.sh --force && tools/fetch_basemap.sh --check`,
-   then `tools/check_all.sh --release`; update the WP2 status table below (steps 5, 10, 11).
+3. Run `tools/check_all.sh --release` and update the lifecycle status table below
+   (steps 5, 10, 11).
 
 ## Obtaining the artefact
 
@@ -93,20 +83,20 @@ script prints the produced header zoom range instead).
 
 1. Pick a build id from <https://maps.protomaps.com/builds>.
 2. `tools/fetch_basemap.sh --from-upstream --upstream-build <BUILD_ID> --maxzoom 6 --out /tmp/z6.pmtiles`
-   (and z7; re-apply rule D23 — each zoom level roughly doubles the file).
+   (and z7; re-apply the maxzoom rule above — each zoom level roughly doubles the file).
 3. Publish a new `basemap-<YYYYMMDD>-z<N>` release (procedure above).
 4. Update `WORLD_PMTILES_URL`, `WORLD_PMTILES_SHA256`, `PM_MAXZOOM`, `PM_BUILD` in
    `tools/basemap.lock`; update this document; commit.
 5. `tools/fetch_basemap.sh --force && tools/check_all.sh --release`.
 
-## WP2 lifecycle status (twelve steps, §11 WP2)
+## Artefact lifecycle status (twelve steps)
 
 | # | Step | Status |
 |---|---|---|
 | 1 | Build id selected (20260831) | done |
 | 2 | z6/z7 candidates extracted | done |
 | 3 | Sizes measured | done (table above) |
-| 4 | D23 applied → maxzoom 6 | done |
+| 4 | Maxzoom rule applied → maxzoom 6 | done |
 | 5 | Immutable release published | **pending maintainer publish** (procedure above) |
 | 6–9 | Lock values recorded | done (URL is the deterministic post-publish asset URL) |
 | 10 | `--preset full` verified against the lock | pending step 5 |

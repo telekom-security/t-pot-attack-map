@@ -1,6 +1,10 @@
 # T-Pot Attack Map 4.0.0 — migration brief
 
-> **Plan of record: [`docs/HANDOFF-v2.md`](HANDOFF-v2.md).**
+> **Historical document.** Internal planning record of the 4.0.0 migration, kept for
+> provenance — NOT user or developer documentation; see [README.md](../../README.md),
+> [docs/BASEMAP.md](../BASEMAP.md) and [docs/RELEASING.md](../RELEASING.md).
+>
+> **Plan of record: [`HANDOFF-v2.md`](HANDOFF-v2.md).**
 > This file states the problem and the architectural intent it must satisfy. Everything that has
 > since been decided, measured or disproven lives in the handoff — where the two ever disagree,
 > the handoff wins.

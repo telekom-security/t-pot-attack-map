@@ -31,7 +31,14 @@ Demo flags: `--demo-seed N` (default 42), `--demo-rate R` (events/s, default 2),
 `--demo-burst N`, `--demo-scenario basic|antimeridian|single-location|flood`.
 Demo mode is **CLI-only, never a default and never enabled via environment variable**; every
 demo message carries `demo: true` and the UI shows a DEMO DATA badge. Never run demo mode in
-production. A full-chain test against real Redis pubsub is described in `docs/HANDOFF-v2.md` §16.
+production.
+
+Full-chain test against a real Redis pubsub instead of `--demo`:
+```sh
+docker run --rm -p 6379:6379 redis:8.4.6-alpine
+python3 AttackMapServer.py --redis-url redis://127.0.0.1:6379
+python3 -m demo_events --publish-redis redis://127.0.0.1:6379 --demo-rate 5 --demo-seed 42
+```
 
 ### Verification
 ```sh

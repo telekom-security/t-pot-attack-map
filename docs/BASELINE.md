@@ -1,7 +1,7 @@
 # WP0 — Baseline and behaviour inventory (3.0.1, commit `e798fcb`)
 
 Temporary document. Created in WP0, consumed by WP1 (screenshots), WP6 (parity review) and
-WP8 (visual verification); deleted in WP10 after sign-off (HANDOFF-v2 §11 WP0, §24 item 11).
+WP8 (visual verification); deleted in WP10 after sign-off (docs/history/HANDOFF-v2.md).
 
 All line numbers verified against the working tree at `e798fcb` on 2026-09-01.
 

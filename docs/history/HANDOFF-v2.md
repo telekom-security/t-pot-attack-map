@@ -2,6 +2,12 @@
 # Leaflet + D3 + CARTO -> MapLibre GL + PMTiles
 # Offline-first, Globe-ready architecture
 
+> **Historical document.** This is the internal planning and design record of the
+> 4.0.0 migration, kept for provenance. It is NOT user or developer documentation —
+> see [README.md](../../README.md), [docs/BASEMAP.md](../BASEMAP.md) and
+> [docs/RELEASING.md](../RELEASING.md) instead. Where implemented behaviour later
+> changed by maintainer decision (recorded in the git history), the code wins.
+
 Plan of record for the 4.0.0 migration. Self-contained: an implementing session needs this
 document, the repository, and nothing else.
 
