@@ -46,7 +46,16 @@ immutable T-Pot GitHub release asset; Protomaps is touched only by the re-pin pa
 
 1. Enable **immutable releases** in the repository settings (once; existing releases stay
    mutable — the basemap release must be created after the setting is on).
-2. Create a draft release, attach the artefact, then publish:
+2. **Verify the local artefact against the lock BEFORE uploading** — an immutable release
+   cannot be corrected afterwards, only superseded:
+
+```sh
+tools/fetch_basemap.sh --check     # must print: OK ... matches the pinned artefact
+```
+
+3. Create a draft release, attach the artefact, then publish. Tag (`basemap-20260901-z6`)
+   and asset name (`world.pmtiles`) must match `WORLD_PMTILES_URL` in `tools/basemap.lock`
+   exactly — the download URL is derived from them:
 
 ```sh
 gh release create basemap-20260901-z6 --draft \
@@ -62,7 +71,8 @@ gh release edit basemap-20260901-z6 --draft=false \
   --repo telekom-security/t-pot-attack-map
 ```
 
-3. Verify the pinned path end to end: `tools/fetch_basemap.sh --force && tools/fetch_basemap.sh --check`.
+4. Verify the pinned path end to end: `tools/fetch_basemap.sh --force && tools/fetch_basemap.sh --check`,
+   then `tools/check_all.sh --release`; update the WP2 status table below (steps 5, 10, 11).
 
 ## Obtaining the artefact
 
