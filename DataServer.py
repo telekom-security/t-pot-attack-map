@@ -215,6 +215,8 @@ def get_honeypot_stats(timedelta):
 # record) and says so in the log.
 EVENT_PAGE_SIZE = 100
 MAX_EVENT_PAGES_PER_POLL = 10
+MAX_WATERMARK_LAG_S = 60
+PIT_KEEP_ALIVE = "10s"
 
 
 def build_event_query(gt_ts, lte_ts):
@@ -249,26 +251,68 @@ def build_event_query(gt_ts, lte_ts):
 def fetch_new_events(es_client, gt_ts, lte_ts):
     """Fetch every event in (gt_ts, lte_ts], oldest first, paged via
     search_after and bounded by MAX_EVENT_PAGES_PER_POLL pages per call.
+    Runs inside a point in time: PIT searches get the unique _shard_doc
+    tiebreaker appended to the sort automatically, so page boundaries that
+    fall inside a group of equal @timestamp values lose nothing (the full
+    per-hit sort tuple is handed to search_after).
     Returns (hits, last_timestamp_or_None, saturated)."""
     query = build_event_query(gt_ts, lte_ts)
+    pit_id = es_client.open_point_in_time(
+        index="logstash-*", keep_alive=PIT_KEEP_ALIVE)["id"]
     hits_out = []
     search_after = None
     saturated = False
-    for page in range(MAX_EVENT_PAGES_PER_POLL):
-        kwargs = dict(index="logstash-*", size=EVENT_PAGE_SIZE, query=query,
-                      sort=[{"@timestamp": "asc"}])
-        if search_after is not None:
-            kwargs["search_after"] = search_after
-        res = es_client.search(**kwargs)
-        page_hits = res["hits"]["hits"]
-        hits_out.extend(page_hits)
-        if len(page_hits) < EVENT_PAGE_SIZE:
-            break
-        search_after = page_hits[-1]["sort"]
-    else:
-        saturated = True
+    try:
+        for page in range(MAX_EVENT_PAGES_PER_POLL):
+            kwargs = dict(size=EVENT_PAGE_SIZE, query=query,
+                          sort=[{"@timestamp": "asc"}],
+                          pit={"id": pit_id, "keep_alive": PIT_KEEP_ALIVE})
+            if search_after is not None:
+                kwargs["search_after"] = search_after
+            res = es_client.search(**kwargs)
+            pit_id = res.get("pit_id", pit_id)
+            page_hits = res["hits"]["hits"]
+            hits_out.extend(page_hits)
+            if len(page_hits) < EVENT_PAGE_SIZE:
+                break
+            search_after = page_hits[-1]["sort"]
+        else:
+            saturated = True
+    finally:
+        try:
+            es_client.close_point_in_time(id=pit_id)
+        except Exception:
+            pass
     last_ts = hits_out[-1]["_source"]["@timestamp"] if hits_out else None
     return hits_out, last_ts, saturated
+
+
+def _parse_ts(ts):
+    """ES timestamps may be timezone-aware ('...Z'); window bounds are naive
+    UTC — normalise everything to naive UTC for arithmetic."""
+    dt = datetime.datetime.fromisoformat(ts)
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(datetime.UTC).replace(tzinfo=None)
+    return dt
+
+
+def advance_watermark(current, last_ts, window_end, saturated,
+                      max_lag_s=MAX_WATERMARK_LAG_S):
+    """Watermark policy (maintainer decision 2026-09-02): bursts are caught
+    up completely; only under SUSTAINED overload — the watermark falling more
+    than max_lag_s behind the window end despite a saturated poll — the live
+    map skips ahead (and says so), keeping the view live. Kibana/Elasticsearch
+    always remain the complete record.
+    Returns (new_watermark, action) with action in
+    idle | current | backlog | skipped."""
+    if last_ts is None:
+        return current, "idle"
+    if not saturated:
+        return last_ts, "current"
+    lag = (_parse_ts(window_end) - _parse_ts(last_ts)).total_seconds()
+    if lag > max_lag_s:
+        return window_end, "skipped"
+    return last_ts, "backlog"
 
 
 def update_honeypot_data():
@@ -303,12 +347,16 @@ def update_honeypot_data():
         window_end = (datetime.datetime.now(datetime.UTC)
                       - datetime.timedelta(seconds=mydelta)).replace(tzinfo=None).isoformat()
         hits, last_ts, saturated = fetch_new_events(es, watermark, window_end)
-        if saturated:
-            print("[!] Event rate exceeds the map sampling capacity "
-                  f"({EVENT_PAGE_SIZE * MAX_EVENT_PAGES_PER_POLL} events per poll); "
-                  "the live map samples — Kibana/Elasticsearch remain complete.")
+        watermark, action = advance_watermark(watermark, last_ts, window_end, saturated)
+        if action == "backlog":
+            behind = (_parse_ts(window_end) - _parse_ts(watermark)).total_seconds()
+            print(f"[!] Event burst: the live map is catching up ({behind:.0f}s behind).")
+        elif action == "skipped":
+            print(f"[!] Sustained overload (> {MAX_WATERMARK_LAG_S}s behind at "
+                  f"{EVENT_PAGE_SIZE * MAX_EVENT_PAGES_PER_POLL} events per poll): "
+                  "the live map skips ahead to stay live — "
+                  "Kibana/Elasticsearch remain complete.")
         if hits:
-            watermark = last_ts
             for hit in hits:
                 try:
                     process_datas = process_data(hit)

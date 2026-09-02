@@ -49,10 +49,19 @@ class AttackCache {
             }
 
             const request = indexedDB.open(this.dbName, this.version);
-            
+
             request.onerror = () => reject(request.error);
             request.onsuccess = () => {
                 this.db = request.result;
+                // approximate live count for the hard maxEvents cap
+                // (counted once here, incremented per insert)
+                this.eventCount = 0;
+                this._trimming = false;
+                try {
+                    const tx = this.db.transaction([this.storeName], 'readonly');
+                    const countReq = tx.objectStore(this.storeName).count();
+                    countReq.onsuccess = () => { this.eventCount = countReq.result; };
+                } catch (e) { /* counter stays approximate */ }
                 resolve();
             };
 
@@ -112,14 +121,27 @@ class AttackCache {
     }
 
     async storeEventIndexedDB(event) {
-        return new Promise((resolve, reject) => {
+        await new Promise((resolve, reject) => {
             const transaction = this.db.transaction([this.storeName], 'readwrite');
             const store = transaction.objectStore(this.storeName);
             const request = store.add(event);
-            
+
             request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
         });
+        // Hard maxEvents cap (2026-09-02): the periodic cleanup alone let the
+        // store overshoot by rate x 5 min; trim as soon as the approximate
+        // counter runs 10% over the cap.
+        this.eventCount = (this.eventCount || 0) + 1;
+        if (this.eventCount > this.maxEvents * 1.1 && !this._trimming) {
+            this._trimming = true;
+            try {
+                const tx = this.db.transaction([this.storeName], 'readwrite');
+                await this.trimIndexedDBToMaxEvents(tx.objectStore(this.storeName));
+            } finally {
+                this._trimming = false;
+            }
+        }
     }
 
     storeEventLocalStorage(event) {
@@ -229,7 +251,11 @@ class AttackCache {
             const countReq = store.count();
             countReq.onsuccess = () => {
                 let excess = countReq.result - this.maxEvents;
-                if (excess <= 0) { resolve(); return; }
+                if (excess <= 0) {
+                    this.eventCount = countReq.result;   // counter re-synced
+                    resolve();
+                    return;
+                }
                 const toDelete = excess;
                 // oldest first via the timestamp index
                 const cursorReq = store.index('timestamp').openCursor();
@@ -240,6 +266,7 @@ class AttackCache {
                         excess--;
                         cursor.continue();
                     } else {
+                        this.eventCount = this.maxEvents;   // counter re-synced
                         console.log(`[CACHE] Trimmed ${toDelete} events over the ${this.maxEvents} cap from IndexedDB`);
                         resolve();
                     }
