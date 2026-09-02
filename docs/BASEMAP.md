@@ -97,8 +97,8 @@ script prints the produced header zoom range instead).
 | 2 | z6/z7 candidates extracted | done |
 | 3 | Sizes measured | done (table above) |
 | 4 | Maxzoom rule applied → maxzoom 6 | done |
-| 5 | Immutable release published | **pending maintainer publish** (procedure above) |
+| 5 | Immutable release published | done 2026-09-02 (`tools/publish_basemap.sh`, maintainer) |
 | 6–9 | Lock values recorded | done (URL is the deterministic post-publish asset URL) |
-| 10 | `--preset full` verified against the lock | pending step 5 |
-| 11 | `dev`/`dev-ci` extracts from the release asset | pending step 5 (verified locally against the identical candidate file) |
+| 10 | `--preset full` verified against the lock | done 2026-09-02 (post-publish re-download + `--check`; `check_all.sh --release` green) |
+| 11 | `dev`/`dev-ci` extracts from the release asset | done 2026-09-02 (ranged extracts from the live asset, header z0–4 / z0–2) |
 | 12 | This document | done |
