@@ -210,9 +210,11 @@ def get_honeypot_stats(timedelta):
 # was forwarded and the watermark advanced anyway — silent, biased loss under
 # event floods. Now: sorted by @timestamp ascending, paged via search_after,
 # and the watermark only ever moves to the timestamp of the last event that
-# was actually processed. The page cap keeps one poll tick bounded; if it is
-# reached, the map deliberately samples (Kibana/ES remain the system of
-# record) and says so in the log.
+# was actually processed. The page cap keeps one poll tick bounded; when it
+# is reached the PIT cursor is carried into the next tick (bursts are caught
+# up completely), and only under sustained overload — more than
+# MAX_WATERMARK_LAG_S behind real time — the live map skips ahead and says so
+# in the log (Kibana/ES remain the system of record).
 EVENT_PAGE_SIZE = 100
 MAX_EVENT_PAGES_PER_POLL = 10
 MAX_WATERMARK_LAG_S = 60
@@ -248,19 +250,41 @@ def build_event_query(gt_ts, lte_ts):
     }
 
 
-def fetch_new_events(es_client, gt_ts, lte_ts):
-    """Fetch every event in (gt_ts, lte_ts], oldest first, paged via
-    search_after and bounded by MAX_EVENT_PAGES_PER_POLL pages per call.
-    Runs inside a point in time: PIT searches get the unique _shard_doc
-    tiebreaker appended to the sort automatically, so page boundaries that
-    fall inside a group of equal @timestamp values lose nothing (the full
-    per-hit sort tuple is handed to search_after).
-    Returns (hits, last_timestamp_or_None, saturated)."""
-    query = build_event_query(gt_ts, lte_ts)
-    pit_id = es_client.open_point_in_time(
-        index="logstash-*", keep_alive=PIT_KEEP_ALIVE)["id"]
+def close_cursor(es_client, resume_state):
+    """Best-effort close of a resumable poll cursor's point in time."""
+    if not resume_state:
+        return
+    try:
+        es_client.close_point_in_time(id=resume_state["pit_id"])
+    except Exception:
+        pass
+
+
+def fetch_new_events(es_client, gt_ts, lte_ts, resume=None):
+    """Fetch events in (gt_ts, lte_ts], oldest first, paged via search_after
+    inside a point in time (PIT searches get the unique _shard_doc tiebreaker
+    appended to the sort automatically; the full per-hit sort tuple is handed
+    to search_after), bounded by MAX_EVENT_PAGES_PER_POLL pages per call.
+
+    Resumable across polls (security review 2026-09-02, round 3): when the
+    page cap is hit, the PIT stays OPEN and a resume state {pit_id, query,
+    search_after} is returned. The next call must pass it back as `resume`
+    and continues exactly at the cursor inside the SAME frozen window —
+    closing the PIT and restarting with `gt last_ts` would drop events that
+    share the last processed @timestamp. An exhausted window closes the PIT.
+
+    Returns (hits, last_timestamp_or_None, saturated, resume_state_or_None)."""
+    if resume is None:
+        query = build_event_query(gt_ts, lte_ts)
+        pit_id = es_client.open_point_in_time(
+            index="logstash-*", keep_alive=PIT_KEEP_ALIVE)["id"]
+        search_after = None
+    else:
+        query = resume["query"]
+        pit_id = resume["pit_id"]
+        search_after = resume["search_after"]
+
     hits_out = []
-    search_after = None
     saturated = False
     try:
         for page in range(MAX_EVENT_PAGES_PER_POLL):
@@ -278,13 +302,17 @@ def fetch_new_events(es_client, gt_ts, lte_ts):
             search_after = page_hits[-1]["sort"]
         else:
             saturated = True
-    finally:
-        try:
-            es_client.close_point_in_time(id=pit_id)
-        except Exception:
-            pass
+    except Exception:
+        close_cursor(es_client, {"pit_id": pit_id})
+        raise
+
     last_ts = hits_out[-1]["_source"]["@timestamp"] if hits_out else None
-    return hits_out, last_ts, saturated
+    if saturated:
+        resume_state = {"pit_id": pit_id, "query": query, "search_after": search_after}
+    else:
+        close_cursor(es_client, {"pit_id": pit_id})
+        resume_state = None
+    return hits_out, last_ts, saturated, resume_state
 
 
 def _parse_ts(ts):
@@ -325,6 +353,7 @@ def update_honeypot_data():
     watermark = (datetime.datetime.now(datetime.UTC)
                  - datetime.timedelta(seconds=mydelta)).replace(tzinfo=None).isoformat()
     last_stats_time = datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=10)
+    cursor = None   # resumable PIT cursor while catching up on a burst
     while True:
         now = datetime.datetime.now(datetime.UTC)
         # Get the honeypot stats every 10s (last 1m, 1h, 24h)
@@ -346,16 +375,24 @@ def update_honeypot_data():
         # Elasticsearch mydelta seconds of indexing lag.
         window_end = (datetime.datetime.now(datetime.UTC)
                       - datetime.timedelta(seconds=mydelta)).replace(tzinfo=None).isoformat()
-        hits, last_ts, saturated = fetch_new_events(es, watermark, window_end)
+        hits, last_ts, saturated, resume_state = fetch_new_events(
+            es, watermark, window_end, resume=cursor)
+        # lag is measured against the CURRENT window end (real time), not
+        # against the frozen window a resumed cursor is still working through
         watermark, action = advance_watermark(watermark, last_ts, window_end, saturated)
         if action == "backlog":
+            cursor = resume_state   # continue at the cursor next tick — no loss
             behind = (_parse_ts(window_end) - _parse_ts(watermark)).total_seconds()
             print(f"[!] Event burst: the live map is catching up ({behind:.0f}s behind).")
         elif action == "skipped":
+            close_cursor(es, resume_state)
+            cursor = None
             print(f"[!] Sustained overload (> {MAX_WATERMARK_LAG_S}s behind at "
                   f"{EVENT_PAGE_SIZE * MAX_EVENT_PAGES_PER_POLL} events per poll): "
                   "the live map skips ahead to stay live — "
                   "Kibana/Elasticsearch remain complete.")
+        else:
+            cursor = None   # window exhausted (PIT already closed) or idle
         if hits:
             for hit in hits:
                 try:

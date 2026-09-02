@@ -26,6 +26,10 @@ class AttackCache {
             await this.initIndexedDB();
             this.storageType = 'indexeddb';
             console.log('[CACHE] Using IndexedDB for storage');
+            // Trim BEFORE the dashboard restores from the cache: a store that
+            // grew large under an older version must not be loaded in full
+            // once (security review 2026-09-02, upgrade case).
+            await this.cleanup();
         } catch (error) {
             console.warn('[CACHE] IndexedDB failed, falling back to LocalStorage:', error);
             this.initLocalStorage();
@@ -129,9 +133,10 @@ class AttackCache {
             request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
         });
-        // Hard maxEvents cap (2026-09-02): the periodic cleanup alone let the
-        // store overshoot by rate x 5 min; trim as soon as the approximate
-        // counter runs 10% over the cap.
+        // Bounded maxEvents cap with ~10% hysteresis (2026-09-02): the periodic
+        // cleanup alone let the store overshoot by rate x 5 min; trim as soon
+        // as the approximate counter runs 10% over the cap (cheaper than a
+        // count per insert, overshoot bounded to ~maxEvents/10).
         this.eventCount = (this.eventCount || 0) + 1;
         if (this.eventCount > this.maxEvents * 1.1 && !this._trimming) {
             this._trimming = true;
