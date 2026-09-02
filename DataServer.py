@@ -205,13 +205,81 @@ def get_honeypot_stats(timedelta):
     return ES_query_stats
 
 
+# Deterministic event polling (security review 2026-09-02). The old query
+# used size=100 WITHOUT sort: with >100 hits per window an arbitrary subset
+# was forwarded and the watermark advanced anyway — silent, biased loss under
+# event floods. Now: sorted by @timestamp ascending, paged via search_after,
+# and the watermark only ever moves to the timestamp of the last event that
+# was actually processed. The page cap keeps one poll tick bounded; if it is
+# reached, the map deliberately samples (Kibana/ES remain the system of
+# record) and says so in the log.
+EVENT_PAGE_SIZE = 100
+MAX_EVENT_PAGES_PER_POLL = 10
+
+
+def build_event_query(gt_ts, lte_ts):
+    return {
+        "bool": {
+            "must": [
+                {
+                    "query_string": {
+                        "query": (
+                            "type:(Adbhoney OR Beelzebub OR Ciscoasa OR CitrixHoneypot OR ConPot OR Cowrie "
+                            "OR Ddospot OR Dicompot OR Dionaea OR ElasticPot OR Endlessh OR Galah OR Glutton OR Go-pot OR H0neytr4p "
+                            "OR Hellpot OR Heralding OR Honeyaml OR Honeypots OR Honeytrap OR Ipphoney OR Log4pot OR Mailoney "
+                            "OR Medpot OR Miniprint OR RDPHoneypot OR Redishoneypot OR Sentrypeer OR Tanner OR Wordpot)"
+                        )
+                    }
+                }
+            ],
+            "filter": [
+                {
+                    "range": {
+                        "@timestamp": {
+                            "gt": gt_ts,
+                            "lte": lte_ts
+                        }
+                    }
+                }
+            ]
+        }
+    }
+
+
+def fetch_new_events(es_client, gt_ts, lte_ts):
+    """Fetch every event in (gt_ts, lte_ts], oldest first, paged via
+    search_after and bounded by MAX_EVENT_PAGES_PER_POLL pages per call.
+    Returns (hits, last_timestamp_or_None, saturated)."""
+    query = build_event_query(gt_ts, lte_ts)
+    hits_out = []
+    search_after = None
+    saturated = False
+    for page in range(MAX_EVENT_PAGES_PER_POLL):
+        kwargs = dict(index="logstash-*", size=EVENT_PAGE_SIZE, query=query,
+                      sort=[{"@timestamp": "asc"}])
+        if search_after is not None:
+            kwargs["search_after"] = search_after
+        res = es_client.search(**kwargs)
+        page_hits = res["hits"]["hits"]
+        hits_out.extend(page_hits)
+        if len(page_hits) < EVENT_PAGE_SIZE:
+            break
+        search_after = page_hits[-1]["sort"]
+    else:
+        saturated = True
+    last_ts = hits_out[-1]["_source"]["@timestamp"] if hits_out else None
+    return hits_out, last_ts, saturated
+
+
 def update_honeypot_data():
     global was_disconnected_es, was_disconnected_redis
     processed_data = []
     last = {"1m", "1h", "24h"}
     mydelta = 10
-    # Using timezone-aware UTC datetime (Python 3.14+ requirement)
-    time_last_request = datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=mydelta)
+    # Watermark: ES timestamp string of the last event actually processed;
+    # the next window is exclusive (gt) of it. Starts at now - mydelta.
+    watermark = (datetime.datetime.now(datetime.UTC)
+                 - datetime.timedelta(seconds=mydelta)).replace(tzinfo=None).isoformat()
     last_stats_time = datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=10)
     while True:
         now = datetime.datetime.now(datetime.UTC)
@@ -229,46 +297,19 @@ def update_honeypot_data():
             honeypot_stats.update({"type": "Stats"})
             push_honeypot_stats(honeypot_stats)
 
-        # Get the last 100 new honeypot events every 0.5s
-        # Convert timezone-aware datetime to naive for consistent string formatting with ES
-        mylast_dt = time_last_request.replace(tzinfo=None)
-        mynow_dt = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=mydelta)).replace(tzinfo=None)
-        
-        mylast = str(mylast_dt).split(" ")
-        mynow = str(mynow_dt).split(" ")
-        
-        ES_query = {
-            "bool": {
-                "must": [
-                    {
-                        "query_string": {
-                            "query": (
-                                "type:(Adbhoney OR Beelzebub OR Ciscoasa OR CitrixHoneypot OR ConPot OR Cowrie "
-                                "OR Ddospot OR Dicompot OR Dionaea OR ElasticPot OR Endlessh OR Galah OR Glutton OR Go-pot OR H0neytr4p "
-                                "OR Hellpot OR Heralding OR Honeyaml OR Honeypots OR Honeytrap OR Ipphoney OR Log4pot OR Mailoney "
-                                "OR Medpot OR Miniprint OR RDPHoneypot OR Redishoneypot OR Sentrypeer OR Tanner OR Wordpot)"
-                            )
-                        }
-                    }
-                ],
-                "filter": [
-                    {
-                        "range": {
-                            "@timestamp": {
-                                "gte": mylast[0] + "T" + mylast[1],
-                                "lte": mynow[0] + "T" + mynow[1]
-                            }
-                        }
-                    }
-                ]
-            }
-        }
-
-        res = es.search(index="logstash-*", size=100, query=ES_query)
-        hits = res['hits']
-        if len(hits['hits']) != 0:
-            time_last_request = datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=mydelta)
-            for hit in hits['hits']:
+        # Fetch every new honeypot event since the watermark (deterministic,
+        # sorted + paged; bounded per tick) up to now - mydelta, which leaves
+        # Elasticsearch mydelta seconds of indexing lag.
+        window_end = (datetime.datetime.now(datetime.UTC)
+                      - datetime.timedelta(seconds=mydelta)).replace(tzinfo=None).isoformat()
+        hits, last_ts, saturated = fetch_new_events(es, watermark, window_end)
+        if saturated:
+            print("[!] Event rate exceeds the map sampling capacity "
+                  f"({EVENT_PAGE_SIZE * MAX_EVENT_PAGES_PER_POLL} events per poll); "
+                  "the live map samples — Kibana/Elasticsearch remain complete.")
+        if hits:
+            watermark = last_ts
+            for hit in hits:
                 try:
                     process_datas = process_data(hit)
                     if process_datas != None:
