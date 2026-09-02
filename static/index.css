@@ -433,19 +433,14 @@ body {
     z-index: 1;
 }
 
-.leaflet-container {
+.maplibregl-map {
     background: var(--bg-primary);
     font-family: var(--font-primary);
     max-height: 100% !important;
     z-index: 1;
 }
 
-.leaflet-control-container {
-    position: relative;
-    top: var(--spacing-lg);
-}
-
-.leaflet-control-attribution {
+.maplibregl-ctrl-attrib {
     font-size: var(--font-xs);
     opacity: 0.6;
     color: var(--text-muted) !important;
@@ -453,22 +448,40 @@ body {
     border-radius: var(--radius-sm);
 }
 
-.leaflet-popup-content-wrapper {
+.maplibregl-ctrl-attrib a {
+    color: var(--text-muted);
+}
+
+.maplibregl-popup-content {
     background: var(--bg-modal);
     border-radius: var(--radius-lg);
     box-shadow: 0 8px 32px var(--shadow-heavy);
     border: 1px solid var(--border-primary);
 }
 
-.leaflet-popup-tip {
-    background: var(--bg-modal);
-    border: 1px solid var(--border-primary);
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--bg-modal); }
+.maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--bg-modal); }
+.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--bg-modal); }
+.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--bg-modal); }
+
+.maplibregl-popup-close-button {
+    color: var(--text-secondary);
+    font-size: 16px;
+    padding: 2px 6px;
 }
 
-.leaflet-popup-content {
+.maplibregl-popup {
     font-size: var(--font-sm);
     color: var(--text-primary);
     line-height: 1.6;
+    /* 3.0.1 Leaflet pane order: arcs (overlayPane) < pins (markerPane)
+       < popups (popupPane) — see the .attack-canvas / .maplibregl-marker
+       z-index chain 2 < 3 < 4 */
+    z-index: 4;
+}
+
+.maplibregl-marker {
+    z-index: 3;   /* pins above the attack canvas, below popups */
 }
 
 .stat-label {
@@ -504,12 +517,6 @@ body {
     border-left: none;
 }
 
-.side-panel.collapsed-right {
-    transform: translateX(200px);
-    width: 0px;
-    border-left: none;
-}
-
 .panel-toggle {
     position: absolute;
     left: -15px;
@@ -529,11 +536,6 @@ body {
     z-index: 10;
 }
 
-.side-panel.collapsed-right .panel-toggle {
-    left: -215px;
-    right: auto;
-}
-
 .panel-toggle:hover {
     background: var(--bg-tertiary);
     color: var(--text-primary);
@@ -551,18 +553,13 @@ body {
     transform: rotate(180deg);
 }
 
-.side-panel.collapsed-right .panel-toggle i {
-    transform: rotate(0deg);
-}
-
 .panel-content {
     flex: 1;
     padding: var(--spacing-md);
     overflow-y: auto;
 }
 
-.side-panel.collapsed .panel-content,
-.side-panel.collapsed-right .panel-content {
+.side-panel.collapsed .panel-content {
     display: none;
 }
 
@@ -1228,8 +1225,8 @@ body {
     background: var(--bg-modal);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-lg);
-    max-width: 450px;
-    width: 90%;
+    max-width: 640px;
+    width: min(92vw, 640px);
     max-height: 80vh;
     overflow: hidden;
     display: flex;
@@ -1288,7 +1285,7 @@ body {
 
 .modal-body {
     flex: 1;
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
     overflow-y: auto;
     background: var(--bg-primary);
 }
@@ -1297,7 +1294,16 @@ body {
     padding: var(--spacing-md) var(--spacing-lg);
     background: var(--bg-tertiary);
     border-top: 1px solid var(--border-primary);
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
     gap: var(--spacing-md);
+}
+
+/* neutralise Bootstrap's .modal-footer > * child margins */
+.modal-footer > * {
+    margin: 0;
 }
 
 /* Modal-specific button styling */
@@ -1313,8 +1319,8 @@ body {
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
-    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
 }
 
 .settings-section:last-child {
@@ -1322,7 +1328,7 @@ body {
 }
 
 .settings-section h4 {
-    font-size: 1.125rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0 0 var(--spacing-lg) 0;
@@ -1348,6 +1354,42 @@ body {
 
 .setting-content {
     flex: 1;
+}
+
+/* System-settings row layout: title left, control right, description below */
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    cursor: pointer;
+}
+
+.setting-row .setting-title {
+    margin-bottom: 0;
+}
+
+.setting-row .setting-select {
+    width: 260px;
+    max-width: 55%;
+    margin-top: 0;
+    flex-shrink: 0;
+}
+
+.setting-row input[type="checkbox"] {
+    margin: 0;
+    accent-color: var(--primary-color);
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.setting-row .btn-base {
+    flex-shrink: 0;
+}
+
+.setting-row + .setting-description {
+    margin-top: var(--spacing-xs);
 }
 
 .setting-title {
@@ -1871,27 +1913,49 @@ select:focus {
 }
 
 /* Modern Map Popup Styles */
-.leaflet-popup-content-wrapper {
+.modern-popup .maplibregl-popup-content {
     background: var(--bg-card);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-md);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
     overflow: hidden;
-}
-
-.leaflet-popup-content {
     margin: 0;
     padding: 0;
     font-family: var(--font-primary);
     line-height: 1.4;
+    /* clamped-into-view popups (map.js installPopupClamp): the header stays
+       fixed and the content scrolls within the JS-set max-height */
+    display: flex;
+    flex-direction: column;
 }
 
-.leaflet-popup-tip {
-    background: var(--bg-card);
-    border: 1px solid var(--border-primary);
-    box-shadow: none;
+/* the popup builders wrap header + content in one classless div — pass the
+   flex chain through it so the capped height reaches .popup-content */
+.modern-popup .maplibregl-popup-content > div {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
+
+.modern-popup .popup-header {
+    flex-shrink: 0;
+}
+
+.modern-popup .popup-content {
+    overflow-y: auto;
+    min-height: 0;
+}
+
+/* the body was shifted to stay inside the map area — the tip would point
+   nowhere, so hide it (visibility keeps the wrapper's flex layout stable,
+   display:none would shift the just-measured content by the tip size) */
+.modern-popup.popup-clamped .maplibregl-popup-tip {
+    visibility: hidden;
+}
+
+.modern-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--bg-card); }
+.modern-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--bg-card); }
 
 /* Modern popup structure */
 .popup-header {
@@ -2232,7 +2296,7 @@ select:focus {
     font-family: var(--font-primary);
 }
 
-.honeypot-popup .leaflet-popup-content-wrapper {
+.honeypot-popup .maplibregl-popup-content {
     background: var(--bg-modal);
     border: 1px solid var(--border-primary);
     border-radius: var(--border-radius);
@@ -2240,9 +2304,6 @@ select:focus {
     backdrop-filter: blur(10px);
     padding: 0;
     overflow: hidden;
-}
-
-.honeypot-popup .leaflet-popup-content {
     margin: 0;
     max-width: 400px;
 }
@@ -2358,12 +2419,8 @@ select:focus {
     flex-shrink: 0;
 }
 
-.honeypot-popup .leaflet-popup-tip {
-    background: var(--bg-modal);
-    border: 1px solid var(--border-primary);
-    border-top: none;
-    border-right: none;
-}
+.honeypot-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--bg-modal); }
+.honeypot-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--bg-modal); }
 
 /* Pulse animation for active honeypots */
 .honeypot-popup .popup-title h4::before {
@@ -2389,7 +2446,7 @@ select:focus {
     font-family: var(--font-primary);
 }
 
-.attacker-popup .leaflet-popup-content-wrapper {
+.attacker-popup .maplibregl-popup-content {
     background: var(--bg-modal);
     border: 1px solid var(--border-primary);
     border-radius: var(--border-radius);
@@ -2397,9 +2454,6 @@ select:focus {
     backdrop-filter: blur(10px);
     padding: 0;
     overflow: hidden;
-}
-
-.attacker-popup .leaflet-popup-content {
     margin: 0;
     max-width: 400px;
 }
@@ -2556,12 +2610,8 @@ select:focus {
     font-weight: 500;
 }
 
-.attacker-popup .leaflet-popup-tip {
-    background: var(--bg-modal);
-    border: 1px solid var(--border-primary);
-    border-top: none;
-    border-right: none;
-}
+.attacker-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--bg-modal); }
+.attacker-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--bg-modal); }
 
 @keyframes attackerPulse {
     0%, 100% { 
@@ -2629,23 +2679,13 @@ select:focus {
 }
 
 
-/* === LEAFLET FIXES === */
-
-/* Fix for tile gaps/grid lines: Set background color to match map theme */
-html[data-theme="dark"] .leaflet-container {
-    background-color: #0a0a0a; /* Matches dark theme background */
+/* Map background matches the theme while tiles load */
+html[data-theme="dark"] .maplibregl-map {
+    background-color: #0a0a0a;
 }
 
-html[data-theme="light"] .leaflet-container {
-    background-color: #ffffff; /* Matches light theme background */
-}
-
-/* Additional fix for sub-pixel rendering gaps */
-.leaflet-tile-container img.leaflet-tile {
-    /* Ensure hardware acceleration is used */
-    will-change: transform;
-    /* Disable mix-blend-mode to prevent bright lines from tile overlap fix */
-    mix-blend-mode: normal !important;
+html[data-theme="light"] .maplibregl-map {
+    background-color: #ffffff;
 }
 
 /* Initial hidden states for elements toggled by JS */
@@ -2653,3 +2693,70 @@ html[data-theme="light"] .leaflet-container {
 #sound-options {
     display: none;
 }
+
+/* 4.0 attack animation overlay (HANDOFF-v2 §9.4, WP5): above .maplibregl-canvas,
+   below pins and popups via the explicit z-index chain
+   .attack-canvas 2 < .maplibregl-marker 3 < .maplibregl-popup 4
+   (3.0.1 Leaflet pane order: overlayPane < markerPane < popupPane). */
+.attack-canvas {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* Map failure panel (HANDOFF-v2 §13.5/§13.6; markup ships in WP6) */
+#map-failure-panel {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+    z-index: 3;
+}
+
+#map-failure-panel[hidden] { display: none; }
+
+.map-failure-content {
+    max-width: 480px;
+    padding: var(--spacing-xl);
+    text-align: center;
+    color: var(--text-primary);
+    background: var(--bg-modal);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 32px var(--shadow-heavy);
+}
+
+.map-failure-content i {
+    font-size: 2rem;
+    color: var(--warning-color, #ffc107);
+    margin-bottom: var(--spacing-md);
+}
+
+.map-failure-content p {
+    color: var(--text-secondary);
+    font-family: var(--font-mono, monospace);
+    font-size: var(--font-sm);
+    word-break: break-word;
+}
+
+/* DEMO DATA badge (D27): visible while incoming messages carry demo: true */
+#demo-badge {
+    position: fixed;
+    top: 74px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    padding: 4px 14px;
+    border-radius: var(--radius-sm);
+    background: repeating-linear-gradient(45deg, #b8860b, #b8860b 10px, #8a6508 10px, #8a6508 20px);
+    color: #fff;
+    font-family: var(--font-mono, monospace);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    pointer-events: none;
+}
+
+#demo-badge[hidden] { display: none; }

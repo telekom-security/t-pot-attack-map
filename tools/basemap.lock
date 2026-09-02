@@ -1,0 +1,11 @@
+# tools/basemap.lock — the only place basemap and CLI pins live (HANDOFF-v2 D10, §11 WP2).
+# POSIX-sourceable. WORLD_* values point at the immutable T-Pot release asset
+# (release basemap-<YYYYMMDD>-z<N> on telekom-security/t-pot-attack-map).
+WORLD_PMTILES_URL=https://github.com/telekom-security/t-pot-attack-map/releases/download/basemap-20260901-z6/world.pmtiles
+WORLD_PMTILES_SHA256=375d8d83385b7bba46a518f97edff487d4c0f54d9ceea42ef4f1e76dbe773ff8
+PM_MAXZOOM=6
+PM_BUILD=20260831
+PMTILES_CLI=1.31.2
+PMTILES_CLI_SHA256_linux_x86_64=3ed7dbf4ec2e6dfe5e25b6f70d1ffc932729f93c86db353bf514dd71010a312f
+PMTILES_CLI_SHA256_linux_arm64=f8bd47e7ea866863489cad588fbaf2f31f42e5821f7a03f009b3769f05801cb1
+PMTILES_CLI_SHA256_darwin_arm64=40528f7f616fcbf91207cd48c8fc023d213f6d86c0cbf1f748732803d1880f3d

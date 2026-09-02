@@ -1,0 +1,5 @@
+# tools/iso_unsupported.txt — universe codes with no polygon in the vendored dataset
+# (HANDOFF-v2 §8.5, §22 item 10). One code per line.
+BV
+GI
+UM

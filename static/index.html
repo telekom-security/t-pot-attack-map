@@ -4,46 +4,44 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' https://*.cartocdn.com https://*.openstreetmap.org data:; object-src 'none'; connect-src 'self' wss: ws:">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'none'">
         <title>T-Pot Attack Map - Real-time Cybersecurity Visualization</title>
         <meta name="description" content="Real-time visualization of T-Pot honeypot attacks and cybersecurity threats">
 
         <!-- Check integrity: openssl dgst -sha384 -binary your.file.name | openssl base64 -A-->
 
-        <!--Setup D3-->
-        <script src="static/d3.v7.min.js" defer integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i"></script>
-
-        <!--Setup JQuery-->
-        <script src="static/jquery-3.7.1.min.js" defer integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs"></script>
-
-        <!--Setup Luxon-->
-        <script src="static/luxon.min.js" defer integrity="sha384-CU0J6nu6GO5gWB5IqOOhPQsG0LKyjpotF5Gw502R+0zbkzKHjDWc6FKSZsNTJfLX"></script>
-
         <!--Setup Chart.js for enhanced visualizations-->
-        <script src="static/chart.umd.js" defer integrity="sha384-FcQlsUOd0TJjROrBxhJdUhXTUgNJQxTMcxZe6nHbaEfFL1zjQ+bq/uRoBQxb0KMo"></script>
+        <script src="static/chart.umd.js" defer integrity="sha384-hfkuqrKeWFmnTMWN31VWyoe8xgdTADD11kgxmdpx2uyE6j5Az5uZq6u6AKYYmAOw"></script>
 
         <!--Setup Bootstrap-->
-        <link href="static/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"/>
-        <script src="static/bootstrap.min.js" defer integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"></script>
+        <link href="static/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"/>
 
-        <!--Setup Leaflet-->
-        <link rel="stylesheet" href="static/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"/>
-        <script src="static/leaflet.js" defer integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"></script>
-
-        <!--Setup Leaflet Fullscreen Plugin (https://github.com/Leaflet/Leaflet.fullscreen) -->
-        <link href="static/leaflet.fullscreen.css" integrity="sha384-C7Iw1+OrHpvFnDYJhJHiS1pJp56ctL3Y74XojtVviNiHwMX1h8KlJEo41yI6UA8i" rel="stylesheet"/>
-        <script src="static/leaflet.fullscreen.js" defer integrity="sha384-TqFtkYBnYsrP2JCfIv/oLQxS9L6xpaIV9xnaI2UGMK25cJsTtQXZIU6WGQ7daT0Z"></script>
+        <!--Setup MapLibre GL (self-hosted, HANDOFF-v2 D1). The ESM graph
+            (map-boot.mjs -> maplibre-gl.mjs / pmtiles.mjs / fflate.mjs and the
+            renderer modules) is pulled in by map.js via await import();
+            modulepreload links warm and integrity-pin that graph (§14.4). -->
+        <link rel="stylesheet" href="static/maplibre-gl.css" integrity="sha384-Q5Blg3vUVAlUKqIPJYz7wGnz40Vwrx4pVuFVicI73+8c/26Zr5hhckfuIiIUflLE"/>
+        <link rel="modulepreload" href="static/map-boot.mjs" integrity="sha384-AScU/9GLzBrZAxf3GCgTgXcM3YcyYRS2LbrYqYuMm28tOeqq14p6aDu/W4DkP4ot">
+        <link rel="modulepreload" href="static/maplibre-gl.mjs" integrity="sha384-Wf5cGlTLBG2VP5WNDIH9vAGdeiw2nYya5CpUWtPY2XXMoIhzjChL0DPEYddOuq2B">
+        <link rel="modulepreload" href="static/maplibre-gl-shared.mjs" integrity="sha384-BOGwfR1zlfKJlXWbHSaENskAbBb0zGUa0i76kRTASFlqCIQEvPJMgE6ghvw6Gdp5">
+        <link rel="modulepreload" href="static/pmtiles.mjs" integrity="sha384-rt1przjoT+WghNs8YSJN3lGpJAi7jd/R9ZKn3LOdEnBa+num0kppF4KjTVOCaTMp">
+        <link rel="modulepreload" href="static/fflate.mjs" integrity="sha384-SNKgXdor2lJGkzPBg9ywUthk1cf7jcEOGewjMgbgasovEnR+wHQyNIf318oz4E/E">
+        <link rel="modulepreload" href="static/attack-renderer.mjs" integrity="sha384-m3WQlMgTrOdxM7HN68Y/gKrLQYyMR8xt0el9nRcTY4Jdb4qx7G7KpZaqwIIvXlLP">
+        <link rel="modulepreload" href="static/attack-geometry.mjs" integrity="sha384-dW+eJz4zY+4NIgmJC3GzurG3EHoaD3SExRB8OQzubKQl8kPIvpvqkq0A1R6yXOs0">
 
         <!-- Local Fonts (Inter & JetBrains Mono) -->
-        <link href="static/fonts/fonts.css" rel="stylesheet" integrity="sha384-hfuGJk4QqYM6FMHlIjLQUEioQvJ1nPENVylKK8+JSZTBQ/KG7GwoJe29Mpw+2p11">
+        <link href="static/fonts/fonts.css" rel="stylesheet" integrity="sha384-n138lt+vFMyu24Fv1itVvEQokyUNV3NNKUZNsuBW+omxRqQSOEShiH/5ymOzEV8r">
 
         <!-- Local Icons (Font Awesome) -->
-        <link rel="stylesheet" href="static/fontawesome/css/all.min.css" integrity="sha384-t1nt8BQoYMLFN5p42tRAtuAAFQaCQODekUVeKKZrEnEyp4H2R0RHFz0KWpmj7i8g">
+        <link rel="stylesheet" href="static/fontawesome/css/all.min.css" integrity="sha384-qrALq7+6jBOZIQsNnT6xGkMDru64qD6uTlDra39xrt2SoXl4pO3FX6Roz/RpR/BS">
 
-        <link href="static/index.css?v=6" rel="stylesheet" integrity="sha384-axsUVEL9GPXH1d8THaTelM/LEPfqz4DQswvGr5mjWiL97mOoRFAsB8KLrDB13qAI"/>
+        <link href="static/index.css?v=7" rel="stylesheet" integrity="sha384-1tOU/vzLc3GRLSJ3+FXAZug+911TR8rlK6kA/S+/mGAGecVvVXloNNYYs9H/ljyo"/>
     </head>
 
     <body>
+        <!-- DEMO DATA badge (D27): shown while incoming messages carry demo: true -->
+        <div id="demo-badge" hidden>DEMO DATA</div>
+
         <!-- Loading Screen -->
         <div id="loading-screen" class="loading-screen">
             <div class="loading-content">
@@ -114,12 +112,23 @@
             <!-- Map Container -->
             <div class="map-container">
                 <div id="map"></div>
+                <!-- Map failure state (functional markup, HANDOFF-v2 §13.5/§13.6;
+                     populated by showMapFailure(); styled in WP8). The dashboard
+                     and data channel stay alive when this is shown. -->
+                <div id="map-failure-panel" hidden>
+                    <div class="map-failure-content">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <h3 id="map-failure-title"></h3>
+                        <p id="map-failure-hint"></p>
+                    </div>
+                </div>
             </div>
 
             <!-- Side Panel (Collapsible) -->
             <div class="side-panel" id="side-panel">
                 <div class="panel-toggle" id="panel-toggle">
-                    <i class="fas fa-chevron-left"></i>
+                    <!-- panel collapses to the RIGHT: open shows '>', collapsed rotates to '<' -->
+                    <i class="fas fa-chevron-right"></i>
                 </div>
                 
                 <div class="panel-content">
@@ -379,7 +388,7 @@
                                 <div class="card-header flex-between">
                                     <h4 class="flex-center"><i class="fas fa-clock"></i> Activity Timeline</h4>
                                     <div class="time-range-selector">
-                                        <select id="timeline-interval" class="timeline-dropdown">
+                                        <select id="timeline-interval" class="timeline-dropdown" title="Timeline range" aria-label="Timeline range">
                                             <option value="1m">Last 1 Minute</option>
                                             <option value="1h">Last 1 Hour</option>
                                             <option value="24h" selected>Last 24 Hours</option>
@@ -496,7 +505,7 @@
             <div class="modal-content">
                 <div class="modal-header flex-between">
                     <h3 class="flex-center"><i class="fas fa-cog"></i> Settings</h3>
-                    <button class="modal-close flex-center-both" id="settings-close">
+                    <button class="modal-close flex-center-both" id="settings-close" title="Close settings" aria-label="Close settings">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -504,18 +513,16 @@
                     <div class="settings-section">
                         <h4 class="flex-center"><i class="fas fa-volume-up"></i> Audio Alerts</h4>
                         <div class="setting-item">
-                            <label class="setting-label">
+                            <label class="setting-row">
+                                <span class="setting-title">Play sound alerts</span>
                                 <input type="checkbox" id="sound-alerts">
-                                <div class="setting-content">
-                                    <span class="setting-title">Play sound alerts</span>
-                                    <span class="setting-description">Enable audio notifications for new attacks</span>
-                                </div>
                             </label>
+                            <span class="setting-description">Enable audio notifications for new attacks</span>
                         </div>
                         <div class="setting-item" id="sound-options">
-                            <div class="setting-content">
-                                <span class="setting-title">Alert Sound</span>
-                                <select id="alert-sound" class="setting-select">
+                            <div class="setting-row">
+                                <span class="setting-title">Alert sound</span>
+                                <select id="alert-sound" class="setting-select" title="Alert sound">
                                     <option value="beep">Digital Beep</option>
                                     <option value="notification">Notification Chime</option>
                                     <option value="alert">Security Alert</option>
@@ -524,17 +531,39 @@
                             </div>
                         </div>
                     </div>
-                    
+
+                    <div class="settings-section">
+                        <h4 class="flex-center"><i class="fas fa-earth-europe"></i> Map</h4>
+                        <div class="setting-item">
+                            <div class="setting-row">
+                                <span class="setting-title">Activity shading</span>
+                                <select id="shading-mode" class="setting-select" title="Activity shading mode">
+                                    <option value="mixed">Mixed (auto by zoom)</option>
+                                    <option value="choropleth">Countries only</option>
+                                    <option value="heatmap">Heatmap only</option>
+                                    <option value="off">Off</option>
+                                </select>
+                            </div>
+                            <span class="setting-description">Shades where observed events geolocate
+                                by source IP address — not attribution: it does not establish that an
+                                attacker, operator or state actor is physically located there. Positions
+                                are GeoIP city/centroid estimates and frequently mark hosting providers
+                                and data centres; proxies, VPNs and compromised hosts all shift the
+                                apparent origin. In Mixed mode the country shading crossfades into a
+                                density heatmap while zooming in.</span>
+                        </div>
+                    </div>
+
                     <div class="settings-section">
                         <h4 class="flex-center"><i class="fas fa-database"></i> Data Management</h4>
                         <div class="setting-item">
-                            <div class="setting-content">
-                                <span class="setting-title">Cache Storage</span>
-                                <span class="setting-description">Clear cached attack data and reset map markers</span>
-                                <button class="btn-base btn-warning hover-lift mt-2" id="clear-cache">
+                            <div class="setting-row">
+                                <span class="setting-title">Cache storage</span>
+                                <button class="btn-base btn-warning hover-lift" id="clear-cache">
                                     <i class="fas fa-trash-alt"></i> Clear Cache
                                 </button>
                             </div>
+                            <span class="setting-description">Clear cached attack data and reset map markers</span>
                         </div>
                     </div>
                 </div>
@@ -550,8 +579,8 @@
         </div>
 
         <script src="static/cache-bridge.js" defer integrity="sha384-mMltIbf7JoxVuM6ZaB7TYkrLmY2njkbSTL9VvYqNKtmct/C2X1/JvKr8FeYHU0I+"></script>
-        <script src="static/map.js" defer integrity="sha384-2qT3tHtMdXU7HVX5lsXUrVs/of8RMbZKLzlajAkUSFHOQtHBOR/e8klblY+r89DE"></script>
-        <script src="static/dashboard.js" defer integrity="sha384-G3w6UiVOgfx+CP0Otu961qJu1kfOfCLHDO4rtaWMPxem4VHwdL1SPSA0jDDWqRKF"></script>
+        <script src="static/map.js" defer integrity="sha384-fVE/Sno/KJJE45x8vRjAPAvqYpetDUcvMgCpBVdM5YGtRgLic2xSDlRV5498MXIR"></script>
+        <script src="static/dashboard.js" defer integrity="sha384-oV+F5o8wm7wxU+36GeUCND1m9/O98l7cfJCynfdDZZCukh2p5I4OfDHJvPB1500I"></script>
     </body>
 
 </html>

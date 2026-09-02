@@ -1,0 +1,9 @@
+{
+  "name": "tpot-attackmap-e2e",
+  "private": true,
+  "description": "Local pinned-Chromium smoke test for the T-Pot Attack Map (HANDOFF-v2 §17.3)",
+  "type": "module",
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

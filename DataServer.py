@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import json
 import time
@@ -7,13 +8,13 @@ import redis
 from elasticsearch import Elasticsearch
 from tzlocal import get_localzone
 
-# Within T-Pot: es = Elasticsearch('http://elasticsearch:9200') and redis_ip = 'map_redis'
-#es = Elasticsearch('http://127.0.0.1:64298')
-#redis_ip = '127.0.0.1'
-es = Elasticsearch('http://elasticsearch:9200')
-redis_ip = 'map_redis'
+# Configuration defaults (override via CLI flags, HANDOFF-v2 D21)
+DEFAULT_ES_URL = 'http://elasticsearch:9200'
+DEFAULT_REDIS_HOST = 'map_redis'
+es = Elasticsearch(DEFAULT_ES_URL)
+redis_ip = DEFAULT_REDIS_HOST
 redis_channel = 'attack-map-production'
-version = 'Data Server 3.0.1'
+version = 'Data Server 4.0.0'
 local_tz = get_localzone()
 output_text = os.getenv("TPOT_ATTACKMAP_TEXT", "ENABLED").upper()
 
@@ -204,14 +205,155 @@ def get_honeypot_stats(timedelta):
     return ES_query_stats
 
 
+# Deterministic event polling (security review 2026-09-02). The old query
+# used size=100 WITHOUT sort: with >100 hits per window an arbitrary subset
+# was forwarded and the watermark advanced anyway — silent, biased loss under
+# event floods. Now: sorted by @timestamp ascending, paged via search_after,
+# and the watermark only ever moves to the timestamp of the last event that
+# was actually processed. The page cap keeps one poll tick bounded; when it
+# is reached the PIT cursor is carried into the next tick (bursts are caught
+# up completely), and only under sustained overload — more than
+# MAX_WATERMARK_LAG_S behind real time — the live map skips ahead and says so
+# in the log (Kibana/ES remain the system of record).
+EVENT_PAGE_SIZE = 100
+MAX_EVENT_PAGES_PER_POLL = 10
+MAX_WATERMARK_LAG_S = 60
+PIT_KEEP_ALIVE = "10s"
+
+
+def build_event_query(gt_ts, lte_ts):
+    return {
+        "bool": {
+            "must": [
+                {
+                    "query_string": {
+                        "query": (
+                            "type:(Adbhoney OR Beelzebub OR Ciscoasa OR CitrixHoneypot OR ConPot OR Cowrie "
+                            "OR Ddospot OR Dicompot OR Dionaea OR ElasticPot OR Endlessh OR Galah OR Glutton OR Go-pot OR H0neytr4p "
+                            "OR Hellpot OR Heralding OR Honeyaml OR Honeypots OR Honeytrap OR Ipphoney OR Log4pot OR Mailoney "
+                            "OR Medpot OR Miniprint OR RDPHoneypot OR Redishoneypot OR Sentrypeer OR Tanner OR Wordpot)"
+                        )
+                    }
+                }
+            ],
+            "filter": [
+                {
+                    "range": {
+                        "@timestamp": {
+                            "gt": gt_ts,
+                            "lte": lte_ts
+                        }
+                    }
+                }
+            ]
+        }
+    }
+
+
+def close_cursor(es_client, resume_state):
+    """Best-effort close of a resumable poll cursor's point in time."""
+    if not resume_state:
+        return
+    try:
+        es_client.close_point_in_time(id=resume_state["pit_id"])
+    except Exception:
+        pass
+
+
+def fetch_new_events(es_client, gt_ts, lte_ts, resume=None):
+    """Fetch events in (gt_ts, lte_ts], oldest first, paged via search_after
+    inside a point in time (PIT searches get the unique _shard_doc tiebreaker
+    appended to the sort automatically; the full per-hit sort tuple is handed
+    to search_after), bounded by MAX_EVENT_PAGES_PER_POLL pages per call.
+
+    Resumable across polls (security review 2026-09-02, round 3): when the
+    page cap is hit, the PIT stays OPEN and a resume state {pit_id, query,
+    search_after} is returned. The next call must pass it back as `resume`
+    and continues exactly at the cursor inside the SAME frozen window —
+    closing the PIT and restarting with `gt last_ts` would drop events that
+    share the last processed @timestamp. An exhausted window closes the PIT.
+
+    Returns (hits, last_timestamp_or_None, saturated, resume_state_or_None)."""
+    if resume is None:
+        query = build_event_query(gt_ts, lte_ts)
+        pit_id = es_client.open_point_in_time(
+            index="logstash-*", keep_alive=PIT_KEEP_ALIVE)["id"]
+        search_after = None
+    else:
+        query = resume["query"]
+        pit_id = resume["pit_id"]
+        search_after = resume["search_after"]
+
+    hits_out = []
+    saturated = False
+    try:
+        for page in range(MAX_EVENT_PAGES_PER_POLL):
+            kwargs = dict(size=EVENT_PAGE_SIZE, query=query,
+                          sort=[{"@timestamp": "asc"}],
+                          pit={"id": pit_id, "keep_alive": PIT_KEEP_ALIVE})
+            if search_after is not None:
+                kwargs["search_after"] = search_after
+            res = es_client.search(**kwargs)
+            pit_id = res.get("pit_id", pit_id)
+            page_hits = res["hits"]["hits"]
+            hits_out.extend(page_hits)
+            if len(page_hits) < EVENT_PAGE_SIZE:
+                break
+            search_after = page_hits[-1]["sort"]
+        else:
+            saturated = True
+    except Exception:
+        close_cursor(es_client, {"pit_id": pit_id})
+        raise
+
+    last_ts = hits_out[-1]["_source"]["@timestamp"] if hits_out else None
+    if saturated:
+        resume_state = {"pit_id": pit_id, "query": query, "search_after": search_after}
+    else:
+        close_cursor(es_client, {"pit_id": pit_id})
+        resume_state = None
+    return hits_out, last_ts, saturated, resume_state
+
+
+def _parse_ts(ts):
+    """ES timestamps may be timezone-aware ('...Z'); window bounds are naive
+    UTC — normalise everything to naive UTC for arithmetic."""
+    dt = datetime.datetime.fromisoformat(ts)
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(datetime.UTC).replace(tzinfo=None)
+    return dt
+
+
+def advance_watermark(current, last_ts, window_end, saturated,
+                      max_lag_s=MAX_WATERMARK_LAG_S):
+    """Watermark policy (maintainer decision 2026-09-02): bursts are caught
+    up completely; only under SUSTAINED overload — the watermark falling more
+    than max_lag_s behind the window end despite a saturated poll — the live
+    map skips ahead (and says so), keeping the view live. Kibana/Elasticsearch
+    always remain the complete record.
+    Returns (new_watermark, action) with action in
+    idle | current | backlog | skipped."""
+    if last_ts is None:
+        return current, "idle"
+    if not saturated:
+        return last_ts, "current"
+    lag = (_parse_ts(window_end) - _parse_ts(last_ts)).total_seconds()
+    if lag > max_lag_s:
+        return window_end, "skipped"
+    return last_ts, "backlog"
+
+
 def update_honeypot_data():
     global was_disconnected_es, was_disconnected_redis
     processed_data = []
     last = {"1m", "1h", "24h"}
     mydelta = 10
-    # Using timezone-aware UTC datetime (Python 3.14+ requirement)
-    time_last_request = datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=mydelta)
+    # Watermark: ES timestamp string of the last event actually processed;
+    # the next window is exclusive (gt) of it. Starts at now - mydelta.
+    watermark = (datetime.datetime.now(datetime.UTC)
+                 - datetime.timedelta(seconds=mydelta)).replace(tzinfo=None).isoformat()
     last_stats_time = datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=10)
+    cursor = None   # resumable PIT cursor while catching up on a burst
     while True:
         now = datetime.datetime.now(datetime.UTC)
         # Get the honeypot stats every 10s (last 1m, 1h, 24h)
@@ -228,46 +370,31 @@ def update_honeypot_data():
             honeypot_stats.update({"type": "Stats"})
             push_honeypot_stats(honeypot_stats)
 
-        # Get the last 100 new honeypot events every 0.5s
-        # Convert timezone-aware datetime to naive for consistent string formatting with ES
-        mylast_dt = time_last_request.replace(tzinfo=None)
-        mynow_dt = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=mydelta)).replace(tzinfo=None)
-        
-        mylast = str(mylast_dt).split(" ")
-        mynow = str(mynow_dt).split(" ")
-        
-        ES_query = {
-            "bool": {
-                "must": [
-                    {
-                        "query_string": {
-                            "query": (
-                                "type:(Adbhoney OR Beelzebub OR Ciscoasa OR CitrixHoneypot OR ConPot OR Cowrie "
-                                "OR Ddospot OR Dicompot OR Dionaea OR ElasticPot OR Endlessh OR Galah OR Glutton OR Go-pot OR H0neytr4p "
-                                "OR Hellpot OR Heralding OR Honeyaml OR Honeypots OR Honeytrap OR Ipphoney OR Log4pot OR Mailoney "
-                                "OR Medpot OR Miniprint OR RDPHoneypot OR Redishoneypot OR Sentrypeer OR Tanner OR Wordpot)"
-                            )
-                        }
-                    }
-                ],
-                "filter": [
-                    {
-                        "range": {
-                            "@timestamp": {
-                                "gte": mylast[0] + "T" + mylast[1],
-                                "lte": mynow[0] + "T" + mynow[1]
-                            }
-                        }
-                    }
-                ]
-            }
-        }
-
-        res = es.search(index="logstash-*", size=100, query=ES_query)
-        hits = res['hits']
-        if len(hits['hits']) != 0:
-            time_last_request = datetime.datetime.now(datetime.UTC) - datetime.timedelta(seconds=mydelta)
-            for hit in hits['hits']:
+        # Fetch every new honeypot event since the watermark (deterministic,
+        # sorted + paged; bounded per tick) up to now - mydelta, which leaves
+        # Elasticsearch mydelta seconds of indexing lag.
+        window_end = (datetime.datetime.now(datetime.UTC)
+                      - datetime.timedelta(seconds=mydelta)).replace(tzinfo=None).isoformat()
+        hits, last_ts, saturated, resume_state = fetch_new_events(
+            es, watermark, window_end, resume=cursor)
+        # lag is measured against the CURRENT window end (real time), not
+        # against the frozen window a resumed cursor is still working through
+        watermark, action = advance_watermark(watermark, last_ts, window_end, saturated)
+        if action == "backlog":
+            cursor = resume_state   # continue at the cursor next tick — no loss
+            behind = (_parse_ts(window_end) - _parse_ts(watermark)).total_seconds()
+            print(f"[!] Event burst: the live map is catching up ({behind:.0f}s behind).")
+        elif action == "skipped":
+            close_cursor(es, resume_state)
+            cursor = None
+            print(f"[!] Sustained overload (> {MAX_WATERMARK_LAG_S}s behind at "
+                  f"{EVENT_PAGE_SIZE * MAX_EVENT_PAGES_PER_POLL} events per poll): "
+                  "the live map skips ahead to stay live — "
+                  "Kibana/Elasticsearch remain complete.")
+        else:
+            cursor = None   # window exhausted (PIT already closed) or idle
+        if hits:
+            for hit in hits:
                 try:
                     process_datas = process_data(hit)
                     if process_datas != None:
@@ -426,9 +553,21 @@ def check_connections():
     
     return True
 
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description=version)
+    parser.add_argument('--redis-host', default=DEFAULT_REDIS_HOST,
+                        help=f'Redis host (default: {DEFAULT_REDIS_HOST})')
+    parser.add_argument('--es-url', default=DEFAULT_ES_URL,
+                        help=f'Elasticsearch URL (default: {DEFAULT_ES_URL})')
+    return parser.parse_args(argv)
+
+
 if __name__ == '__main__':
+    cli_args = parse_args()
+    redis_ip = cli_args.redis_host
+    es = Elasticsearch(cli_args.es_url)
     print(version)
-    
+
     # Check both connections on startup
     check_connections()
     print("[*] Starting data server...\n")

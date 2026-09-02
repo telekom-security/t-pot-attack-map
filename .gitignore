@@ -5,3 +5,8 @@ lib/
 pyvenv.cfg
 __pycache__/
 
+.venv/
+static/dist/*.pmtiles
+tools/e2e/node_modules/
+tools/styles/node_modules/
+.DS_Store

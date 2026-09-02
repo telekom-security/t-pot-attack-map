@@ -26,6 +26,10 @@ class AttackCache {
             await this.initIndexedDB();
             this.storageType = 'indexeddb';
             console.log('[CACHE] Using IndexedDB for storage');
+            // Trim BEFORE the dashboard restores from the cache: a store that
+            // grew large under an older version must not be loaded in full
+            // once (security review 2026-09-02, upgrade case).
+            await this.cleanup();
         } catch (error) {
             console.warn('[CACHE] IndexedDB failed, falling back to LocalStorage:', error);
             this.initLocalStorage();
@@ -49,10 +53,19 @@ class AttackCache {
             }
 
             const request = indexedDB.open(this.dbName, this.version);
-            
+
             request.onerror = () => reject(request.error);
             request.onsuccess = () => {
                 this.db = request.result;
+                // approximate live count for the hard maxEvents cap
+                // (counted once here, incremented per insert)
+                this.eventCount = 0;
+                this._trimming = false;
+                try {
+                    const tx = this.db.transaction([this.storeName], 'readonly');
+                    const countReq = tx.objectStore(this.storeName).count();
+                    countReq.onsuccess = () => { this.eventCount = countReq.result; };
+                } catch (e) { /* counter stays approximate */ }
                 resolve();
             };
 
@@ -112,14 +125,28 @@ class AttackCache {
     }
 
     async storeEventIndexedDB(event) {
-        return new Promise((resolve, reject) => {
+        await new Promise((resolve, reject) => {
             const transaction = this.db.transaction([this.storeName], 'readwrite');
             const store = transaction.objectStore(this.storeName);
             const request = store.add(event);
-            
+
             request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
         });
+        // Bounded maxEvents cap with ~10% hysteresis (2026-09-02): the periodic
+        // cleanup alone let the store overshoot by rate x 5 min; trim as soon
+        // as the approximate counter runs 10% over the cap (cheaper than a
+        // count per insert, overshoot bounded to ~maxEvents/10).
+        this.eventCount = (this.eventCount || 0) + 1;
+        if (this.eventCount > this.maxEvents * 1.1 && !this._trimming) {
+            this._trimming = true;
+            try {
+                const tx = this.db.transaction([this.storeName], 'readwrite');
+                await this.trimIndexedDBToMaxEvents(tx.objectStore(this.storeName));
+            } finally {
+                this._trimming = false;
+            }
+        }
     }
 
     storeEventLocalStorage(event) {
@@ -214,10 +241,44 @@ class AttackCache {
                     if (deletedCount > 0) {
                         console.log(`[CACHE] Cleaned up ${deletedCount} old events from IndexedDB`);
                     }
-                    resolve();
+                    // Enforce maxEvents too (2026-09-02): until now only the
+                    // localStorage path applied the cap, so high event rates
+                    // could grow IndexedDB to rate x 24h records.
+                    this.trimIndexedDBToMaxEvents(store).then(resolve, reject);
                 }
             };
             request.onerror = () => reject(request.error);
+        });
+    }
+
+    trimIndexedDBToMaxEvents(store) {
+        return new Promise((resolve, reject) => {
+            const countReq = store.count();
+            countReq.onsuccess = () => {
+                let excess = countReq.result - this.maxEvents;
+                if (excess <= 0) {
+                    this.eventCount = countReq.result;   // counter re-synced
+                    resolve();
+                    return;
+                }
+                const toDelete = excess;
+                // oldest first via the timestamp index
+                const cursorReq = store.index('timestamp').openCursor();
+                cursorReq.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor && excess > 0) {
+                        cursor.delete();
+                        excess--;
+                        cursor.continue();
+                    } else {
+                        this.eventCount = this.maxEvents;   // counter re-synced
+                        console.log(`[CACHE] Trimmed ${toDelete} events over the ${this.maxEvents} cap from IndexedDB`);
+                        resolve();
+                    }
+                };
+                cursorReq.onerror = () => reject(cursorReq.error);
+            };
+            countReq.onerror = () => reject(countReq.error);
         });
     }
 
@@ -1095,10 +1156,11 @@ Cache Statistics:
         // Update side panel height based on bottom panel position
         this.updateSidePanelHeight();
         
-        // Trigger map resize if needed
+        // Trigger map resize if needed (D37: window.map is null until the map
+        // is READY — optional calls keep this safe in every lifecycle state)
         if (window.map) {
             setTimeout(() => {
-                window.map.invalidateSize();
+                window.map?.resize?.();
             }, 300);
         }
     }
@@ -2051,11 +2113,20 @@ Cache Statistics:
     loadSettings() {
         const defaultSettings = {
             soundAlerts: false,
-            alertSound: 'beep'
+            alertSound: 'beep',
+            shadingMode: 'mixed'   // D28: activity shading on by default (zoom crossfade)
         };
 
         const saved = localStorage.getItem('attack-map-settings');
-        return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+        const stored = saved ? JSON.parse(saved) : {};
+        const settings = { ...defaultSettings, ...stored };
+        // migration from the pre-mode boolean setting — decided on the RAW
+        // stored value, before the default 'mixed' fills the gap
+        if (!['mixed', 'choropleth', 'heatmap', 'off'].includes(stored.shadingMode)) {
+            settings.shadingMode = stored.choroplethEnabled === false ? 'off' : 'mixed';
+        }
+        delete settings.choroplethEnabled;
+        return settings;
     }
 
     loadSettingsUI() {
@@ -2078,7 +2149,7 @@ Cache Statistics:
         const settings = {};
         
         // Collect all settings from UI
-        ['sound-alerts', 'alert-sound'].forEach(id => {
+        ['sound-alerts', 'alert-sound', 'shading-mode'].forEach(id => {
             const element = document.getElementById(id);
             if (element) {
                 const key = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
@@ -2138,6 +2209,9 @@ Cache Statistics:
             // Ensure checkbox matches the setting
             soundAlerts.checked = this.settings.soundAlerts;
         }
+
+        // Activity shading mode (D28; map side handled by map.js)
+        window.__choropleth?.setMode(this.settings.shadingMode ?? 'mixed');
     }
 
     async clearCache() {
@@ -2154,13 +2228,14 @@ Cache Statistics:
                 await this.attackCache.clearCache();
             }
 
+            // Clear map visuals and pending queues in EVERY lifecycle state
+            // (D38: a pre-clear event must never resurface when the map
+            // becomes READY — this call must not sit behind if (window.map))
+            window.clearMapVisuals?.();
+
             // Clear map markers and data
             if (window.map) {
-                // Clear Leaflet map layers
-                if (window.circles) window.circles.clearLayers();
-                if (window.markers) window.markers.clearLayers();
-                if (window.attackLines) window.attackLines.clearLayers();
-                
+
                 // Clear map data objects
                 if (window.circleAttackData) {
                     Object.keys(window.circleAttackData).forEach(key => {
@@ -3264,7 +3339,15 @@ Cache Statistics:
                 this.countryTrackingStats[country].topProtocol = topProtocol;
             }
         }
-        
+
+        // D39 choropleth bridge (HANDOFF-v2 §8.6): push the ABSOLUTE count —
+        // never a delta — whenever a country's hit count changes. map.js keeps
+        // its own mirror and never reads countryTrackingStats.
+        const bridgeCode = this.countryTrackingStats[country].countryCode;
+        if (bridgeCode && bridgeCode !== 'XX') {
+            window.updateChoropleth?.(bridgeCode, this.countryTrackingStats[country].hits);
+        }
+
         // Update country table if it's the active tab
         if (this.activeTab === 'countries') {
             this.updateTopCountriesTable();
@@ -3657,23 +3740,14 @@ Cache Statistics:
     }
 }
 
-// Initialize dashboard when DOM is loaded
-// Initialize dashboard when DOM and scripts are loaded
-window.addEventListener('load', () => {
-    // Wait for Chart.js to be available
-    function initWhenReady() {
-        if (typeof Chart !== 'undefined') {
-            console.log('[DEBUG] Chart.js available, initializing Attack Map Dashboard...');
-            window.attackMapDashboard = new AttackMapDashboard();
-            console.log('[DEBUG] Dashboard initialized:', window.attackMapDashboard);
-        } else {
-            console.log('[DEBUG] Chart.js not yet available, waiting...');
-            setTimeout(initWhenReady, 100);
-        }
-    }
-    
-    initWhenReady();
-});
+// D43 (HANDOFF-v2): instantiate the dashboard SYNCHRONOUSLY at script
+// evaluation. Safe by spec-guaranteed document order, not timing: Chart.js is
+// a deferred classic script earlier in index.html, deferred scripts execute in
+// document order, all complete before DOMContentLoaded, and the WebSocket only
+// connects at DOMContentLoaded — so the dashboard object exists before the
+// first message can arrive. The 3.0.1 window.load + Chart.js polling loop had
+// a real race (an early Traffic message threw) and is deleted.
+window.attackMapDashboard = new AttackMapDashboard();
 
 // Export for use in other modules
 window.AttackMapDashboard = AttackMapDashboard;
