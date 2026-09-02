@@ -214,10 +214,39 @@ class AttackCache {
                     if (deletedCount > 0) {
                         console.log(`[CACHE] Cleaned up ${deletedCount} old events from IndexedDB`);
                     }
-                    resolve();
+                    // Enforce maxEvents too (2026-09-02): until now only the
+                    // localStorage path applied the cap, so high event rates
+                    // could grow IndexedDB to rate x 24h records.
+                    this.trimIndexedDBToMaxEvents(store).then(resolve, reject);
                 }
             };
             request.onerror = () => reject(request.error);
+        });
+    }
+
+    trimIndexedDBToMaxEvents(store) {
+        return new Promise((resolve, reject) => {
+            const countReq = store.count();
+            countReq.onsuccess = () => {
+                let excess = countReq.result - this.maxEvents;
+                if (excess <= 0) { resolve(); return; }
+                const toDelete = excess;
+                // oldest first via the timestamp index
+                const cursorReq = store.index('timestamp').openCursor();
+                cursorReq.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor && excess > 0) {
+                        cursor.delete();
+                        excess--;
+                        cursor.continue();
+                    } else {
+                        console.log(`[CACHE] Trimmed ${toDelete} events over the ${this.maxEvents} cap from IndexedDB`);
+                        resolve();
+                    }
+                };
+                cursorReq.onerror = () => reject(cursorReq.error);
+            };
+            countReq.onerror = () => reject(countReq.error);
         });
     }
 
